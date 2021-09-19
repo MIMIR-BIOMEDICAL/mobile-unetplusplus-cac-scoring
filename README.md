@@ -1,5 +1,5 @@
-# UNet3Plus-3D-Cardiac-Tumours-Segmentation
+# Using UNet++ to do better CAC Scoring
 
-3D Cardiac Tumours Semantic Segmentation using UNet3+
+A Modified UNet++ to do automatic CAC scoring
 
 This is a repo to develop my Undergraduate Thesis on Biomedical Engineering
