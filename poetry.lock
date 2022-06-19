@@ -936,6 +936,17 @@ docs = ["furo (>=2021.7.5b38)", "proselint (>=0.10.2)", "sphinx-autodoc-typehint
 test = ["appdirs (==1.4.4)", "pytest-cov (>=2.7)", "pytest-mock (>=3.6)", "pytest (>=6)"]
 
 [[package]]
+name = "plotly"
+version = "5.8.2"
+description = "An open-source, interactive data visualization library for Python"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+tenacity = ">=6.2.0"
+
+[[package]]
 name = "prometheus-client"
 version = "0.14.1"
 description = "Python client for the Prometheus monitoring system."
@@ -1330,6 +1341,17 @@ validators = "*"
 watchdog = {version = "*", markers = "platform_system != \"Darwin\""}
 
 [[package]]
+name = "tenacity"
+version = "8.0.1"
+description = "Retry code until it succeeds"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.extras]
+doc = ["reno", "sphinx", "tornado (>=4.5)"]
+
+[[package]]
 name = "tensorboard"
 version = "2.9.1"
 description = "TensorBoard lets you watch Tensors Flow"
@@ -1633,7 +1655,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.11"
-content-hash = "955bcfe3fc89469b5c7e2a5933b4da571d00d4a085fb6cdacad662d900a053a4"
+content-hash = "f92e0477c0b9b2dc3f456458cd047943b6ebb83b8d9e584d3248e0cec6d6f057"
 
 [metadata.files]
 absl-py = [
@@ -2219,6 +2241,10 @@ platformdirs = [
     {file = "platformdirs-2.5.2-py3-none-any.whl", hash = "sha256:027d8e83a2d7de06bbac4e5ef7e023c02b863d7ea5d079477e722bb41ab25788"},
     {file = "platformdirs-2.5.2.tar.gz", hash = "sha256:58c8abb07dcb441e6ee4b11d8df0ac856038f944ab98b7be6b27b2a3c7feef19"},
 ]
+plotly = [
+    {file = "plotly-5.8.2-py2.py3-none-any.whl", hash = "sha256:bd5376ac8cc06e195e3d397da089f3189243b61b27b6c837c1930edbf75fb8f3"},
+    {file = "plotly-5.8.2.tar.gz", hash = "sha256:6cfbb2cce3866671dbf304e5168c58950328be4573547dc9a337f9e000c8e32b"},
+]
 prometheus-client = [
     {file = "prometheus_client-0.14.1-py3-none-any.whl", hash = "sha256:522fded625282822a89e2773452f42df14b5a8e84a86433e3f8a189c1d54dc01"},
     {file = "prometheus_client-0.14.1.tar.gz", hash = "sha256:5459c427624961076277fdc6dc50540e2bacb98eebde99886e59ec55ed92093a"},
@@ -2551,6 +2577,10 @@ stack-data = [
 streamlit = [
     {file = "streamlit-1.10.0-py2.py3-none-any.whl", hash = "sha256:4febd37144a62177e583d6970ab50f351a2bfd4eb112cf19e38c25b12246a4db"},
     {file = "streamlit-1.10.0.tar.gz", hash = "sha256:9479d623dd4bec1fc7bd27e85d5012672351210e640889022ee7b4631c4efb2c"},
+]
+tenacity = [
+    {file = "tenacity-8.0.1-py3-none-any.whl", hash = "sha256:f78f4ea81b0fabc06728c11dc2a8c01277bfc5181b321a4770471902e3eb844a"},
+    {file = "tenacity-8.0.1.tar.gz", hash = "sha256:43242a20e3e73291a28bcbcacfd6e000b02d3857a9a9fff56b297a27afdc932f"},
 ]
 tensorboard = [
     {file = "tensorboard-2.9.1-py3-none-any.whl", hash = "sha256:baa727f791776f9e5841d347127720ceed4bbd59c36b40604b95fb2ae6029276"},
