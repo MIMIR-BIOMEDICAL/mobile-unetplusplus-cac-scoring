@@ -1,5 +1,6 @@
 import os
 import subprocess
+import click
 
 from dotenv import load_dotenv
 
@@ -14,13 +15,17 @@ def install_az():
 
 def download_coca_dataset():
     print("Downloading Dataset")
-    subprocess.run(["azcopy", "copy", os.getenv("DATASET_URL"), "data", "--recursive"], text=True)
+    subprocess.run(
+        ["azcopy", "copy", os.getenv("DATASET_URL"), "data", "--recursive"], text=True
+    )
     print("Dataset Downloaded")
 
 
 def clean_directory():
     print("Cleaning Directory")
-    subprocess.run(["mv", "data/cocacoronarycalciumandchestcts-2/Gated_release_final", "dataset/"])
+    subprocess.run(
+        ["mv", "data/cocacoronarycalciumandchestcts-2/Gated_release_final", "dataset/"]
+    )
     subprocess.run(["rm", "-r", "data"])
     print("Finish Cleaning Directory")
 
