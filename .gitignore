@@ -1,4 +1,5 @@
 .env
 .cenv
 main/dataloader/data**
+data/**
 test**
