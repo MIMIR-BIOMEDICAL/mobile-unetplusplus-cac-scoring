@@ -1,47 +1,48 @@
 import os
 import subprocess
 import click
+from shutil import which
 
 from dotenv import load_dotenv
 
-load_dotenv()
 
+@click.command()
+@click.option("-u", "--url", help="Dataset URL")
+@click.option(
+    "-d",
+    "--dest",
+    default="data/raw/",
+    type=click.Path(exists=True),
+    help="Destination folder",
+)
+def download_dataset(url, dest):
 
-def install_az():
-    print("AzCopy not found, installing AzCopy")
-    subprocess.run(["./install_azcopy.sh"], text=True)
-    print("Azcopy Installed")
+    load_dotenv()
 
+    if which("azcopy") is None:
+        click.echo("AZCopy is not installed, installing azcopy...")
+        subprocess.run(["src/data/install_azcopy.sh"], text=True)
+        click.echo("AZCopy installed")
 
-def download_coca_dataset():
-    print("Downloading Dataset")
-    subprocess.run(
-        ["azcopy", "copy", os.getenv("DATASET_URL"), "data", "--recursive"], text=True
+    if url is not None:
+        subprocess.run(
+            ["azcopy", "copy", url, dest, "--recursive"],
+            text=True,
+        )
+        return
+
+    if os.getenv("DATASET_URL") is not None:
+        subprocess.run(
+            ["azcopy", "copy", os.getenv("DATASET_URL"), dest, "--recursive"],
+            text=True,
+        )
+        return
+
+    click.echo(
+        "Please provide URL via --url options or DATASET_URL environment variable!",
+        err=True,
     )
-    print("Dataset Downloaded")
-
-
-def clean_directory():
-    print("Cleaning Directory")
-    subprocess.run(
-        ["mv", "data/cocacoronarycalciumandchestcts-2/Gated_release_final", "dataset/"]
-    )
-    subprocess.run(["rm", "-r", "data"])
-    print("Finish Cleaning Directory")
-
-
-def main():
-    if "dataset" not in os.listdir("."):
-        try:
-            download_coca_dataset()
-            clean_directory()
-        except:
-            install_az()
-            download_coca_dataset()
-            clean_directory()
-    else:
-        print("Dataset in directory")
 
 
 if __name__ == "__main__":
-    main()
+    download_dataset()
