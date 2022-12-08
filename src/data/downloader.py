@@ -28,8 +28,10 @@ def download_dataset(url, dest):
     """
     load_dotenv()
 
-    subprocess.run(["src/data/install_azcopy.sh"], text=True)
-    click.echo("AZCopy installed")
+    if which("azcopy") is None:
+        click.echo("AZCopy is not installed, installing azcopy...")
+        subprocess.run(["src/data/install_azcopy.sh"], text=True)
+        click.echo("AZCopy installed")
 
     if url is not None:
         subprocess.run(
