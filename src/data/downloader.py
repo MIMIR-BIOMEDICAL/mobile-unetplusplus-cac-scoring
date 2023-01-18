@@ -15,7 +15,7 @@ from dotenv import load_dotenv
     type=click.Path(exists=True),
     help="Destination folder",
 )
-def download_dataset(url, dest):
+def download_dataset(url: str, dest: str):
     """
     A function (and cli) to download (specifically COCA Dataset)
 
