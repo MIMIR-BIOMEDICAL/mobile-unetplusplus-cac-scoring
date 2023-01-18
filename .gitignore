@@ -3,4 +3,7 @@
 main/dataloader/data**
 data/**
 test**
+
+# Cache
 .ipynb_checkpoints
+__pycache__
