@@ -2,7 +2,6 @@
 .cenv
 main/dataloader/data**
 data/**
-test**
 
 # Cache
 .ipynb_checkpoints
