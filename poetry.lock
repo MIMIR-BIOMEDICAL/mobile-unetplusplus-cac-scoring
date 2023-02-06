@@ -1556,6 +1556,14 @@ python-versions = ">=3.6.1"
 docs = ["matplotlib", "numpy", "numpydoc", "pillow", "sphinx", "sphinx-copybutton", "sphinx-gallery", "sphinx-rtd-theme", "sphinxcontrib-napoleon"]
 
 [[package]]
+name = "pyfakefs"
+version = "5.1.0"
+description = "pyfakefs implements a fake file system that mocks the Python file system modules."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[[package]]
 name = "pyflakes"
 version = "3.0.1"
 description = "passive checker of Python programs"
@@ -2299,7 +2307,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.9.7 || >3.9.7,<3.11"
-content-hash = "cd544967ec19e3bb7d5fcae370c8dcae34f6f7c3f92ec6e7a72794cf7bc73d50"
+content-hash = "6a82ea4f8f194918633a8a7782796d99eb7746af21fd4dd3ff94c99ca1fdd032"
 
 [metadata.files]
 absl-py = [
@@ -3290,6 +3298,10 @@ pydeck = [
 pydicom = [
     {file = "pydicom-2.3.1-py3-none-any.whl", hash = "sha256:b00bacdabc1f8a18b61a08bb6cd0f41c419446531638c895a708c22a35d69cfe"},
     {file = "pydicom-2.3.1.tar.gz", hash = "sha256:655db29c21cb333a4f9dfffdeaa80995b1d3b89e98b66a16f5cc886e5b338028"},
+]
+pyfakefs = [
+    {file = "pyfakefs-5.1.0-py3-none-any.whl", hash = "sha256:e6f34a8224b41f1b1ab25aa8d430121dac42e3c6e981e01eae76b3343fba47d0"},
+    {file = "pyfakefs-5.1.0.tar.gz", hash = "sha256:316c6026640d14a6b4fbde71fd9674576d1b5710deda8fabde8aad51d785dbc3"},
 ]
 pyflakes = [
     {file = "pyflakes-3.0.1-py2.py3-none-any.whl", hash = "sha256:ec55bf7fe21fff7f1ad2f7da62363d749e2a470500eab1b555334b67aa1ef8cf"},
