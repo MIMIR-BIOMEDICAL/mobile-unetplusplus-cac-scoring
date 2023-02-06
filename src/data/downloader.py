@@ -1,8 +1,9 @@
+"""CLI Data Downloader"""
 import os
 import subprocess
-import click
 from shutil import which
 
+import click
 from dotenv import load_dotenv
 
 
@@ -30,21 +31,51 @@ def download_dataset(url: str, dest: str):
 
     if which("azcopy") is None:
         click.echo("AZCopy is not installed, installing azcopy...")
-        subprocess.run(["src/data/install_azcopy.sh"], text=True)
+        try:
+            subprocess.run(
+                ["src/data/install_azcopy.sh"],
+                text=True,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as error:
+            print(f"Error: {error}")
+            print(f"Stdout: {error.stdout}")
+            print(f"Stderr: {error.stderr}")
+            raise
         click.echo("AZCopy installed")
 
     if url is not None:
-        subprocess.run(
-            ["azcopy", "copy", url, dest, "--recursive"],
-            text=True,
-        )
+        try:
+            subprocess.run(
+                ["azcopy", "copy", url, dest, "--recursive"],
+                text=True,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as error:
+            print(f"Error: {error}")
+            print(f"Stdout: {error.stdout}")
+            print(f"Stderr: {error.stderr}")
+            raise
         return
 
     if os.getenv("DATASET_URL") is not None:
-        subprocess.run(
-            ["azcopy", "copy", os.getenv("DATASET_URL"), dest, "--recursive"],
-            text=True,
-        )
+        try:
+            subprocess.run(
+                ["azcopy", "copy", str(os.getenv("DATASET_URL")), dest, "--recursive"],
+                text=True,
+                check=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as error:
+            print(f"Error: {error}")
+            print(f"Stdout: {error.stdout}")
+            print(f"Stderr: {error.stderr}")
+            raise
         return
 
     click.echo(
@@ -54,4 +85,4 @@ def download_dataset(url: str, dest: str):
 
 
 if __name__ == "__main__":
-    download_dataset()
+    download_dataset()  # pylint: disable=no-value-for-parameter
