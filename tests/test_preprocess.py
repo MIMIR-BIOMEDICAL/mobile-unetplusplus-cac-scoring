@@ -12,9 +12,9 @@ def test_convert_plist_to_dict(fs):  # pylint: disable=invalid-name
         cwd_path
         / "data"
         / "raw"
-        / " cocacoronarycalciumandchestcts-2"
+        / "cocacoronarycalciumandchestcts-2"
         / "Gated_release_final"
-        / "calicum_xml"
+        / "calcium_xml"
         / "test.xml"
     )
 
