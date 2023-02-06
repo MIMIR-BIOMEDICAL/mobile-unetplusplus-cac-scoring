@@ -11,24 +11,20 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
+      - name: Install poetry ${{ vars.POETRY_VER}}
+        run: pipx install poetry==${{ vars.POETRY_VER }}
+
       - name: Set up Python ${{ vars.PYTHON_VER }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ vars.PYTHON_VER }}
           cache: "poetry"
 
-      - name: Install poetry
-        uses: abatilo/actions-poetry@v2
-        with:
-          poetry-version: ${{ vars.POETRY_VER }}
-
       - name: Install dependencies
         run: poetry install
 
       - name: Analysing the code with pylint
-        run: |
-          poetry run pylint $(git ls-files '*.py')
+        run: poetry run pylint $(git ls-files '*.py')
 
       - name: Analysing the code with pylint
-        run: |
-          poetry run pytest
+        run: poetry run pytest
