@@ -25,6 +25,7 @@ autohooks-plugin-black = "^22.11.0"
 autohooks-plugin-pylint = "^22.8.1"
 autohooks-plugin-pytest = "^23.1.0"
 autohooks-plugin-isort = "^22.8.0"
+pyfakefs = "^5.1.0"
 
 
 [tool.autohooks]
