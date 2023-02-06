@@ -1,0 +1,30 @@
+name: Lint and Test
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Install poetry ${{ vars.POETRY_VER}}
+        run: pipx install poetry==${{ vars.POETRY_VER }}
+
+      - name: Set up Python ${{ vars.PYTHON_VER }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ vars.PYTHON_VER }}
+          cache: "poetry"
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Analysing code with Pylint
+        run: poetry run pylint $(git ls-files '*.py')
+
+      - name: Analysing code with Pytest
+        run: poetry run pytest

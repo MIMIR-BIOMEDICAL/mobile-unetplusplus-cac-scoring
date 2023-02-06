@@ -4,7 +4,6 @@ version = "0.1.0"
 description = ""
 authors = ["Aditya Wardianto <aditya.wardianto@zero-one-group.com>"]
 readme = "README.md"
-packages = [{include = "mobile_unetplusplus_cac_scoring"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.9.7 || >3.9.7,<3.11"
