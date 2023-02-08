@@ -1,11 +1,13 @@
 """Preprocessing Function Test"""
 
+import json
 import pathlib
 
-from src.data.preprocess import convert_plist_to_dict
+from src.data.preprocess.pipeline.segmentation import \
+    create_raw_segmentation_json
 
 
-def test_convert_plist_to_dict(fs):  # pylint: disable=invalid-name
+def test_create_raw_segmentation_json(fs):  # pylint: disable=invalid-name
     """Test for convert_plist_to_dict function with mocked plist file"""
     cwd_path = pathlib.Path.cwd()
     test_data_path = (
@@ -36,10 +38,20 @@ def test_convert_plist_to_dict(fs):  # pylint: disable=invalid-name
 </plist>""",
     )
 
-    dict_output = convert_plist_to_dict(test_data_path)
+    fs.create_dir(cwd_path / "data" / "interim")
+
+    create_raw_segmentation_json(cwd_path)
+
+    json_path = cwd_path / "data" / "interim" / "raw_segmentation.json"
+
+    with json_path.open(mode="r") as json_file:
+        dict_output = json.load(json_file)
+
     assert dict_output == {
-        "userId": 1,
-        "id": 1,
-        "title": "delectus aut autem",
-        "completed": False,
+        "test": {
+            "userId": 1,
+            "id": 1,
+            "title": "delectus aut autem",
+            "completed": False,
+        }
     }
