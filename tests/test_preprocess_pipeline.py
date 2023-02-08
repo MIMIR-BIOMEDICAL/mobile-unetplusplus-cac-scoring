@@ -3,8 +3,8 @@
 import json
 import pathlib
 
-from src.data.preprocess.pipeline.segmentation import \
-    create_raw_segmentation_json
+from src.data.preprocess.pipeline.segmentation import (
+    clean_raw_segmentation_json, create_raw_segmentation_json)
 
 
 def test_create_raw_segmentation_json(fs):  # pylint: disable=invalid-name
@@ -54,4 +54,59 @@ def test_create_raw_segmentation_json(fs):  # pylint: disable=invalid-name
             "title": "delectus aut autem",
             "completed": False,
         }
+    }
+
+
+def test_clean_raw_segmentation_json(fs):  # pylint: disable=invalid-name
+    """Test pipeline for cleaning preprocess segmentation data"""
+    cwd_path = pathlib.Path.cwd()
+    test_data_path = cwd_path / "data" / "interim" / "raw_segmentation.json"
+
+    fs.create_file(
+        test_data_path,
+        contents=r"""
+        {
+  "000": {
+    "Images": [
+      {
+        "ImageIndex": 1,
+        "NumberOfROIs": 1,
+        "ROIs": [
+          {
+            "Area": 1,
+            "Center": "(1, 1, 1)",
+            "Dev": 1,
+            "IndexInImage": 0,
+            "Length": 1,
+            "Max": 1,
+            "Mean": 1,
+            "Min": 1,
+            "Name": "Another Breaking Changes Done",
+            "NumberOfPoints": 1,
+            "Point_mm": [
+              "(1, 1, 1)"
+            ],
+            "Point_px": [
+              "(1.00, 1.00)"
+            ],
+            "Total": 1,
+            "Type": 1
+          }
+        ]
+      }
+    ]
+  }
+}
+        """,
+    )
+
+    clean_raw_segmentation_json(cwd_path, test_data_path)
+
+    json_path = cwd_path / "data" / "interim" / "clean_segmentation.json"
+
+    with json_path.open(mode="r") as json_file:
+        cleaned_dict_output = json.load(json_file)
+
+    assert cleaned_dict_output == {
+        "000": [{"idx": 1, "roi": [{"name": "ABC", "pos": [[1, 1]]}]}]
     }

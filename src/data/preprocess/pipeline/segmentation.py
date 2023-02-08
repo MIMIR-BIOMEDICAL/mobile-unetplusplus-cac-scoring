@@ -7,8 +7,8 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.data.preprocess.lib.segmentation import \
-    convert_plist_to_dict  # pylint: disable=import-error,wrong-import-position
+from src.data.preprocess.lib.segmentation import (  # pylint: disable=import-error,wrong-import-position
+    clean_raw_segmentation_dict, convert_plist_to_dict)
 
 
 def create_raw_segmentation_json(project_root_path: pathlib.Path):
@@ -50,3 +50,49 @@ def create_raw_segmentation_json(project_root_path: pathlib.Path):
     # Save file to data/interim/raw_plist_json.json
     with raw_json_file_path.open(mode="w") as file:
         file.write(json.dumps(sorted_out_dict))
+
+
+def clean_raw_segmentation_json(
+    project_root_path: pathlib.Path, json_path: pathlib.Path
+) -> dict:
+    """
+    Pipeline function for cleaning raw segmentation json
+
+    Args:
+        project_root_path: path to root project
+        json_path: path to raw segmentation json
+
+    Returns:
+
+    """
+    # Open json file
+    with json_path.open(mode="r") as json_file:
+        raw_json_dict = json.load(json_file)
+
+    clean_output_dict = clean_raw_segmentation_dict(raw_json_dict)
+
+    # Output Path
+    clean_json_file_path = (
+        project_root_path / "data" / "interim" / "clean_segmentation.json"
+    )
+
+    # Save file to data/interim/raw_plist_json.json
+    with clean_json_file_path.open(mode="w") as file:
+        file.write(json.dumps(clean_output_dict))
+
+
+def preprocess_segmentation_pipeline():
+    """A function to run all preprocessing pipeline"""
+    project_root_path = pathlib.Path.cwd()
+    raw_json_file_path = (
+        project_root_path / "data" / "interim" / "raw_segmentation.json"
+    )
+
+    # Preprocess Segmentation
+    # Convert all plist segmentation file into a json file
+    create_raw_segmentation_json(project_root_path)
+    clean_raw_segmentation_json(project_root_path, raw_json_file_path)
+
+
+if __name__ == "__main__":
+    preprocess_segmentation_pipeline()
