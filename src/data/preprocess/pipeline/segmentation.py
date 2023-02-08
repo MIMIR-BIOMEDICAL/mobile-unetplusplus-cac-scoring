@@ -49,7 +49,7 @@ def create_raw_segmentation_json(project_root_path: pathlib.Path):
 
     # Save file to data/interim/raw_plist_json.json
     with raw_json_file_path.open(mode="w") as file:
-        file.write(json.dumps(sorted_out_dict))
+        file.write(json.dumps(sorted_out_dict, separators=(",", ":")))
 
 
 def clean_raw_segmentation_json(
@@ -78,7 +78,7 @@ def clean_raw_segmentation_json(
 
     # Save file to data/interim/raw_plist_json.json
     with clean_json_file_path.open(mode="w") as file:
-        file.write(json.dumps(clean_output_dict))
+        file.write(json.dumps(clean_output_dict, separators=(",", ":")))
 
 
 def preprocess_segmentation_pipeline():
