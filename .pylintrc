@@ -1,2 +1,2 @@
 [MAIN]
-ignore-patterns=tests
+ignore-paths=^tests/.*$
