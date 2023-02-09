@@ -78,11 +78,42 @@ def test_clean_raw_segmentation_dict():
         }
     }
 
+    no_roi_test_dict = {
+        "000": {
+            "Images": [
+                {
+                    "ImageIndex": 1,
+                    "NumberOfROIs": 1,
+                    "ROIs": [
+                        {
+                            "Area": 0,
+                            "Center": "(0, 0, 0)",
+                            "Dev": 0,
+                            "IndexInImage": 0,
+                            "Length": 0,
+                            "Max": 0,
+                            "Mean": 0,
+                            "Min": 0,
+                            "Name": "Another Breaking Changes Done",
+                            "NumberOfPoints": 0,
+                            "Point_mm": [],
+                            "Point_px": [],
+                            "Total": 0,
+                            "Type": 0,
+                        }
+                    ],
+                }
+            ]
+        }
+    }
     cleaned_dict = clean_raw_segmentation_dict(test_dict)
+    cleaned_no_roi_dict = clean_raw_segmentation_dict(no_roi_test_dict)
 
     assert cleaned_dict == {
         "000": [{"idx": 1, "roi": [{"name": "ABC", "pos": [(1, 1)]}]}]
     }
+
+    assert cleaned_no_roi_dict == {"000": []}
 
 
 def test_string_to_int_tuple():

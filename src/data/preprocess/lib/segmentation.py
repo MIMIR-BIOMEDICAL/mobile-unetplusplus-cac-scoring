@@ -83,6 +83,10 @@ def clean_raw_segmentation_dict(raw_segmentation_dict: dict) -> dict:
                         "pos": int_pixel_coord_list,
                     }
                 )
+            # Skip adding to cleaned data if no roi is detected
+            if len(cleaned_roi_list) == 0:
+                continue
+
             patient_img_list.append(
                 {"idx": image_dict["ImageIndex"], "roi": cleaned_roi_list}
             )
