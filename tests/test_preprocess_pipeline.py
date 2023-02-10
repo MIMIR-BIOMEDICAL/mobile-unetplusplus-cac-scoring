@@ -81,7 +81,7 @@ def test_clean_raw_segmentation_json(fs):  # pylint: disable=invalid-name
             "Max": 1,
             "Mean": 1,
             "Min": 1,
-            "Name": "Left Arterior Descending Artery",
+            "Name": "Left Anterior Descending Artery",
             "NumberOfPoints": 1,
             "Point_mm": [
               "(1, 1, 1)"

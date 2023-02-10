@@ -37,7 +37,7 @@ def artery_loc_to_abbr(string_input: str) -> str | None:
 
     """
     if string_input not in [
-        "Left Arterior Descending Artery",
+        "Left Anterior Descending Artery",
         "Right Coronary Artery",
         "Left Circumflex Artery",
         "Left Coronary Artery",
@@ -45,7 +45,7 @@ def artery_loc_to_abbr(string_input: str) -> str | None:
         return None
 
     conversion_dict = {
-        "Left Arterior Descending Artery": "LAD",
+        "Left Anterior Descending Artery": "LAD",
         "Right Coronary Artery": "RCA",
         "Left Circumflex Artery": "LCX",
         "Left Coronary Artery": "LCA",

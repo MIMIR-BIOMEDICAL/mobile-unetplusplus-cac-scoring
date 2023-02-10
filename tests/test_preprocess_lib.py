@@ -66,7 +66,7 @@ def test_clean_raw_segmentation_dict():
                             "Max": 1,
                             "Mean": 1,
                             "Min": 1,
-                            "Name": "Left Arterior Descending Artery",
+                            "Name": "Left Anterior Descending Artery",
                             "NumberOfPoints": 1,
                             "Point_mm": ["(1, 1, 1)"],
                             "Point_px": ["(1.00, 1.00)"],
@@ -95,7 +95,7 @@ def test_clean_raw_segmentation_dict():
                             "Max": 0,
                             "Mean": 0,
                             "Min": 0,
-                            "Name": "Left Arterior Descending Artery",
+                            "Name": "Left Anterior Descending Artery",
                             "NumberOfPoints": 0,
                             "Point_mm": [],
                             "Point_px": [],
@@ -125,7 +125,7 @@ def test_string_to_int_tuple():
 
 
 def test_convert_artery_location_to_abbreviation():
-    test_string = "Left Arterior Descending Artery"
+    test_string = "Left Anterior Descending Artery"
     fail_test_string = "1"
 
     test_output = artery_loc_to_abbr(test_string)
