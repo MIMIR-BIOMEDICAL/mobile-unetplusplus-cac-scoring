@@ -87,11 +87,23 @@ def preprocess_segmentation_pipeline():
     raw_json_file_path = (
         project_root_path / "data" / "interim" / "raw_segmentation.json"
     )
+    clean_json_file_path = (
+        project_root_path / "data" / "interim" / "clean_segmentation.json"
+    )
 
     # Preprocess Segmentation
     # Convert all plist segmentation file into a json file
     create_raw_segmentation_json(project_root_path)
     clean_raw_segmentation_json(project_root_path, raw_json_file_path)
+
+    with clean_json_file_path.open(mode="r") as json_file:
+        clean_json_dict = json.load(json_file)
+
+    for key, value in clean_json_dict.items():
+        for image in value:
+            for roi in image["roi"]:
+                if roi["name"] not in ["LAD", "RCA", "LCA"]:
+                    print(roi["pos"], roi["name"], key)
 
 
 if __name__ == "__main__":
