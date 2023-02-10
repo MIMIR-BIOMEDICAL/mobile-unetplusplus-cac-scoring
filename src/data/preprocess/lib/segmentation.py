@@ -7,8 +7,8 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.data.preprocess.lib.utils import \
-    string_to_int_tuple  # pylint: disable=wrong-import-position,import-error
+from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
+    artery_loc_to_abbr, string_to_int_tuple)
 
 
 def convert_plist_to_dict(plist_path: pathlib.Path) -> dict:
@@ -63,26 +63,27 @@ def clean_raw_segmentation_dict(raw_segmentation_dict: dict) -> dict:
         for image_dict in images_list:
             cleaned_roi_list = []
             for roi in image_dict["ROIs"]:
-                # Check if there is no area
-                if roi["Area"] == 0:
+                # Check if there is no area or no Px point
+                if roi["Area"] == 0 or len(roi["Point_px"]) == 0:
                     continue
 
-                string_pixel_coord_list = roi["Point_px"]
+                artery_abbreviation = artery_loc_to_abbr(roi["Name"])
+                if artery_abbreviation is None:
+                    continue
 
                 # Convert string coords to integer coords
                 int_pixel_coord_list = [
                     string_to_int_tuple(string_coord)
-                    for string_coord in string_pixel_coord_list
+                    for string_coord in roi["Point_px"]
                 ]
 
                 # Remove duplicate coords
                 int_pixel_coord_list = list(set(int_pixel_coord_list))
-                cleaned_roi_list.append(
-                    {
-                        "name": "".join([word[0] for word in roi["Name"].split()][:3]),
-                        "pos": int_pixel_coord_list,
-                    }
-                )
+                cleaned_roi = {
+                    "name": artery_abbreviation,
+                    "pos": int_pixel_coord_list,
+                }
+                cleaned_roi_list.append(cleaned_roi)
             # Skip adding to cleaned data if no roi is detected
             if len(cleaned_roi_list) == 0:
                 continue

@@ -4,7 +4,8 @@ import pathlib
 
 from src.data.preprocess.lib.segmentation import (clean_raw_segmentation_dict,
                                                   convert_plist_to_dict)
-from src.data.preprocess.lib.utils import string_to_int_tuple
+from src.data.preprocess.lib.utils import (artery_loc_to_abbr,
+                                           string_to_int_tuple)
 
 
 def test_convert_plist_to_dict(fs):  # pylint: disable=invalid-name
@@ -65,7 +66,7 @@ def test_clean_raw_segmentation_dict():
                             "Max": 1,
                             "Mean": 1,
                             "Min": 1,
-                            "Name": "Another Breaking Changes Done",
+                            "Name": "Left Anterior Descending Artery",
                             "NumberOfPoints": 1,
                             "Point_mm": ["(1, 1, 1)"],
                             "Point_px": ["(1.00, 1.00)"],
@@ -94,7 +95,7 @@ def test_clean_raw_segmentation_dict():
                             "Max": 0,
                             "Mean": 0,
                             "Min": 0,
-                            "Name": "Another Breaking Changes Done",
+                            "Name": "Left Anterior Descending Artery",
                             "NumberOfPoints": 0,
                             "Point_mm": [],
                             "Point_px": [],
@@ -110,7 +111,7 @@ def test_clean_raw_segmentation_dict():
     cleaned_no_roi_dict = clean_raw_segmentation_dict(no_roi_test_dict)
 
     assert cleaned_dict == {
-        "000": [{"idx": 1, "roi": [{"name": "ABC", "pos": [(1, 1)]}]}]
+        "000": [{"idx": 1, "roi": [{"name": "LAD", "pos": [(1, 1)]}]}]
     }
 
     assert cleaned_no_roi_dict == {"000": []}
@@ -121,3 +122,14 @@ def test_string_to_int_tuple():
     test_string = "(1.000, 1.000)"
     out_list = string_to_int_tuple(test_string)
     assert out_list == (1, 1)
+
+
+def test_convert_artery_location_to_abbreviation():
+    test_string = "Left Anterior Descending Artery"
+    fail_test_string = "1"
+
+    test_output = artery_loc_to_abbr(test_string)
+    fail_test_output = artery_loc_to_abbr(fail_test_string)
+
+    assert test_output == "LAD"
+    assert fail_test_output is None
