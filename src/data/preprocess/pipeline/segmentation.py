@@ -8,7 +8,10 @@ from tqdm import tqdm
 sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.data.preprocess.lib.segmentation import (  # pylint: disable=import-error,wrong-import-position
-    clean_raw_segmentation_dict, convert_plist_to_dict)
+    clean_raw_segmentation_dict, convert_plist_to_dict,
+    split_clean_segmentation_to_binary)
+from src.data.preprocess.lib.utils import \
+    find_duplicates  # pylint: disable=import-error,wrong-import-position
 
 
 def create_raw_segmentation_json(project_root_path: pathlib.Path):
@@ -81,6 +84,29 @@ def clean_raw_segmentation_json(
         file.write(json.dumps(clean_output_dict, separators=(",", ":")))
 
 
+def get_binary_segmentation_json(
+    project_root_path: pathlib.Path, cleaned_json_path: pathlib.Path
+):
+    """
+    This is a pipeline function for extracting binary segmentation
+    out of the cleaned data
+
+    Args:
+        project_root_path:
+        cleaned_json_path:
+    """
+    with cleaned_json_path.open(mode="r") as json_file:
+        clean_json_dict = json.load(json_file)
+    binary_segmentation_dict = split_clean_segmentation_to_binary(clean_json_dict)
+
+    binary_segmentation_json_path = (
+        project_root_path / "data" / "interim" / "binary_segmentation.json"
+    )
+
+    with binary_segmentation_json_path.open(mode="w") as json_file:
+        json_file.write(json.dumps(binary_segmentation_dict, separators=(",", ":")))
+
+
 def preprocess_segmentation_pipeline():
     """A function to run all preprocessing pipeline"""
     project_root_path = pathlib.Path.cwd()
@@ -88,10 +114,32 @@ def preprocess_segmentation_pipeline():
         project_root_path / "data" / "interim" / "raw_segmentation.json"
     )
 
+    clean_json_file_path = (
+        project_root_path / "data" / "interim" / "clean_segmentation.json"
+    )
+
+    binary_segmentation_path = (
+        project_root_path / "data" / "interim" / "binary_segmentation.json"
+    )
+
     # Preprocess Segmentation
     # Convert all plist segmentation file into a json file
     create_raw_segmentation_json(project_root_path)
     clean_raw_segmentation_json(project_root_path, raw_json_file_path)
+    get_binary_segmentation_json(project_root_path, clean_json_file_path)
+
+    # DEBUG
+    # Check duplicate in binary segmentation
+    with binary_segmentation_path.open(mode="r") as json_file:
+        binary_segmentation_dict = json.load(json_file)
+
+    for patient_num, image_list in binary_segmentation_dict.items():
+        for obj in image_list:
+            duplicates = find_duplicates(obj["pos"])
+            if len(duplicates) != 0:
+                print(
+                    f"Pixel overlap found on patient {patient_num} image {obj['idx']} on {duplicates}"
+                )
 
 
 if __name__ == "__main__":

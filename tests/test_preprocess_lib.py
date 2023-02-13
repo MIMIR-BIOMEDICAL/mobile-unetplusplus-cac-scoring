@@ -2,8 +2,9 @@
 
 import pathlib
 
-from src.data.preprocess.lib.segmentation import (clean_raw_segmentation_dict,
-                                                  convert_plist_to_dict)
+from src.data.preprocess.lib.segmentation import (
+    clean_raw_segmentation_dict, convert_plist_to_dict,
+    split_clean_segmentation_to_binary)
 from src.data.preprocess.lib.utils import (artery_loc_to_abbr,
                                            string_to_int_tuple)
 
@@ -115,6 +116,26 @@ def test_clean_raw_segmentation_dict():
     }
 
     assert cleaned_no_roi_dict == {"000": []}
+
+
+def test_split_clean_segmentation_to_binary():
+    cleaned_dict = {
+        "000": [
+            {
+                "idx": 1,
+                "roi": [
+                    {"name": "LAD", "pos": [(1, 1)]},
+                    {"name": "LAD", "pos": [(3, 2)]},
+                ],
+            },
+            {"idx": 2, "roi": [{"name": "LAD", "pos": [(2, 2)]}]},
+        ]
+    }
+    binary_segmentation_dict = split_clean_segmentation_to_binary(cleaned_dict)
+
+    assert binary_segmentation_dict == {
+        "000": [{"idx": 1, "pos": [(1, 1), (3, 2)]}, {"idx": 2, "pos": [(2, 2)]}]
+    }
 
 
 def test_string_to_int_tuple():

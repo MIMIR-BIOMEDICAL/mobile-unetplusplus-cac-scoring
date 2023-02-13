@@ -422,7 +422,8 @@ disable=raw-checker-failed,
         useless-suppression,
         deprecated-pragma,
         use-symbolic-message-instead,
-        broad-exception-raised
+        broad-exception-raised,
+        line-too-long
         
 
 # Enable the message, report, category or checker with the given id(s). You can

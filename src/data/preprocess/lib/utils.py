@@ -52,3 +52,24 @@ def artery_loc_to_abbr(string_input: str) -> str | None:
     }
 
     return conversion_dict[string_input]
+
+
+def find_duplicates(lists_of_lists: list) -> list:
+    """
+    This function find duplicate inside a list of list
+
+    Args:
+        lists_of_lists (): list of list containing
+
+    Returns:
+
+    """
+    seen = set()
+    duplicates = []
+    for lst in lists_of_lists:
+        lst = tuple(lst)
+        if lst in seen:
+            duplicates.append(lst)
+        else:
+            seen.add(lst)
+    return duplicates

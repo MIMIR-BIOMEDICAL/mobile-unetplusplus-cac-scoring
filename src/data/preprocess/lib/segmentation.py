@@ -93,3 +93,30 @@ def clean_raw_segmentation_dict(raw_segmentation_dict: dict) -> dict:
             )
         clean_output_dict[patient_number] = patient_img_list
     return clean_output_dict
+
+
+def split_clean_segmentation_to_binary(clean_segmentation_dict: dict) -> dict:
+    """
+    A function to get the binary segmentation representation
+    of the cleaned segmentation dataset. This binary representation
+    is used to train the binary classification head of the model
+    so that it can check whether there is a calcium or not
+
+    Args:
+        clean_segmentation_dict: dictionary containing the cleaned segmentation dat
+
+    Returns:
+        binary_segmentation_dict: dictionary containing the binary
+    """
+    binary_segmentation_dict = {}
+    for patient_number, image_list in clean_segmentation_dict.items():
+        out_image_list = []
+        for image in image_list:
+            image_index = image["idx"]
+            roi_list = image["roi"]
+            pos_list = []
+            for roi in roi_list:
+                pos_list.extend(roi["pos"])
+            out_image_list.append({"idx": image_index, "pos": pos_list})
+        binary_segmentation_dict[patient_number] = out_image_list
+    return binary_segmentation_dict
