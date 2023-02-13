@@ -1,11 +1,10 @@
-"""Preprocessing Function Test"""
+"""Preprocessing lib segmentation Test"""
 
 import pathlib
 
-from src.data.preprocess.lib.segmentation import (clean_raw_segmentation_dict,
-                                                  convert_plist_to_dict)
-from src.data.preprocess.lib.utils import (artery_loc_to_abbr,
-                                           string_to_int_tuple)
+from src.data.preprocess.lib.segmentation import (
+    clean_raw_segmentation_dict, convert_plist_to_dict,
+    split_clean_segmentation_to_binary, split_clean_segmentation_to_multiclass)
 
 
 def test_convert_plist_to_dict(fs):  # pylint: disable=invalid-name
@@ -111,25 +110,58 @@ def test_clean_raw_segmentation_dict():
     cleaned_no_roi_dict = clean_raw_segmentation_dict(no_roi_test_dict)
 
     assert cleaned_dict == {
-        "000": [{"idx": 1, "roi": [{"name": "LAD", "pos": [(1, 1)]}]}]
+        "000": [{"idx": 1, "roi": [{"loc": "LAD", "pos": [(1, 1)]}]}]
     }
 
     assert cleaned_no_roi_dict == {"000": []}
 
 
-def test_string_to_int_tuple():
-    """Test converting a string of tuple float into a list of int"""
-    test_string = "(1.000, 1.000)"
-    out_list = string_to_int_tuple(test_string)
-    assert out_list == (1, 1)
+def test_split_clean_segmentation_to_binary():
+    """Test function for binary segmentation extraction"""
+    cleaned_dict = {
+        "000": [
+            {
+                "idx": 1,
+                "roi": [
+                    {"loc": "LAD", "pos": [(1, 1)]},
+                    {"loc": "LAD", "pos": [(3, 2)]},
+                ],
+            },
+            {"idx": 2, "roi": [{"loc": "LAD", "pos": [(2, 2)]}]},
+        ]
+    }
+    binary_segmentation_dict = split_clean_segmentation_to_binary(cleaned_dict)
+
+    assert binary_segmentation_dict == {
+        "000": [{"idx": 1, "pos": [(1, 1), (3, 2)]}, {"idx": 2, "pos": [(2, 2)]}]
+    }
 
 
-def test_convert_artery_location_to_abbreviation():
-    test_string = "Left Anterior Descending Artery"
-    fail_test_string = "1"
+def test_split_clean_segmentation_to_multiclass():
+    """Test function for multiclass segmentation extraction"""
+    cleaned_dict = {
+        "000": [
+            {
+                "idx": 1,
+                "roi": [
+                    {"loc": "LAD", "pos": [(1, 1)]},
+                    {"loc": "LAD", "pos": [(3, 2)]},
+                ],
+            },
+            {"idx": 2, "roi": [{"loc": "LAD", "pos": [(2, 2)]}]},
+        ]
+    }
+    multiclass_segmentation_dict = split_clean_segmentation_to_multiclass(cleaned_dict)
 
-    test_output = artery_loc_to_abbr(test_string)
-    fail_test_output = artery_loc_to_abbr(fail_test_string)
-
-    assert test_output == "LAD"
-    assert fail_test_output is None
+    assert multiclass_segmentation_dict == {
+        "000": [
+            {
+                "idx": 1,
+                "roi": [
+                    {"loc": 1, "pos": [(1, 1)]},
+                    {"loc": 1, "pos": [(3, 2)]},
+                ],
+            },
+            {"idx": 2, "roi": [{"loc": 1, "pos": [(2, 2)]}]},
+        ]
+    }

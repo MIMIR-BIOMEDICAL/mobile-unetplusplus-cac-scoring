@@ -4,7 +4,8 @@ import json
 import pathlib
 
 from src.data.preprocess.pipeline.segmentation import (
-    clean_raw_segmentation_json, create_raw_segmentation_json)
+    clean_raw_segmentation_json, create_raw_segmentation_json,
+    get_binary_segmentation_json)
 
 
 def test_create_raw_segmentation_json(fs):  # pylint: disable=invalid-name
@@ -108,7 +109,7 @@ def test_clean_raw_segmentation_json(fs):  # pylint: disable=invalid-name
         cleaned_dict_output = json.load(json_file)
 
     assert cleaned_dict_output == {
-        "000": [{"idx": 1, "roi": [{"name": "LAD", "pos": [[1, 1]]}]}]
+        "000": [{"idx": 1, "roi": [{"loc": "LAD", "pos": [[1, 1]]}]}]
     }
 
     test_data_path = cwd_path / "data" / "interim" / "fail_raw_segmentation.json"
@@ -159,3 +160,113 @@ def test_clean_raw_segmentation_json(fs):  # pylint: disable=invalid-name
         cleaned_dict_output = json.load(json_file)
 
     assert cleaned_dict_output == {"000": []}
+
+
+def test_binary_segmentation_json(fs):  # pylint: disable=invalid-name
+    """Test pipeline for extracting binary segmentation data"""
+    cwd_path = pathlib.Path.cwd()
+    test_data_path = cwd_path / "data" / "interim" / "raw_segmentation.json"
+
+    fs.create_file(
+        test_data_path,
+        contents=r"""
+        {
+  "000": {
+    "Images": [
+      {
+        "ImageIndex": 1,
+        "NumberOfROIs": 1,
+        "ROIs": [
+          {
+            "Area": 1,
+            "Center": "(1, 1, 1)",
+            "Dev": 1,
+            "IndexInImage": 0,
+            "Length": 1,
+            "Max": 1,
+            "Mean": 1,
+            "Min": 1,
+            "Name": "Left Anterior Descending Artery",
+            "NumberOfPoints": 1,
+            "Point_mm": [
+              "(1, 1, 1)"
+            ],
+            "Point_px": [
+              "(1.00, 1.00)"
+            ],
+            "Total": 1,
+            "Type": 1
+          }
+        ]
+      }
+    ]
+  }
+}
+        """,
+    )
+
+    clean_raw_segmentation_json(cwd_path, test_data_path)
+
+    json_path = cwd_path / "data" / "interim" / "clean_segmentation.json"
+
+    get_binary_segmentation_json(cwd_path, json_path)
+
+    binary_json_path = cwd_path / "data" / "interim" / "binary_segmentation.json"
+
+    with binary_json_path.open(mode="r") as file:
+        binary_segmentation_dict = json.load(file)
+
+    assert binary_segmentation_dict == {"000": [{"idx": 1, "pos": [[1, 1]]}]}
+
+    test_data_path = cwd_path / "data" / "interim" / "fail_raw_segmentation.json"
+
+    fs.create_file(
+        test_data_path,
+        contents=r"""
+        {
+  "000": {
+    "Images": [
+      {
+        "ImageIndex": 1,
+        "NumberOfROIs": 1,
+        "ROIs": [
+          {
+            "Area": 1,
+            "Center": "(1, 1, 1)",
+            "Dev": 1,
+            "IndexInImage": 0,
+            "Length": 1,
+            "Max": 1,
+            "Mean": 1,
+            "Min": 1,
+            "Name": "1",
+            "NumberOfPoints": 1,
+            "Point_mm": [
+              "(1, 1, 1)"
+            ],
+            "Point_px": [
+              "(1.00, 1.00)"
+            ],
+            "Total": 1,
+            "Type": 1
+          }
+        ]
+      }
+    ]
+  }
+}
+        """,
+    )
+
+    clean_raw_segmentation_json(cwd_path, test_data_path)
+
+    json_path = cwd_path / "data" / "interim" / "clean_segmentation.json"
+
+    get_binary_segmentation_json(cwd_path, json_path)
+
+    binary_json_path = cwd_path / "data" / "interim" / "binary_segmentation.json"
+
+    with binary_json_path.open(mode="r") as file:
+        binary_segmentation_dict = json.load(file)
+
+    assert binary_segmentation_dict == {"000": []}
