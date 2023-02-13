@@ -109,7 +109,9 @@ def split_clean_segmentation_to_binary(clean_segmentation_dict: dict) -> dict:
         binary_segmentation_dict: dictionary containing the binary
     """
     binary_segmentation_dict = {}
-    for patient_number, image_list in clean_segmentation_dict.items():
+    for patient_number, image_list in tqdm(
+        clean_segmentation_dict.items(), desc="Extracting Binary Segmentation Data"
+    ):
         out_image_list = []
         for image in image_list:
             image_index = image["idx"]
@@ -136,7 +138,9 @@ def split_clean_segmentation_to_multiclass(clean_segmentation_dict: dict) -> dic
     Returns:
 
     """
-    for _, image_list in clean_segmentation_dict.items():
+    for _, image_list in tqdm(
+        clean_segmentation_dict.items(), desc="Extracting Multiclass Segmentation Data"
+    ):
         for image in image_list:
             roi_list = image["roi"]
             for roi in roi_list:
