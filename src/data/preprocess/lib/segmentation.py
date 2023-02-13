@@ -8,7 +8,7 @@ from tqdm import tqdm
 sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    artery_loc_to_abbr, string_to_int_tuple)
+    artery_loc_to_abbr, convert_abr_to_num, string_to_int_tuple)
 
 
 def convert_plist_to_dict(plist_path: pathlib.Path) -> dict:
@@ -80,7 +80,7 @@ def clean_raw_segmentation_dict(raw_segmentation_dict: dict) -> dict:
                 # Remove duplicate coords
                 int_pixel_coord_list = list(set(int_pixel_coord_list))
                 cleaned_roi = {
-                    "name": artery_abbreviation,
+                    "loc": artery_abbreviation,
                     "pos": int_pixel_coord_list,
                 }
                 cleaned_roi_list.append(cleaned_roi)
@@ -120,3 +120,25 @@ def split_clean_segmentation_to_binary(clean_segmentation_dict: dict) -> dict:
             out_image_list.append({"idx": image_index, "pos": pos_list})
         binary_segmentation_dict[patient_number] = out_image_list
     return binary_segmentation_dict
+
+
+def split_clean_segmentation_to_multiclass(clean_segmentation_dict: dict) -> dict:
+    """
+    A function to get the multiclas segmentation representation.
+    There isn't much difference between the cleaned segmentation data,
+    the only difference is in the location (i.e LAD, RCA, etc) that is
+    encoded to number, to help the making of a 3D Sparse Matrix. This
+    data will be used for the multiclass head of the model
+
+    Args:
+        clean_segmentation_dict:
+
+    Returns:
+
+    """
+    for _, image_list in clean_segmentation_dict.items():
+        for image in image_list:
+            roi_list = image["roi"]
+            for roi in roi_list:
+                roi["loc"] = convert_abr_to_num(roi["loc"])
+    return clean_segmentation_dict

@@ -73,3 +73,25 @@ def find_duplicates(lists_of_lists: list) -> list:
         else:
             seen.add(lst)
     return duplicates
+
+
+def convert_abr_to_num(input_string: str) -> int:
+    """
+    This function convert artery location abbreviation
+    to its number encoding
+
+
+    Args:
+        input_string: artery location abbreviation
+
+    Returns:
+
+    """
+    conversion_dict = {
+        "LAD": 1,
+        "RCA": 2,
+        "LCX": 3,
+        "LCA": 4,
+    }
+
+    return conversion_dict.get(input_string, 0)

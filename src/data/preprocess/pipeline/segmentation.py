@@ -9,7 +9,7 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.data.preprocess.lib.segmentation import (  # pylint: disable=import-error,wrong-import-position
     clean_raw_segmentation_dict, convert_plist_to_dict,
-    split_clean_segmentation_to_binary)
+    split_clean_segmentation_to_binary, split_clean_segmentation_to_multiclass)
 from src.data.preprocess.lib.utils import \
     find_duplicates  # pylint: disable=import-error,wrong-import-position
 
@@ -107,6 +107,31 @@ def get_binary_segmentation_json(
         json_file.write(json.dumps(binary_segmentation_dict, separators=(",", ":")))
 
 
+def get_multiclass_segmentation_json(
+    project_root_path: pathlib.Path, cleaned_json_path: pathlib.Path
+):
+    """
+    This is a pipeline function for extracting multiclass segmentation
+    out of the cleaned data
+
+    Args:
+        project_root_path:
+        cleaned_json_path:
+    """
+    with cleaned_json_path.open(mode="r") as json_file:
+        clean_json_dict = json.load(json_file)
+    multiclass_segmentation_dict = split_clean_segmentation_to_multiclass(
+        clean_json_dict
+    )
+
+    multiclass_segmentation_json_path = (
+        project_root_path / "data" / "interim" / "multiclass_segmentation.json"
+    )
+
+    with multiclass_segmentation_json_path.open(mode="w") as json_file:
+        json_file.write(json.dumps(multiclass_segmentation_dict, separators=(",", ":")))
+
+
 def preprocess_segmentation_pipeline():
     """A function to run all preprocessing pipeline"""
     project_root_path = pathlib.Path.cwd()
@@ -127,6 +152,7 @@ def preprocess_segmentation_pipeline():
     create_raw_segmentation_json(project_root_path)
     clean_raw_segmentation_json(project_root_path, raw_json_file_path)
     get_binary_segmentation_json(project_root_path, clean_json_file_path)
+    get_multiclass_segmentation_json(project_root_path, clean_json_file_path)
 
     # DEBUG
     # Check duplicate in binary segmentation
