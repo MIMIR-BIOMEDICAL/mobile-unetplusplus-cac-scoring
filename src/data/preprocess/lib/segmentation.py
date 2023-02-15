@@ -108,7 +108,7 @@ def clean_raw_segmentation_dict(raw_segmentation_dict: dict) -> dict:
                 continue
 
             patient_img_list.append(
-                {"idx": image_dict["ImageIndex"], "roi": cleaned_roi_list}
+                {"idx": str(image_dict["ImageIndex"]).zfill(3), "roi": cleaned_roi_list}
             )
 
         clean_output_dict[patient_number] = patient_img_list

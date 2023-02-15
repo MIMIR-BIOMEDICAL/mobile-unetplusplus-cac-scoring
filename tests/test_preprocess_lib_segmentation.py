@@ -110,7 +110,7 @@ def test_clean_raw_segmentation_dict():
     cleaned_no_roi_dict = clean_raw_segmentation_dict(no_roi_test_dict)
 
     assert cleaned_dict == {
-        "000": [{"idx": 1, "roi": [{"loc": "LAD", "pos": [(1, 1)]}]}]
+        "000": [{"idx": "001", "roi": [{"loc": "LAD", "pos": [(1, 1)]}]}]
     }
 
     assert cleaned_no_roi_dict == {"000": []}
@@ -121,19 +121,22 @@ def test_split_clean_segmentation_to_binary():
     cleaned_dict = {
         "000": [
             {
-                "idx": 1,
+                "idx": "001",
                 "roi": [
                     {"loc": "LAD", "pos": [(1, 1)]},
                     {"loc": "LAD", "pos": [(3, 2)]},
                 ],
             },
-            {"idx": 2, "roi": [{"loc": "LAD", "pos": [(2, 2)]}]},
+            {"idx": "002", "roi": [{"loc": "LAD", "pos": [(2, 2)]}]},
         ]
     }
     binary_segmentation_dict = split_clean_segmentation_to_binary(cleaned_dict)
 
     assert binary_segmentation_dict == {
-        "000": [{"idx": 1, "pos": [(1, 1), (3, 2)]}, {"idx": 2, "pos": [(2, 2)]}]
+        "000": [
+            {"idx": "001", "pos": [(1, 1), (3, 2)]},
+            {"idx": "002", "pos": [(2, 2)]},
+        ]
     }
 
 
@@ -142,13 +145,13 @@ def test_split_clean_segmentation_to_multiclass():
     cleaned_dict = {
         "000": [
             {
-                "idx": 1,
+                "idx": "001",
                 "roi": [
                     {"loc": "LAD", "pos": [(1, 1)]},
                     {"loc": "LAD", "pos": [(3, 2)]},
                 ],
             },
-            {"idx": 2, "roi": [{"loc": "LAD", "pos": [(2, 2)]}]},
+            {"idx": "002", "roi": [{"loc": "LAD", "pos": [(2, 2)]}]},
         ]
     }
     multiclass_segmentation_dict = split_clean_segmentation_to_multiclass(cleaned_dict)
@@ -156,12 +159,12 @@ def test_split_clean_segmentation_to_multiclass():
     assert multiclass_segmentation_dict == {
         "000": [
             {
-                "idx": 1,
+                "idx": "001",
                 "roi": [
                     {"loc": 1, "pos": [(1, 1)]},
                     {"loc": 1, "pos": [(3, 2)]},
                 ],
             },
-            {"idx": 2, "roi": [{"loc": 1, "pos": [(2, 2)]}]},
+            {"idx": "002", "roi": [{"loc": 1, "pos": [(2, 2)]}]},
         ]
     }
