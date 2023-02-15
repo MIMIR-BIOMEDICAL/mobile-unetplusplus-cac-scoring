@@ -159,6 +159,7 @@ def preprocess_segmentation_pipeline():
     with binary_segmentation_path.open(mode="r") as json_file:
         binary_segmentation_dict = json.load(json_file)
 
+    blacklist_set = set()
     for patient_num, image_list in binary_segmentation_dict.items():
         for obj in image_list:
             duplicates = find_duplicates(obj["pos"])
@@ -166,6 +167,7 @@ def preprocess_segmentation_pipeline():
                 print(
                     f"Pixel overlap found on patient {patient_num} image {obj['idx']} on {duplicates}"
                 )
+                blacklist_set.add(patient_num)
 
 
 if __name__ == "__main__":
