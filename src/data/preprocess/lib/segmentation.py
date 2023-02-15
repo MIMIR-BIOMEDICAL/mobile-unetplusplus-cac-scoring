@@ -54,6 +54,25 @@ def clean_raw_segmentation_dict(raw_segmentation_dict: dict) -> dict:
     for patient_number, patient_image_dict in tqdm(
         raw_segmentation_dict.items(), desc="Cleaning Raw Segmentation JSON"
     ):
+        # Blacklist patient number
+        if patient_number in [
+            "132",
+            "428",
+            "004",
+            "037",
+            "116",
+            "144",
+            "300",
+            "161",
+            "283",
+            "303",
+            "154",
+            "305",
+            "289",
+            "387",
+            "013",
+        ]:
+            continue
         images_list = patient_image_dict["Images"]
         # Check if no image
         if len(images_list) == 0:
@@ -91,6 +110,7 @@ def clean_raw_segmentation_dict(raw_segmentation_dict: dict) -> dict:
             patient_img_list.append(
                 {"idx": image_dict["ImageIndex"], "roi": cleaned_roi_list}
             )
+
         clean_output_dict[patient_number] = patient_img_list
     return clean_output_dict
 
