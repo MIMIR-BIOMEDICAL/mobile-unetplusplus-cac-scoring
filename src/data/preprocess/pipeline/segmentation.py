@@ -24,7 +24,10 @@ def create_raw_segmentation_json(project_root_path: pathlib.Path):
     """
 
     # Find xml all plist file inside data
-    xml_file_list = project_root_path.rglob("*.xml")
+    raw_xml_file_list = project_root_path.rglob("*.xml")
+    xml_file_list = filter(
+        lambda file: "-checkpoint" not in str(file), raw_xml_file_list
+    )
 
     # Variable used for output
     out_dict = {}
