@@ -206,6 +206,17 @@ def blacklist_multiple_image_id():
     ]
 
 
+def blacklist_invalid_dicom():
+    """
+    A function that return the list of patients
+    with invalid dicom data
+
+    Returns:
+
+    """
+    return ["159"]
+
+
 def patient_number_zfill_range(min_val: int, max_val: int) -> list:
     """
     A function that make a list within the range of

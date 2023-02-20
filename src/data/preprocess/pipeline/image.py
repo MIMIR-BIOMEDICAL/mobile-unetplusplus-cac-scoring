@@ -16,7 +16,7 @@ from src.data.preprocess.lib.utils import \
 
 
 def extract_patient_dicom_data_to_h5(
-    project_root_path: pathlib.Path, batch_step: int
+    project_root_path: pathlib.Path, batch_step: int, sample: bool
 ):  # pylint: disable=too-many-locals
     """
     Pipeline function that extract dicom data (patient number,index, image, HU),
@@ -67,6 +67,15 @@ def extract_patient_dicom_data_to_h5(
                     continue
 
                 patient_num_group = file.create_group(f"{patient_num}")
+                patient_root_image_group = patient_num_group.create_group("img")
+
+                sample_data = pdc.dcmread(patient_img_list[0]["path"])
+                patient_num_group.create_dataset(
+                    "pxl_spc", data=sample_data.PixelSpacing
+                )
+                patient_num_group.create_dataset(
+                    "slc_thc", data=sample_data.SliceThickness
+                )
                 for patient_img in tqdm(
                     patient_img_list, desc="Processing Image", unit="img", leave=False
                 ):
@@ -76,13 +85,13 @@ def extract_patient_dicom_data_to_h5(
                         img_array, img_dcm
                     )
 
-                    patient_image_group = patient_num_group.create_group(
+                    patient_image_group = patient_root_image_group.create_group(
                         f"{patient_img['idx']}"
                     )
 
                     # Image dataset
                     patient_image_group.create_dataset(
-                        "img",
+                        "img_arr",
                         data=img_array,
                         compression="gzip",
                         compression_opts=9,
@@ -96,11 +105,14 @@ def extract_patient_dicom_data_to_h5(
                         compression_opts=9,
                         chunks=True,
                     )
+        if sample:
+            break
 
 
 @click.command()
 @click.option("-b", "--batch", type=click.INT, help="Patient Batch Size", default=10)
-def preprocess_image_pipeline(batch):
+@click.option("-s", "--sample", type=click.BOOL, help="Sample Mode", default=False)
+def preprocess_image_pipeline(batch, sample):
     """
     Cli interface for image pipeline
 
@@ -108,7 +120,7 @@ def preprocess_image_pipeline(batch):
         batch ():
     """
     project_root_path = pathlib.Path.cwd()
-    extract_patient_dicom_data_to_h5(project_root_path, batch_step=batch)
+    extract_patient_dicom_data_to_h5(project_root_path, batch_step=batch, sample=sample)
 
 
 if __name__ == "__main__":
