@@ -7,8 +7,8 @@ from tqdm import tqdm
 sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    blacklist_mislabelled_roi, blacklist_multiple_image_id,
-    blacklist_pixel_overlap)
+    blacklist_invalid_dicom, blacklist_mislabelled_roi,
+    blacklist_multiple_image_id, blacklist_pixel_overlap)
 
 
 def extract_patient_dicom_path(gated_path: pathlib.Path):
@@ -34,10 +34,12 @@ def extract_patient_dicom_path(gated_path: pathlib.Path):
         # - image with overlapping roi
         # - image with mislabelled roi
         # - image with multiple dataset
+        # - invalid dicom
         if (
             patient_number in blacklist_pixel_overlap()
             or patient_number in blacklist_mislabelled_roi()
             or patient_number in blacklist_multiple_image_id()
+            or patient_number in blacklist_invalid_dicom()
         ):
             continue
 
