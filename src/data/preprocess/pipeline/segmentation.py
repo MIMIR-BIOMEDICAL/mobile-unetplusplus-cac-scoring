@@ -10,8 +10,6 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.data.preprocess.lib.segmentation import (  # pylint: disable=import-error,wrong-import-position
     clean_raw_segmentation_dict, convert_plist_to_dict,
     split_clean_segmentation_to_binary, split_clean_segmentation_to_multiclass)
-from src.data.preprocess.lib.utils import \
-    find_duplicates  # pylint: disable=import-error,wrong-import-position
 
 
 def create_raw_segmentation_json(project_root_path: pathlib.Path):
@@ -146,10 +144,6 @@ def preprocess_segmentation_pipeline():
         project_root_path / "data" / "interim" / "clean_segmentation.json"
     )
 
-    binary_segmentation_path = (
-        project_root_path / "data" / "interim" / "binary_segmentation.json"
-    )
-
     # Preprocess Segmentation
     # Convert all plist segmentation file into a json file
     create_raw_segmentation_json(project_root_path)
@@ -157,20 +151,24 @@ def preprocess_segmentation_pipeline():
     get_binary_segmentation_json(project_root_path, clean_json_file_path)
     get_multiclass_segmentation_json(project_root_path, clean_json_file_path)
 
-    # DEBUG
-    # Check duplicate in binary segmentation
-    with binary_segmentation_path.open(mode="r") as json_file:
-        binary_segmentation_dict = json.load(json_file)
-
-    blacklist_set = set()
-    for patient_num, image_list in binary_segmentation_dict.items():
-        for obj in image_list:
-            duplicates = find_duplicates(obj["pos"])
-            if len(duplicates) != 0:
-                print(
-                    f"Pixel overlap found on patient {patient_num} image {obj['idx']} on {duplicates}"
-                )
-                blacklist_set.add(patient_num)
+    # # DEBUG
+    # from src.data.preprocess.lib.utils import \
+    #     find_duplicates  # pylint: disable=import-error,wrong-import-position
+    # binary_segmentation_path = (
+    #     project_root_path / "data" / "interim" / "binary_segmentation.json"
+    # )
+    #
+    # # Check duplicate in binary segmentation
+    # with binary_segmentation_path.open(mode="r") as json_file:
+    #     binary_segmentation_dict = json.load(json_file)
+    #
+    # for patient_num, image_list in binary_segmentation_dict.items():
+    #     for obj in image_list:
+    #         duplicates = find_duplicates(obj["pos"])
+    #         if len(duplicates) != 0:
+    #             print(
+    #                 f"Pixel overlap found on patient {patient_num} image {obj['idx']} on {duplicates}"
+    #             )
 
 
 if __name__ == "__main__":
