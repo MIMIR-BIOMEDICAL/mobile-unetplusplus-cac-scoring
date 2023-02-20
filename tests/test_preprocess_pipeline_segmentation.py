@@ -109,7 +109,7 @@ def test_clean_raw_segmentation_json(fs):  # pylint: disable=invalid-name
         cleaned_dict_output = json.load(json_file)
 
     assert cleaned_dict_output == {
-        "000": [{"idx": 1, "roi": [{"loc": "LAD", "pos": [[1, 1]]}]}]
+        "000": [{"idx": "001", "roi": [{"loc": "LAD", "pos": [[1, 1]]}]}]
     }
 
     test_data_path = cwd_path / "data" / "interim" / "fail_raw_segmentation.json"
@@ -216,7 +216,7 @@ def test_binary_segmentation_json(fs):  # pylint: disable=invalid-name
     with binary_json_path.open(mode="r") as file:
         binary_segmentation_dict = json.load(file)
 
-    assert binary_segmentation_dict == {"000": [{"idx": 1, "pos": [[1, 1]]}]}
+    assert binary_segmentation_dict == {"000": [{"idx": "001", "pos": [[1, 1]]}]}
 
     test_data_path = cwd_path / "data" / "interim" / "fail_raw_segmentation.json"
 

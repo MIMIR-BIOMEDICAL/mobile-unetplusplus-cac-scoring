@@ -14,6 +14,7 @@ streamlit = "^1.15.2"
 python-dotenv = "^0.21.0"
 tqdm = "^4.64.1"
 click = "^8.1.3"
+h5py = "^3.8.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -25,6 +26,7 @@ autohooks-plugin-pylint = "^22.8.1"
 autohooks-plugin-pytest = "^23.1.0"
 autohooks-plugin-isort = "^22.8.0"
 pyfakefs = "^5.1.0"
+matplotlib = "^3.7.0"
 
 
 [tool.autohooks]

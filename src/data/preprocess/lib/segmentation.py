@@ -8,7 +8,9 @@ from tqdm import tqdm
 sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    artery_loc_to_abbr, convert_abr_to_num, string_to_int_tuple)
+    artery_loc_to_abbr, blacklist_mislabelled_roi,
+    blacklist_multiple_image_id_with_roi, blacklist_pixel_overlap,
+    convert_abr_to_num, string_to_int_tuple)
 
 
 def convert_plist_to_dict(plist_path: pathlib.Path) -> dict:
@@ -54,31 +56,26 @@ def clean_raw_segmentation_dict(raw_segmentation_dict: dict) -> dict:
     for patient_number, patient_image_dict in tqdm(
         raw_segmentation_dict.items(), desc="Cleaning Raw Segmentation JSON"
     ):
-        # Blacklist patient number
-        if patient_number in [
-            "132",
-            "428",
-            "004",
-            "037",
-            "116",
-            "144",
-            "300",
-            "161",
-            "283",
-            "303",
-            "154",
-            "305",
-            "289",
-            "387",
-            "013",
-        ]:
+        # Blacklist patient due to:
+        # - roi pixel overlapping
+        # - mislabelled roi
+        # - patient with multiple image id and roi
+        if (
+            patient_number in blacklist_pixel_overlap()
+            or patient_number in blacklist_mislabelled_roi()
+            or patient_number in blacklist_multiple_image_id_with_roi()
+        ):
             continue
+
         images_list = patient_image_dict["Images"]
+
         # Check if no image
         if len(images_list) == 0:
             clean_output_dict[patient_number] = {}
             continue
+
         patient_img_list = []
+
         for image_dict in images_list:
             cleaned_roi_list = []
             for roi in image_dict["ROIs"]:
@@ -108,10 +105,11 @@ def clean_raw_segmentation_dict(raw_segmentation_dict: dict) -> dict:
                 continue
 
             patient_img_list.append(
-                {"idx": image_dict["ImageIndex"], "roi": cleaned_roi_list}
+                {"idx": str(image_dict["ImageIndex"]).zfill(3), "roi": cleaned_roi_list}
             )
 
         clean_output_dict[patient_number] = patient_img_list
+
     return clean_output_dict
 
 
