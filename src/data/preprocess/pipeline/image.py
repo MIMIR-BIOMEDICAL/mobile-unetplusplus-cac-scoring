@@ -120,7 +120,6 @@ def preprocess_image_pipeline(batch, sample):
         batch ():
     """
     project_root_path = pathlib.Path.cwd()
-    click.echo(sample)
     extract_patient_dicom_data_to_h5(project_root_path, batch_step=batch, sample=sample)
 
 
