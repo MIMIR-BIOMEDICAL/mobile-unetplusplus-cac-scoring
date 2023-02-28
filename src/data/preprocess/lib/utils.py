@@ -217,6 +217,17 @@ def blacklist_invalid_dicom():
     return ["159"]
 
 
+def blacklist_no_image():
+    """
+    A function that return the list of patients
+    that have missing image entirely
+
+    Returns:
+
+    """
+    return ["012", "197", "598"]
+
+
 def patient_number_zfill_range(min_val: int, max_val: int) -> list:
     """
     A function that make a list within the range of
