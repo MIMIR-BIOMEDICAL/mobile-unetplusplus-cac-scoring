@@ -1,4 +1,5 @@
 """Module containing utility function for preprocessing"""
+import numpy as np
 
 
 def string_to_int_tuple(string_input: str) -> list:
@@ -278,3 +279,35 @@ def filtered_patient_number_zfill_range(min_val: int, max_val: int):
     )
 
     return sorted(list(set_patient_number))
+
+
+def train_test_val_split(input_list, split, random_seed=811):
+    """
+    A function that split a list into 3 part base
+    on the train,test, and val split inside the split
+
+    Args:
+        input_list ():
+        split ():
+        random_seed ():
+
+    Returns:
+
+    """
+    data = input_list
+    np.random.seed(random_seed)
+    np.random.shuffle(data)
+
+    num_samples = len(data)
+    num_train = int(num_samples * split[0])
+    num_test = int(num_samples * split[1])
+
+    train_data = data[:num_train]
+    test_data = data[num_train : num_train + num_test]
+    val_data = data[num_train + num_test :]
+
+    return {
+        "train": train_data,
+        "test": test_data,
+        "val": val_data,
+    }
