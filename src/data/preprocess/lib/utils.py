@@ -244,3 +244,37 @@ def patient_number_zfill_range(min_val: int, max_val: int) -> list:
     for i in range(min_val, max_val + 1):
         output.append(str(i).zfill(3))
     return output
+
+
+def filtered_patient_number_zfill_range(min_val: int, max_val: int):
+    """
+    A function that make a list within the range of
+    min_val and max_val with an added filter from blacklist
+
+    Args:
+        min_val:
+        max_val:
+
+    Returns:
+
+    """
+    patient_number_list = patient_number_zfill_range(min_val, max_val)
+
+    set_patient_number = set(tuple(patient_number_list))
+
+    set_pixel_overlap = set(tuple(blacklist_pixel_overlap()))
+    set_mislabelled_roi = set(tuple(blacklist_mislabelled_roi()))
+    set_multiple_image = set(tuple(blacklist_multiple_image_id()))
+    set_invalid_dicom = set(tuple(blacklist_invalid_dicom()))
+    set_no_image = set(tuple(blacklist_no_image()))
+
+    set_patient_number = (
+        set_patient_number
+        - set_pixel_overlap
+        - set_mislabelled_roi
+        - set_multiple_image
+        - set_invalid_dicom
+        - set_no_image
+    )
+
+    return sorted(list(set_patient_number))
