@@ -32,6 +32,9 @@ def extract_patient_dicom_data_to_h5(
     max_patient_num = int(list(sorted_patient_image_dict.keys())[-1])
     total_batch = math.ceil(max_patient_num / batch_step)
 
+    h5_index_file_path = (
+        project_root_path / "data" / "interim" / "image_h5" / "index.h5"
+    )
     for batch_num in tqdm(
         range(total_batch), desc="Processing batch", unit="patient batch"
     ):
@@ -76,6 +79,12 @@ def extract_patient_dicom_data_to_h5(
                 patient_num_group.create_dataset(
                     "slc_thc", data=sample_data.SliceThickness
                 )
+
+                with h5py.File(h5_index_file_path, "a") as index_file:
+                    index_file[f"/{patient_num}"] = h5py.ExternalLink(
+                        h5_file_path, f"/{patient_num}"
+                    )
+
                 for patient_img in tqdm(
                     patient_img_list, desc="Processing Image", unit="img", leave=False
                 ):
