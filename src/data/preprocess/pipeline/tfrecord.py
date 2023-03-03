@@ -107,7 +107,9 @@ def combine_to_tfrecord(
 
 @click.command()
 @click.option("-s", "--sample", type=click.BOOL, help="Sample Mode", default=False)
-@click.option("-t", "--type", type=click.STRING, help="Type of split", default="all")
+@click.option(
+    "-t", "--split_type", type=click.STRING, help="Type of split", default="all"
+)
 @click.option(
     "-d",
     "--distribution",
@@ -127,10 +129,10 @@ def preprocess_tfrecord_pipeline(sample, split_type, distribution):
     """
     if len(distribution) != 3:
         raise ValueError("Distribution can only contain 3 string")
-    if sum(list(distribution)) != 10:
+    if sum((int(n) for n in distribution)) != 10:
         raise ValueError("Total Distribution should be 10")
     project_root_path = pathlib.Path.cwd()
-    random_index_dict = get_patient_split([n / 10 for n in distribution])
+    random_index_dict = get_patient_split((float(n) / 10 for n in distribution))
     h5_image_index_path = list(project_root_path.rglob("index.h5"))[0]
     binary_json_path = list(project_root_path.rglob("binary*.json"))[0]
     multi_json_path = list(project_root_path.rglob("multi*.json"))[0]
