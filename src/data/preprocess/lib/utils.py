@@ -311,3 +311,43 @@ def train_test_val_split(input_list, split, random_seed=811):
         "test": test_data,
         "val": val_data,
     }
+
+
+def get_pos_from_bin_list(bin_list, idx):
+    """
+    A function that get the segmentation pos
+    from a list of binary roi
+
+    Args:
+        bin_list ():
+        idx ():
+
+    Returns:
+
+    """
+    filtered_list = filter(lambda x: x["idx"] == idx, bin_list)
+    pos = list(filtered_list)[0]["pos"]
+    return pos
+
+
+def get_pos_from_mult_list(mult_list, idx):
+    """
+    A function that get the segmentation pos
+    from a list of multiclass roi
+
+    Args:
+        mult_list ():
+        idx ():
+
+    Returns:
+
+    """
+    filtered_list = filter(lambda x: x["idx"] == idx, mult_list)
+    rois = list(filtered_list)[0]["roi"]
+
+    out_list = []
+    for roi in rois:
+        loc = roi["loc"]
+        for pos in roi["pos"]:
+            out_list.append([pos[0], pos[1], loc])
+    return out_list
