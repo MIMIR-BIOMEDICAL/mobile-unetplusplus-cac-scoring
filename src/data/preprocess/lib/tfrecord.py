@@ -85,7 +85,7 @@ def parsed_example_fn(example):
         "idx": tf.io.FixedLenFeature([], tf.string),
         "img": tf.io.FixedLenFeature([], tf.string),
         "bin_seg": tf.io.VarLenFeature(tf.int64),
-        "multi_seg": tf.io.VarLenFeature(tf.int64),
+        "mult_seg": tf.io.VarLenFeature(tf.int64),
     }
     parsed_example = tf.io.parse_example(example, feature_description)
     parsed_example["img"] = tf.io.parse_tensor(parsed_example["img"], tf.uint16)
@@ -93,7 +93,7 @@ def parsed_example_fn(example):
     dense_bin_seg = tf.sparse.to_dense(parsed_example["bin_seg"])
     parsed_example["bin_seg"] = tf.reshape(dense_bin_seg, [len(dense_bin_seg) // 2, 2])
 
-    dense_multi_seg = tf.sparse.to_dense(parsed_example["multi_seg"])
+    dense_multi_seg = tf.sparse.to_dense(parsed_example["mult_seg"])
     parsed_example["mult_seg"] = tf.reshape(
         dense_multi_seg, [len(dense_multi_seg) // 3, 3]
     )
