@@ -351,3 +351,33 @@ def get_pos_from_mult_list(mult_list, idx):
         for pos in roi["pos"]:
             out_list.append([pos[0], pos[1], loc])
     return out_list
+
+
+def get_patient_split(split_arr: list, random_seed=811):
+    """
+    A function that create the randomize patient base on
+    train,test, val split and also a random_seed
+
+    Args:
+        random_seed ():
+        split_arr:
+
+    Returns:
+
+    """
+    if len(split_arr) != 3:
+        raise Exception("Split array should have only 3 member")
+
+    if sum(split_arr) > 1:
+        raise Exception("Split array should have the sum equaling to 1")
+
+    calc_patient_arr = filtered_patient_number_zfill_range(0, 450)
+    no_calc_patient_arr = filtered_patient_number_zfill_range(451, 789)
+
+    calc_split = train_test_val_split(calc_patient_arr, split_arr, random_seed)
+    no_calc_split = train_test_val_split(no_calc_patient_arr, split_arr, random_seed)
+
+    for split_type in ["train", "val", "test"]:
+        calc_split[split_type].extend(no_calc_split[split_type])
+
+    return calc_split

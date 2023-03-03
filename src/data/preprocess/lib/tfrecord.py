@@ -1,15 +1,6 @@
 "Module containing function that help the creation of TFRecord"
-import pathlib
-import sys
 
-# import h5py
-# import numpy as np
 import tensorflow as tf
-
-sys.path.append(pathlib.Path.cwd().as_posix())
-
-from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    filtered_patient_number_zfill_range, train_test_val_split)
 
 
 def str_feature(str_input: str):
@@ -107,33 +98,3 @@ def parsed_example_fn(example):
         dense_multi_seg, [len(dense_multi_seg) // 3, 3]
     )
     return parsed_example
-
-
-def get_patient_split(split_arr: list, random_seed=811):
-    """
-    A function that create the randomize patient base on
-    train,test, val split and also a random_seed
-
-    Args:
-        random_seed ():
-        split_arr:
-
-    Returns:
-
-    """
-    if len(split_arr) != 3:
-        raise Exception("Split array should have only 3 member")
-
-    if sum(split_arr) > 1:
-        raise Exception("Split array should have the sum equaling to 1")
-
-    calc_patient_arr = filtered_patient_number_zfill_range(0, 450)
-    no_calc_patient_arr = filtered_patient_number_zfill_range(451, 789)
-
-    calc_split = train_test_val_split(calc_patient_arr, split_arr, random_seed)
-    no_calc_split = train_test_val_split(no_calc_patient_arr, split_arr, random_seed)
-
-    for split_type in ["train", "val", "test"]:
-        calc_split[split_type].extend(no_calc_split[split_type])
-
-    return calc_split
