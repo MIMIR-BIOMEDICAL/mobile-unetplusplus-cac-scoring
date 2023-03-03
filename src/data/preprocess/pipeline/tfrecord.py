@@ -132,7 +132,7 @@ def preprocess_tfrecord_pipeline(sample, split_type, distribution):
     if sum((int(n) for n in distribution)) != 10:
         raise ValueError("Total Distribution should be 10")
     project_root_path = pathlib.Path.cwd()
-    random_index_dict = get_patient_split((float(n) / 10 for n in distribution))
+    random_index_dict = get_patient_split([float(n) / 10 for n in distribution])
     h5_image_index_path = list(project_root_path.rglob("index.h5"))[0]
     binary_json_path = list(project_root_path.rglob("binary*.json"))[0]
     multi_json_path = list(project_root_path.rglob("multi*.json"))[0]
