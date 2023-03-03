@@ -14,7 +14,7 @@ def str_feature(str_input: str):
     Returns:
 
     """
-    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[str_input.encode]))
+    return tf.train.Feature(bytes_list=tf.train.BytesList(value=[str_input.encode()]))
 
 
 def image_feature(img_input):
