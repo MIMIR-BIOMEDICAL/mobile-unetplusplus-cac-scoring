@@ -3,6 +3,7 @@ import json
 import pathlib
 import sys
 
+import click
 import h5py
 import numpy as np
 import tensorflow as tf
@@ -13,7 +14,7 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.data.preprocess.lib.tfrecord import \
     create_example_fn  # pylint: disable=wrong-import-position,import-error
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    get_pos_from_bin_list, get_pos_from_mult_list)
+    get_patient_split, get_pos_from_bin_list, get_pos_from_mult_list)
 
 
 def combine_to_tfrecord(
@@ -102,3 +103,60 @@ def combine_to_tfrecord(
 
                             example = create_example_fn(patient_dict)
                             tf_record_file.write(example.SerializeToString())
+
+
+@click.command()
+@click.option("-s", "--sample", type=click.BOOL, help="Sample Mode", default=False)
+@click.option("-t", "--type", type=click.STRING, help="Type of split", default="all")
+@click.option(
+    "-d",
+    "--distribution",
+    type=click.STRING,
+    help="Distribution of train,test and val",
+    default="721",
+)
+def preprocess_tfrecord_pipeline(sample, split_type, distribution):
+    """
+    A wrapper around the tfrecord creation function
+    to be used with click
+
+    Args:
+        sample ():
+        split_type ():
+        distribution ():
+    """
+    if len(distribution) != 3:
+        raise ValueError("Distribution can only contain 3 string")
+    if sum(list(distribution)) != 10:
+        raise ValueError("Total Distribution should be 10")
+    project_root_path = pathlib.Path.cwd()
+    random_index_dict = get_patient_split([n / 10 for n in distribution])
+    h5_image_index_path = list(project_root_path.rglob("index.h5"))[0]
+    binary_json_path = list(project_root_path.rglob("binary*.json"))[0]
+    multi_json_path = list(project_root_path.rglob("multi*.json"))[0]
+
+    if split_type == "all":
+        for split in ["train", "test", "val"]:
+            combine_to_tfrecord(
+                random_index_dict,
+                project_root_path,
+                h5_image_index_path,
+                binary_json_path,
+                multi_json_path,
+                split,
+                sample,
+            )
+    else:
+        combine_to_tfrecord(
+            random_index_dict,
+            project_root_path,
+            h5_image_index_path,
+            binary_json_path,
+            multi_json_path,
+            split_type,
+            sample,
+        )
+
+
+if __name__ == "__main__":
+    preprocess_tfrecord_pipeline()  # pylint: disable=no-value-for-parameter
