@@ -27,6 +27,9 @@ autohooks-plugin-pytest = "^23.1.0"
 autohooks-plugin-isort = "^22.8.0"
 pyfakefs = "^5.1.0"
 matplotlib = "^3.7.0"
+pydot = "^1.4.2"
+pydotplus = "^2.0.2"
+graphviz = "^0.20.1"
 
 
 [tool.autohooks]
