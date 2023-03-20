@@ -98,6 +98,28 @@ def convert_abr_to_num(input_string: str) -> int:
     return conversion_dict.get(input_string, 0)
 
 
+def convert_num_to_abr(input_num: int) -> str:
+    """
+    This function convert artery location number
+    encoding to its abbreviation
+
+
+    Args:
+        input_num: artery location encoding
+
+    Returns:
+
+    """
+    conversion_dict = {
+        1: "LAD",
+        2: "RCA",
+        3: "LCX",
+        4: "LCA",
+    }
+
+    return conversion_dict.get(input_num, 0)
+
+
 def blacklist_pixel_overlap():
     """
     A function that return the list of patients with
