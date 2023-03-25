@@ -169,11 +169,11 @@ def pointwise_block(node_name, filters, linear: bool, strides=1, kernel=1):
 
     def layer(input_tensor):
         x = layers.Conv2D(
-            filters, kernel, strides=strides, padding="same", name=f"{node_name}_pw"
+            filters, kernel, strides=strides, padding="same", name=f"{node_name}_pwise"
         )(input_tensor)
-        x = layers.BatchNormalization(name=f"{node_name}_pw_bn")(x)
+        x = layers.BatchNormalization(name=f"{node_name}_pwise_bnorm")(x)
         if not linear:
-            x = layers.Activation(tf.nn.relu6, name=f"{node_name}_pw_relu6")(x)
+            x = layers.Activation(tf.nn.relu6, name=f"{node_name}_pwwise_relu6")(x)
         return x
 
     return layer
@@ -193,10 +193,10 @@ def depthwise_block(node_name, strides=1, kernel=3):
 
     def layer(input_tensor):
         x = layers.DepthwiseConv2D(
-            kernel, strides=strides, padding="same", name=f"{node_name}_dw"
+            kernel, strides=strides, padding="same", name=f"{node_name}_dwise"
         )(input_tensor)
-        x = layers.BatchNormalization(name=f"{node_name}_dw_bn")(x)
-        x = layers.Activation(tf.nn.relu6, name=f"{node_name}_dw_relu6")(x)
+        x = layers.BatchNormalization(name=f"{node_name}_dwise_bnorm")(x)
+        x = layers.Activation(tf.nn.relu6, name=f"{node_name}_dwise_relu6")(x)
         return x
 
     return layer
@@ -221,11 +221,11 @@ def inverted_residual_bottleneck_block(
 
     def layer(input_tensor):
         expanded_filter = keras.backend.int_shape(input_tensor)[-1] * t_expansion
-        x = pointwise_block(node_name + "_exp", expanded_filter, linear=False)(
+        x = pointwise_block(node_name + "_expand", expanded_filter, linear=False)(
             input_tensor
         )
         x = depthwise_block(node_name, strides=strides)(x)
-        x = pointwise_block(node_name + "_com", filters, linear=True)(x)
+        x = pointwise_block(node_name + "_compress", filters, linear=True)(x)
         if residual:
             x = layers.Add(name=f"{node_name}_add")([x, input_tensor])
 
@@ -253,7 +253,7 @@ def sequence_inv_res_bot_block(node_name, filters, strides, t_expansion, n):
 
     def layer(input_tensor):
         x = inverted_residual_bottleneck_block(
-            node_name=f"{node_name}_i0",
+            node_name=f"{node_name}_iter0",
             filters=filters,
             strides=strides,
             t_expansion=t_expansion,
@@ -262,7 +262,7 @@ def sequence_inv_res_bot_block(node_name, filters, strides, t_expansion, n):
 
         for index in range(1, n):
             x = inverted_residual_bottleneck_block(
-                node_name=f"{node_name}_i{index}",
+                node_name=f"{node_name}_iter{index}",
                 filters=filters,
                 strides=1,
                 t_expansion=t_expansion,
