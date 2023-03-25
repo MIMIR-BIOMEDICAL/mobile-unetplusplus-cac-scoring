@@ -427,7 +427,8 @@ disable=raw-checker-failed,
         too-many-arguments,
         invalid-name,
         wrong-import-position,
-        import-error
+        import-error,
+        too-many-locals
         
         
 
