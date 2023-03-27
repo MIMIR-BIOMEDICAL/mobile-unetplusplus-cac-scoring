@@ -48,7 +48,7 @@ def extract_patient_dicom_path(gated_path: pathlib.Path):
 
         image_index = path.stem[-3:]
 
-        if patient_image_dict.get(patient_number, None) is None:
+        if patient_image_dict.get(patient_number) is None:
             patient_image_dict[patient_number] = []
 
         patient_image_dict[patient_number].append({"idx": image_index, "path": path})
