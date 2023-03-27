@@ -4,8 +4,10 @@ import json
 import pathlib
 
 from src.data.preprocess.pipeline.segmentation import (
-    clean_raw_segmentation_json, create_raw_segmentation_json,
-    get_binary_segmentation_json)
+    clean_raw_segmentation_json,
+    create_raw_segmentation_json,
+    get_binary_segmentation_json,
+)
 
 
 def test_create_raw_segmentation_json(fs):  # pylint: disable=invalid-name

@@ -7,8 +7,11 @@ from tqdm import tqdm
 sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    blacklist_invalid_dicom, blacklist_mislabelled_roi,
-    blacklist_multiple_image_id, blacklist_pixel_overlap)
+    blacklist_invalid_dicom,
+    blacklist_mislabelled_roi,
+    blacklist_multiple_image_id,
+    blacklist_pixel_overlap,
+)
 
 
 def extract_patient_dicom_path(gated_path: pathlib.Path):
