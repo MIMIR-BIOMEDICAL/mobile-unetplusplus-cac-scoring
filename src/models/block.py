@@ -11,26 +11,26 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 
 
 # original block
-def conv_relu_unit(node_name, n_filter, batch_norm, dropout_rate=1, n_kernel=3):
+def conv_bn_relu_unit(node_name, n_filter, batch_norm, n_kernel=3) -> Callable:
     """
-    Smallest unit  containing convolution with batch norm and dropout
+    A block containing convolution layer with batch normalization and ReLU activation
 
     Args:
-        node_name ():
-        n_filter ():
-        enable_batch_norm ():
-        dropout_rate ():
-        n_kernel ():
+        node_name (str): Name of the node/block
+        n_filter (int): Number of filters in the convolution layer
+        batch_norm (bool): Flag to enable/disable batch normalization
+        n_kernel (int): Size of the convolution kernel
 
     Returns:
-
+        Callable: A callable function that accepts an input tensor and applies the convolution,
+                  batch normalization and activation to it.
     """
 
     def layer(input_tensor):
         x = layers.Conv2D(
             filters=n_filter,
             kernel_size=n_kernel,
-            name=f"x_{node_name}_conv",
+            name=f"{node_name}_conv",
             padding="same",
         )(input_tensor)
 
@@ -38,51 +38,62 @@ def conv_relu_unit(node_name, n_filter, batch_norm, dropout_rate=1, n_kernel=3):
         if batch_norm:
             x = layers.BatchNormalization(name=f"x_{node_name}_bn")(x)
 
-        # ACtivation
+        # Activation
         x = layers.Activation("relu", name=f"x_{node_name}_activation")(x)
 
-        # Dropout
-        if dropout_rate != 1:
-            x = layers.Dropout(dropout_rate, name=f"x_{node_name}_dropout")(x)
         return x
 
     return layer
 
 
-def conv_relu_block(
-    node_name, n_filter, batch_norm, dropout_rate=1, n_kernel=3, mode="upsample"
-):
+def conv_bn_relu_block(
+    node_name,
+    n_filter,
+    batch_norm,
+    n_kernel=3,
+    mode="upsample",
+) -> Callable:
     """
-    The activation block for different type of upsampling
+    Creates a block of convolution, batch normalization, and ReLU activation base on upsample mode.
 
     Args:
-        node_name ():
-        n_filter ():
-        enable_batch_norm ():
-        dropout_rate ():
-        n_kernel ():
-        mode ():
+        node_name (str): Name of the node.
+        n_filter (int): Number of convolutional filters.
+        batch_norm (bool): Whether to use batch normalization.
+        n_kernel (int): Size of the convolution kernel. Default is 3.
+        mode (str): Type of upsampling to use. Can be either "upsample" or "transpose". Default is "upsample".
 
     Returns:
-
+        A Keras layer that applies a block of convolution, batch normalization, and ReLU activation.
     """
+
     if mode == "upsample":
 
         def layer(input_tensor):
-            x = conv_relu_unit(node_name, n_filter, batch_norm, dropout_rate, n_kernel)(
-                input_tensor
-            )
+            x = conv_bn_relu_unit(
+                node_name=node_name,
+                n_filter=n_filter,
+                batch_norm=batch_norm,
+                n_kernel=n_kernel,
+            )(input_tensor)
             return x
 
     elif mode == "transpose":
 
         def layer(input_tensor):
-            x = conv_relu_unit(
-                node_name + "_1", n_filter, batch_norm, dropout_rate, n_kernel
+            x = conv_bn_relu_unit(
+                node_name=f"{node_name}_1",
+                n_filter=n_filter,
+                batch_norm=batch_norm,
+                n_kernel=n_kernel,
             )(input_tensor)
-            x = conv_relu_unit(
-                node_name + "_2", n_filter, batch_norm, dropout_rate, n_kernel
-            )(x)
+            x = conv_bn_relu_unit(
+                node_name=f"{node_name}_2",
+                n_filter=n_filter,
+                batch_norm=batch_norm,
+                n_kernel=n_kernel,
+            )(input_tensor)
+
             return x
 
     else:
@@ -91,22 +102,21 @@ def conv_relu_block(
     return layer
 
 
-def upsample_layer(
-    node_name, n_filter, batch_norm, dropout_rate=1, n_kernel=2, mode="upsample"
-):
+def upsample_block(
+    node_name, n_filter, batch_norm, n_kernel=2, mode="upsample"
+) -> Callable:
     """
-    Upsample block containing different type of upsampling method
+    Upsample block containing different types of upsampling methods.
 
     Args:
-        node_name ():
-        n_filter ():
-        enable_batch_norm ():
-        dropout_rate ():
-        n_kernel ():
-        mode ():
+        node_name (str): Name of the layer
+        n_filter (int): Number of filters in the convolution layer
+        batch_norm (bool): Whether to use batch normalization or not
+        n_kernel (int): Kernel size of the convolution layer
+        mode (str): Upsampling mode. Can be either "upsample" or "transpose".
 
     Returns:
-
+        A Keras layer that performs upsampling.
     """
     if mode == "upsample":
 
@@ -131,14 +141,9 @@ def upsample_layer(
             if batch_norm:
                 x = layers.BatchNormalization(name=f"x_{node_name}_transpose_bn")(x)
 
-            # ACtivation
+            # Activation
             x = layers.Activation("relu", name=f"x_{node_name}_transpose_activation")(x)
 
-            # Dropout
-            if dropout_rate != 1:
-                x = layers.Dropout(
-                    dropout_rate, name=f"x_{node_name}_transpose_dropout"
-                )(x)
             return x
 
     else:
@@ -150,6 +155,8 @@ def upsample_layer(
 ###
 # MOBILENETV2 Blocks
 ###
+
+
 def pointwise_block(
     node_name: str,
     n_filter: int,
