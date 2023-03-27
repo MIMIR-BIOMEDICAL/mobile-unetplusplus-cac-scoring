@@ -26,13 +26,15 @@ def base_unet_pp(config: dict):
 
     """
 
+    # base filter_list = [32, 64, 128, 256, 512]
+    filter_list = config["filter_list"]
+    upsample_mode = config["upsample_mode"]
+    n_class = config["n_class"]
     depth = config["depth"]
     upsample_mode = config["upsample_mode"]
     deep_supervision = config["deep_supervision"]
-    n_class = config["n_class"]
 
     model_dict = {}
-    filter_list = [32, 64, 128, 256, 512]
 
     # Input layer for the first node
     model_dict["input"] = keras.Input(shape=config["input_dim"], name="x_00_input")
@@ -85,20 +87,30 @@ def base_unet_pp(config: dict):
             )(layer)
 
     output_lists = []
-    for node_num in range(1, depth):
-        model_dict[f"output_{node_num}"] = layers.Conv2D(
-            filters=n_class,
-            kernel_size=1,
-            name=f"x_output_{node_num}",
-            padding="same",
-            activation="relu",
-        )(model_dict[f"0{node_num}"])
-        output_lists.append(model_dict[f"output_{node_num}"])
+    activation_dict = {"bin": "sigmoid", "mult": "softmax"}
+    for out_name, nc in n_class.items():
+        for node_num in range(1, depth):
+            model_dict[f"output_{node_num}_{out_name}_c{nc}"] = layers.Conv2D(
+                filters=nc,
+                kernel_size=1,
+                name=f"output_{node_num}_{out_name}_c{nc}",
+                padding="same",
+                activation=activation_dict.get(out_name, "relu"),
+            )(model_dict[f"0{node_num}"])
+            output_lists.append(model_dict[f"output_{node_num}_{out_name}_c{nc}"])
 
     if deep_supervision:
         return keras.Model(inputs=model_dict["input"], outputs=output_lists)
 
-    return keras.Model(inputs=model_dict["input"], outputs=output_lists[-1])
+    n_head = len(list(n_class.keys()))
+    output_4_index = [i - 1 for i in range(0, (depth - 1) * n_head + 1, depth - 1)]
+
+    return keras.Model(
+        inputs=model_dict["input"],
+        outputs=output_lists[-1]
+        if n_head == 1
+        else [output_lists[index] for index in output_4_index[1:]],
+    )
 
 
 def mobile_unetpp(config: dict):
@@ -171,6 +183,7 @@ def mobile_unetpp(config: dict):
             )(layer)
 
     output_lists = []
+    activation_dict = {"bin": "sigmoid", "mult": "softmax"}
     for out_name, nc in n_class.items():
         for node_num in range(1, depth):
             model_dict[f"output_{node_num}_{out_name}_c{nc}"] = layers.Conv2D(
@@ -178,7 +191,7 @@ def mobile_unetpp(config: dict):
                 kernel_size=1,
                 name=f"output_{node_num}_{out_name}_c{nc}",
                 padding="same",
-                activation="relu",
+                activation=activation_dict.get(out_name, "relu"),
             )(model_dict[f"0{node_num}"])
             output_lists.append(model_dict[f"output_{node_num}_{out_name}_c{nc}"])
 
