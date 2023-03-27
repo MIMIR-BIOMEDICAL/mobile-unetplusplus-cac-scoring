@@ -75,13 +75,9 @@ def combine_to_tfrecord(
                             segment_flag = False
 
                         for img_index in patient_index_img_list:
-                            patient_dict = {}
-
-                            patient_dict["patient_num"] = patient_index
-                            patient_dict["idx"] = img_index
-                            patient_dict["img"] = indexer[patient_index]["img"][
+                            patient_dict = {"patient_num": patient_index, "idx": img_index, "img": indexer[patient_index]["img"][
                                 img_index
-                            ]["img_arr"][:]
+                            ]["img_arr"][:]}
 
                             if (
                                 segment_flag
