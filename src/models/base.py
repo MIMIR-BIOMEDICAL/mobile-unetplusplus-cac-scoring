@@ -10,161 +10,104 @@ from tensorflow.keras import \
 sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.models.block import (  # pylint: disable=wrong-import-position,import-error
-    conv_relu_block, sequence_inv_res_bot_block, upsample_layer)
+    conv_bn_relu_block, sequence_inv_res_bot_block, upsample_block)
+from src.models.config import UNetPPConfig
 from src.models.utils import \
     node_name_func  # pylint: disable=wrong-import-position,import-error
 
 
-def base_unet_pp(config: dict):
+def base_unet_pp(config: UNetPPConfig):
     """
-    Create a basic UNet++ model
+    Build a UNet++ model based on the given configuration.
+
+    Loop base on network connectivity function (1) in UNet++ Paper
+    i = indexes the down-sampling layer along the encoder
+    j = indexes the layer in skip connection
+    H = Convolution operation followed by an activation function
+    D = Downsample
+    U = Upsample
+    [] = Concatenation layer
+
+    j=0
+    x(i,j)=H(D(x(i-1,j)))
+
+    j>0
+    x(i,j)=H([[x(i,k)](k=0 -> j-1),U(x(i+1,j-1))])
 
     Args:
-        config:
+        config (UNetPPConfig): Configuration object for the UNet++ model.
 
     Returns:
+        keras.Model: A compiled UNet++ model.
 
     """
-
-    # base filter_list = [32, 64, 128, 256, 512]
-    filter_list = config["filter_list"]
-    upsample_mode = config["upsample_mode"]
-    n_class = config["n_class"]
-    depth = config["depth"]
-    upsample_mode = config["upsample_mode"]
-    deep_supervision = config["deep_supervision"]
-
+    model_mode_mapping = {
+        "basic": {
+            "h_block": (
+                conv_bn_relu_block,
+                {
+                    "mode": config.upsample_mode,
+                },
+            ),
+        },
+        "mobile": {
+            "h_block": (
+                sequence_inv_res_bot_block,
+                {
+                    "strides": 1,
+                    "t_expansion": 6,
+                    "n_iter": config.downsample_iteration[0]
+                    if config.downsample_iteration is not None
+                    else 1,
+                },
+            ),
+        },
+    }
     model_dict = {}
 
     # Input layer for the first node
-    model_dict["input"] = keras.Input(shape=config["input_dim"], name="x_00_input")
-    model_dict["00"] = conv_relu_block(
-        node_name="00",
-        n_filter=filter_list[0],
-        enable_batch_norm=config["enable_batch_norm"],
-        mode=upsample_mode,
-    )(model_dict["input"])
+    model_dict["input"] = keras.Input(shape=config.input_dim, name="x_00_input")
 
-    # i = indexes the down-sampling layer along the encoder
-    # j = indexes the layer in skip connection
-    for j in range(depth):
-        for i in range(depth):
-            if i + j > depth - 1:
-                continue
+    # For the first node it is a H block without downsampling
 
+    # H block initialization
+    h_block, h_params = model_mode_mapping[config.model_mode]["h_block"]
+    h_params["batch_norm"] = config.batch_norm
+    h_params["n_filter"] = config.filter_list[0]
+
+    model_dict["00"] = h_block(node_name="00", **h_params)(model_dict["input"])
+
+    for j in range(config.depth):
+        for i in range(max(0, config.depth - j)):
             node_name = node_name_func(i, j)
             print("Creating node ", node_name)
 
-            if j == 0:
-                if i != 0:
-                    # Downsampling layer
+            if j == 0 and i != 0:
+                # Downsampling layer
+                down_layer_name = f"{node_name}_down"
+                down_layer_input = model_dict[node_name_func(i - 1, j)]
+
+                if config.model_mode == "basic":
                     layer = layers.MaxPool2D(
-                        (2, 2), strides=(2, 2), name=f"x_{node_name}_downsample"
-                    )(model_dict[node_name_func(i - 1, j)])
-                else:
-                    continue
-            elif j > 0:
-                # Upsampling
-                upsample = upsample_layer(
-                    node_name=node_name,
-                    n_filter=filter_list[i],
-                    enable_batch_norm=config["enable_batch_norm"],
-                    mode=upsample_mode,
-                )(model_dict[node_name_func(i + 1, j - 1)])
-
-                # Get all skip connection
-                skip_list = [model_dict[node_name_func(i, k)] for k in range(j)]
-                skip_list.append(upsample)
-
-                # Concatenation layer
-                layer = layers.Concatenate(name=f"x_{node_name}_concat")(skip_list)
-
-            model_dict[node_name] = conv_relu_block(
-                node_name=node_name,
-                n_filter=filter_list[i],
-                enable_batch_norm=config["enable_batch_norm"],
-                mode=upsample_mode,
-            )(layer)
-
-    output_lists = []
-    activation_dict = {"bin": "sigmoid", "mult": "softmax"}
-    for out_name, nc in n_class.items():
-        for node_num in range(1, depth):
-            model_dict[f"output_{node_num}_{out_name}_c{nc}"] = layers.Conv2D(
-                filters=nc,
-                kernel_size=1,
-                name=f"output_{node_num}_{out_name}_c{nc}",
-                padding="same",
-                activation=activation_dict.get(out_name, "relu"),
-            )(model_dict[f"0{node_num}"])
-            output_lists.append(model_dict[f"output_{node_num}_{out_name}_c{nc}"])
-
-    if deep_supervision:
-        return keras.Model(inputs=model_dict["input"], outputs=output_lists)
-
-    n_head = len(list(n_class.keys()))
-    output_4_index = [i - 1 for i in range(0, (depth - 1) * n_head + 1, depth - 1)]
-
-    return keras.Model(
-        inputs=model_dict["input"],
-        outputs=output_lists[-1]
-        if n_head == 1
-        else [output_lists[index] for index in output_4_index[1:]],
-    )
-
-
-def mobile_unetpp(config: dict):
-    """
-    A UNet++ Model with MobileNetV2 blocks
-
-    Args:
-        config:
-
-    Returns:
-
-    """
-    filter_list = config["filter_list"]
-    downsample_iteration = config["downsample_iteration"]
-    upsample_mode = config["upsample_mode"]
-    n_class = config["n_class"]
-    depth = config["depth"]
-    upsample_mode = config["upsample_mode"]
-    deep_supervision = config["deep_supervision"]
-
-    model_dict = {}
-
-    model_dict["input"] = keras.Input(shape=config["input_dim"], name="x_00_input")
-    model_dict["00"] = sequence_inv_res_bot_block(
-        node_name="x_00", filters=filter_list[0], strides=1, t_expansion=6, n=1
-    )(model_dict["input"])
-
-    # i = indexes the down-sampling layer along the encoder
-    # j = indexes the layer in skip connection
-    for j in range(depth):
-        for i in range(depth):
-            if i + j > depth - 1:
-                continue
-
-            node_name = node_name_func(i, j)
-            if j == 0:
-                if i != 0:
-                    # Downsampling layer
+                        (2, 2), strides=(2, 2), name=f"x_{down_layer_name}"
+                    )(down_layer_input)
+                elif config.model_mode == "mobile":
                     layer = sequence_inv_res_bot_block(
-                        node_name="x_" + node_name + "_down",
-                        filters=filter_list[i],
+                        node_name=down_layer_name,
+                        batch_norm=config.batch_norm,
+                        n_filter=config.filter_list[i],
                         strides=2,
                         t_expansion=6,
-                        n=downsample_iteration[i],
-                    )(model_dict[node_name_func(i - 1, j)])
-                else:
-                    continue
+                        n_iter=config.downsample_iteration[i],
+                    )(down_layer_input)
+
             elif j > 0:
                 # Upsampling
-                upsample = upsample_layer(
+                upsample = upsample_block(
                     node_name=node_name,
-                    n_filter=filter_list[i],
-                    enable_batch_norm=config["enable_batch_norm"],
-                    mode=upsample_mode,
+                    n_filter=config.filter_list[i],
+                    batch_norm=config.batch_norm,
+                    mode=config.upsample_mode,
                 )(model_dict[node_name_func(i + 1, j - 1)])
 
                 # Get all skip connection
@@ -174,18 +117,24 @@ def mobile_unetpp(config: dict):
                 # Concatenation layer
                 layer = layers.Concatenate(name=f"x_{node_name}_concat")(skip_list)
 
-            model_dict[node_name] = sequence_inv_res_bot_block(
-                node_name="x_" + node_name + "_hblock",
-                filters=filter_list[i],
-                strides=1,
-                t_expansion=6,
-                n=downsample_iteration[i],
-            )(layer)
+            else:  # j==0 and i==0
+                continue
+
+            # Add H Block
+            h_params["n_filter"] = config.filter_list[i]
+            if config.model_mode == "mobile":
+                h_params["n_iter"] = config.downsample_iteration[i]
+            model_dict[node_name] = h_block(node_name=node_name, **h_params)(layer)
+
+    # Preparation whether we use deep supervision or not
+    # This loop basicaclly make sure that a multihead deep supervision is possible
 
     output_lists = []
     activation_dict = {"bin": "sigmoid", "mult": "softmax"}
-    for out_name, nc in n_class.items():
-        for node_num in range(1, depth):
+
+    # Create a bunch of Conv 1x1 to the node with j = 0
+    for out_name, nc in config.n_class.items():
+        for node_num in range(1, config.depth):
             model_dict[f"output_{node_num}_{out_name}_c{nc}"] = layers.Conv2D(
                 filters=nc,
                 kernel_size=1,
@@ -195,15 +144,18 @@ def mobile_unetpp(config: dict):
             )(model_dict[f"0{node_num}"])
             output_lists.append(model_dict[f"output_{node_num}_{out_name}_c{nc}"])
 
-    if deep_supervision:
+    if config.deep_supervision:
         return keras.Model(inputs=model_dict["input"], outputs=output_lists)
 
-    n_head = len(list(n_class.keys()))
-    output_4_index = [i - 1 for i in range(0, (depth - 1) * n_head + 1, depth - 1)]
+    # Get the index of the last node, with the added head
+    n_head = len(list(config.n_class.keys()))
+    non_deep_supervision_output_index = [
+        i - 1 for i in range(0, (config.depth - 1) * n_head + 1, config.depth - 1)
+    ]
 
     return keras.Model(
         inputs=model_dict["input"],
         outputs=output_lists[-1]
         if n_head == 1
-        else [output_lists[index] for index in output_4_index[1:]],
+        else [output_lists[index] for index in non_deep_supervision_output_index[1:]],
     )

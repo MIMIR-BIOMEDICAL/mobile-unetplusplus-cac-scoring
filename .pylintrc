@@ -428,7 +428,8 @@ disable=raw-checker-failed,
         invalid-name,
         wrong-import-position,
         import-error,
-        too-many-locals
+        too-many-locals,
+        too-many-instance-attributes
         
         
 
