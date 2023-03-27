@@ -253,7 +253,7 @@ def sequence_inv_res_bot_block(node_name, filters, strides, t_expansion, n):
 
     def layer(input_tensor):
         x = inverted_residual_bottleneck_block(
-            node_name=f"{node_name}_iter0",
+            node_name=f"x_{node_name}_iter0",
             filters=filters,
             strides=strides,
             t_expansion=t_expansion,
@@ -262,7 +262,7 @@ def sequence_inv_res_bot_block(node_name, filters, strides, t_expansion, n):
 
         for index in range(1, n):
             x = inverted_residual_bottleneck_block(
-                node_name=f"{node_name}_iter{index}",
+                node_name=f"x_{node_name}_iter{index}",
                 filters=filters,
                 strides=1,
                 t_expansion=t_expansion,
