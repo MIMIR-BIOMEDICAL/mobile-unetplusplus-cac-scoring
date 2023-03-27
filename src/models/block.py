@@ -30,7 +30,7 @@ def conv_bn_relu_unit(node_name, n_filter, batch_norm, n_kernel=3) -> Callable:
         x = layers.Conv2D(
             filters=n_filter,
             kernel_size=n_kernel,
-            name=f"{node_name}_conv",
+            name=f"x_{node_name}_conv",
             padding="same",
         )(input_tensor)
 
