@@ -42,21 +42,26 @@ def base_unet_pp(config: UNetPPConfig):
 
     """
     model_mode_mapping = {
-        "basic": (
-            conv_bn_relu_block,
-            {
-                "batch_norm": config.batch_norm,
-                "mode": config.upsample_mode,
-            },
-        ),
-        "mobile": (
-            sequence_inv_res_bot_block,
-            {
-                "batch_norm": config.batch_norm,
-                "strides": 1,
-                "t_expansion": 6,
-            },
-        ),
+        "basic": {
+            "h_block": (
+                conv_bn_relu_block,
+                {
+                    "mode": config.upsample_mode,
+                },
+            ),
+        },
+        "mobile": {
+            "h_block": (
+                sequence_inv_res_bot_block,
+                {
+                    "strides": 1,
+                    "t_expansion": 6,
+                    "n_iter": config.downsample_iteration[0]
+                    if config.downsample_iteration is not None
+                    else 1,
+                },
+            ),
+        },
     }
     model_dict = {}
 
@@ -64,10 +69,12 @@ def base_unet_pp(config: UNetPPConfig):
     model_dict["input"] = keras.Input(shape=config.input_dim, name="x_00_input")
 
     # For the first node it is a H block without downsampling
-    h_block, h_params = model_mode_mapping[config.model_mode]
+
+    # H block initialization
+    h_block, h_params = model_mode_mapping[config.model_mode]["h_block"]
+    h_params["batch_norm"] = config.batch_norm
     h_params["n_filter"] = config.filter_list[0]
-    if config.model_mode == "mobile":
-        h_params["n_iter"] = config.downsample_iteration[0]
+
     model_dict["00"] = h_block(node_name="00", **h_params)(model_dict["input"])
 
     for j in range(config.depth):
@@ -87,7 +94,8 @@ def base_unet_pp(config: UNetPPConfig):
                 elif config.model_mode == "mobile":
                     layer = sequence_inv_res_bot_block(
                         node_name=down_layer_name,
-                        filters=config.filter_list[i],
+                        batch_norm=config.batch_norm,
+                        n_filter=config.filter_list[i],
                         strides=2,
                         t_expansion=6,
                         n_iter=config.downsample_iteration[i],

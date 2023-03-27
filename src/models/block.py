@@ -92,7 +92,7 @@ def conv_bn_relu_block(
                 n_filter=n_filter,
                 batch_norm=batch_norm,
                 n_kernel=n_kernel,
-            )(input_tensor)
+            )(x)
 
             return x
 
