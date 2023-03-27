@@ -11,10 +11,14 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.data.preprocess.lib.tfrecord import \
-    create_example_fn  # pylint: disable=wrong-import-position,import-error
+from src.data.preprocess.lib.tfrecord import (  # pylint: disable=wrong-import-position,import-error
+    create_example_fn,
+)
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    get_patient_split, get_pos_from_bin_list, get_pos_from_mult_list)
+    get_patient_split,
+    get_pos_from_bin_list,
+    get_pos_from_mult_list,
+)
 
 
 def combine_to_tfrecord(
@@ -75,9 +79,13 @@ def combine_to_tfrecord(
                             segment_flag = False
 
                         for img_index in patient_index_img_list:
-                            patient_dict = {"patient_num": patient_index, "idx": img_index, "img": indexer[patient_index]["img"][
-                                img_index
-                            ]["img_arr"][:]}
+                            patient_dict = {
+                                "patient_num": patient_index,
+                                "idx": img_index,
+                                "img": indexer[patient_index]["img"][img_index][
+                                    "img_arr"
+                                ][:],
+                            }
 
                             if (
                                 segment_flag
