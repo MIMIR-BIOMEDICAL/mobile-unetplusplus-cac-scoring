@@ -10,7 +10,7 @@ from tensorflow.keras import \
 sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.models.block import (  # pylint: disable=wrong-import-position,import-error
-    conv_bn_relu_block, sequence_inv_res_bot_block, upsample_layer)
+    conv_bn_relu_block, sequence_inv_res_bot_block, upsample_block)
 from src.models.config import UNetPPConfig
 from src.models.utils import \
     node_name_func  # pylint: disable=wrong-import-position,import-error
@@ -95,7 +95,7 @@ def base_unet_pp(config: UNetPPConfig):
 
             elif j > 0:
                 # Upsampling
-                upsample = upsample_layer(
+                upsample = upsample_block(
                     node_name=node_name,
                     n_filter=config.filter_list[i],
                     batch_norm=config.batch_norm,
