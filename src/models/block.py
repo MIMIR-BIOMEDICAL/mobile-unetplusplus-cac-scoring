@@ -1,6 +1,7 @@
 """Module containing the building block function for the ml model"""
 import pathlib
 import sys
+from typing import Callable
 
 import keras
 import tensorflow as tf
@@ -10,7 +11,7 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 
 
 # original block
-def conv_relu_unit(node_name, n_filter, enable_batch_norm, dropout_rate=1, n_kernel=3):
+def conv_relu_unit(node_name, n_filter, batch_norm, dropout_rate=1, n_kernel=3):
     """
     Smallest unit  containing convolution with batch norm and dropout
 
@@ -34,7 +35,7 @@ def conv_relu_unit(node_name, n_filter, enable_batch_norm, dropout_rate=1, n_ker
         )(input_tensor)
 
         # Batch Normalization
-        if enable_batch_norm:
+        if batch_norm:
             x = layers.BatchNormalization(name=f"x_{node_name}_bn")(x)
 
         # ACtivation
@@ -49,7 +50,7 @@ def conv_relu_unit(node_name, n_filter, enable_batch_norm, dropout_rate=1, n_ker
 
 
 def conv_relu_block(
-    node_name, n_filter, enable_batch_norm, dropout_rate=1, n_kernel=3, mode="upsample"
+    node_name, n_filter, batch_norm, dropout_rate=1, n_kernel=3, mode="upsample"
 ):
     """
     The activation block for different type of upsampling
@@ -68,19 +69,19 @@ def conv_relu_block(
     if mode == "upsample":
 
         def layer(input_tensor):
-            x = conv_relu_unit(
-                node_name, n_filter, enable_batch_norm, dropout_rate, n_kernel
-            )(input_tensor)
+            x = conv_relu_unit(node_name, n_filter, batch_norm, dropout_rate, n_kernel)(
+                input_tensor
+            )
             return x
 
     elif mode == "transpose":
 
         def layer(input_tensor):
             x = conv_relu_unit(
-                node_name + "_1", n_filter, enable_batch_norm, dropout_rate, n_kernel
+                node_name + "_1", n_filter, batch_norm, dropout_rate, n_kernel
             )(input_tensor)
             x = conv_relu_unit(
-                node_name + "_2", n_filter, enable_batch_norm, dropout_rate, n_kernel
+                node_name + "_2", n_filter, batch_norm, dropout_rate, n_kernel
             )(x)
             return x
 
@@ -91,7 +92,7 @@ def conv_relu_block(
 
 
 def upsample_layer(
-    node_name, n_filter, enable_batch_norm, dropout_rate=1, n_kernel=2, mode="upsample"
+    node_name, n_filter, batch_norm, dropout_rate=1, n_kernel=2, mode="upsample"
 ):
     """
     Upsample block containing different type of upsampling method
@@ -127,7 +128,7 @@ def upsample_layer(
             )(input_tensor)
 
             # Batch Norm
-            if enable_batch_norm:
+            if batch_norm:
                 x = layers.BatchNormalization(name=f"x_{node_name}_transpose_bn")(x)
 
             # ACtivation
@@ -149,53 +150,80 @@ def upsample_layer(
 ###
 # MOBILENETV2 Blocks
 ###
-
-
-def pointwise_block(node_name, filters, linear: bool, strides=1, kernel=1):
+def pointwise_block(
+    node_name: str,
+    n_filter: int,
+    batch_norm: bool,
+    linear: bool,
+    strides: int = 1,
+    kernel: int = 1,
+) -> Callable:
     """
-    A pointwise convolution block with added linearity
-    or non linearity (relu6)
+    Returns a pointwise convolutional layer with optional batch normalization and activation.
 
     Args:
-        node_name ():
-        filters ():
-        linear ():
-        strides ():
-        kernel ():
+        node_name (str): Name of the layer.
+        n_filter (int): Number of filters for the convolutional layer.
+        batch_norm (bool): Whether to apply batch normalization.
+        linear (bool): Whether to apply activation (relu6) after the convolutional layer.
+        strides (int, optional): Stride of the convolutional layer. Defaults to 1.
+        kernel (int, optional): Kernel size of the convolutional layer. Defaults to 1.
 
     Returns:
-
+        callable: Function that returns the layer when called with an input tensor.
     """
 
-    def layer(input_tensor):
+    def layer(input_tensor: tf.Tensor) -> tf.Tensor:
+        """
+        A pointwise convolution block with added linearity or non-linearity (ReLU6).
+
+        Args:
+            input_tensor (tf.Tensor): Input tensor to the layer.
+
+        Returns:
+            tf.Tensor: Output tensor of the layer.
+        """
         x = layers.Conv2D(
-            filters, kernel, strides=strides, padding="same", name=f"{node_name}_pwise"
+            n_filter, kernel, strides=strides, padding="same", name=f"{node_name}_pwise"
         )(input_tensor)
-        x = layers.BatchNormalization(name=f"{node_name}_pwise_bnorm")(x)
+        if batch_norm:
+            x = layers.BatchNormalization(name=f"{node_name}_pwise_bnorm")(x)
         if not linear:
-            x = layers.Activation(tf.nn.relu6, name=f"{node_name}_pwwise_relu6")(x)
+            x = layers.Activation(tf.nn.relu6, name=f"{node_name}_pwise_relu6")(x)
         return x
 
     return layer
 
 
-def depthwise_block(node_name, strides=1, kernel=3):
-    """
-    A depthwise convolution block with relu6 activation
+def depthwise_block(
+    node_name: str, batch_norm: bool, strides: int = 1, kernel: int = 3
+) -> Callable:
+    """Create a depthwise convolution block with relu6 activation.
 
     Args:
-        strides ():
-        kernel ():
+        node_name (str): Name of the block.
+        batch_norm (bool): Whether or not to apply batch normalization.
+        strides (int, optional): The strides of the convolution along the height and width. Defaults to 1.
+        kernel (int, optional): Integer, the size of the kernel to be used in depthwise convolution. Defaults to 3.
 
     Returns:
-
+        Callable: A callable object that applies the depthwise convolution block to the input tensor.
     """
 
-    def layer(input_tensor):
+    def layer(input_tensor: tf.Tensor) -> tf.Tensor:
+        """Applies depthwise convolution block to input_tensor.
+
+        Args:
+            input_tensor (tf.Tensor): Input tensor.
+
+        Returns:
+            tf.Tensor: Output tensor.
+        """
         x = layers.DepthwiseConv2D(
             kernel, strides=strides, padding="same", name=f"{node_name}_dwise"
         )(input_tensor)
-        x = layers.BatchNormalization(name=f"{node_name}_dwise_bnorm")(x)
+        if batch_norm:
+            x = layers.BatchNormalization(name=f"{node_name}_dwise_bnorm")(x)
         x = layers.Activation(tf.nn.relu6, name=f"{node_name}_dwise_relu6")(x)
         return x
 
@@ -203,29 +231,58 @@ def depthwise_block(node_name, strides=1, kernel=3):
 
 
 def inverted_residual_bottleneck_block(
-    node_name, filters, strides, t_expansion, residual=False
-):
+    node_name: str,
+    n_filter: int,
+    strides: int,
+    t_expansion: int,
+    batch_norm: bool,
+    residual: bool = False,
+) -> Callable:
     """
-    A bottleneck block containig expansion and compression using
+    A bottleneck block containing expansion and compression using pointwise and depthwise convolutions
+    followed by optional residual connection.
 
     Args:
-        node_name ():
-        filters ():
-        strides ():
-        t_expansion ():
-        residual ():
+        node_name: A name for the block.
+        n_filter: Number of filters in the output tensor.
+        strides: Stride size of the depthwise convolution.
+        t_expansion: Expansion factor for the number of filters in the expansion layer.
+        batch_norm: Whether to apply batch normalization after each convolution.
+        residual: Whether to apply a residual connection to the output tensor.
 
     Returns:
-
+        A callable that takes an input tensor and returns the output tensor.
     """
 
-    def layer(input_tensor):
+    def layer(input_tensor: tf.Tensor) -> tf.Tensor:
         expanded_filter = keras.backend.int_shape(input_tensor)[-1] * t_expansion
-        x = pointwise_block(node_name + "_expand", expanded_filter, linear=False)(
-            input_tensor
-        )
-        x = depthwise_block(node_name, strides=strides)(x)
-        x = pointwise_block(node_name + "_compress", filters, linear=True)(x)
+
+        # Expansion layer
+        x = pointwise_block(
+            node_name=node_name + "_expand",
+            n_filter=expanded_filter,
+            batch_norm=batch_norm,
+            linear=False,
+        )(input_tensor)
+
+        # Depthwise Layer
+        x = depthwise_block(
+            node_name=node_name + "_depthwise",
+            batch_norm=batch_norm,
+            strides=strides,
+            kernel=3,
+        )(x)
+
+        # Compression layer
+        x = pointwise_block(
+            node_name=node_name + "_compress",
+            n_filter=n_filter,
+            batch_norm=batch_norm,
+            strides=1,
+            kernel=1,
+            linear=True,
+        )(x)
+
         if residual:
             x = layers.Add(name=f"{node_name}_add")([x, input_tensor])
 
@@ -234,36 +291,41 @@ def inverted_residual_bottleneck_block(
     return layer
 
 
-def sequence_inv_res_bot_block(node_name, filters, strides, t_expansion, n):
+def sequence_inv_res_bot_block(
+    node_name, n_filter, batch_norm, strides, t_expansion, n_iter
+) -> Callable:
     """
     A layer containing a sequence of inverted
     residual bottleneck block that is repeated
-    n times
+    n_iter times
 
     Args:
-        node_name ():
-        filters ():
-        strides ():
-        t_expansion ():
-        n ():
+        node_name (str):
+        n_filter (int):
+        batch_norm (bool):
+        strides (int):
+        t_expansion (int):
+        n_iter (int):
 
     Returns:
-
+        Callable: A callable Keras layer that applies the sequence of inverted residual bottleneck blocks to an input tensor.
     """
 
     def layer(input_tensor):
         x = inverted_residual_bottleneck_block(
             node_name=f"x_{node_name}_iter0",
-            filters=filters,
+            n_filter=n_filter,
+            batch_norm=batch_norm,
             strides=strides,
             t_expansion=t_expansion,
             residual=False,
         )(input_tensor)
 
-        for index in range(1, n):
+        for index in range(1, n_iter):
             x = inverted_residual_bottleneck_block(
                 node_name=f"x_{node_name}_iter{index}",
-                filters=filters,
+                n_filter=n_filter,
+                batch_norm=batch_norm,
                 strides=1,
                 t_expansion=t_expansion,
                 residual=True,
