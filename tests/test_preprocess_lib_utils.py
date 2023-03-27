@@ -1,7 +1,9 @@
 """Preprocessing lib utils test"""
-from src.data.preprocess.lib.utils import (artery_loc_to_abbr,
-                                           convert_abr_to_num,
-                                           string_to_int_tuple)
+from src.data.preprocess.lib.utils import (
+    artery_loc_to_abbr,
+    convert_abr_to_num,
+    string_to_int_tuple,
+)
 
 
 def test_string_to_int_tuple():

@@ -3,8 +3,11 @@
 import pathlib
 
 from src.data.preprocess.lib.segmentation import (
-    clean_raw_segmentation_dict, convert_plist_to_dict,
-    split_clean_segmentation_to_binary, split_clean_segmentation_to_multiclass)
+    clean_raw_segmentation_dict,
+    convert_plist_to_dict,
+    split_clean_segmentation_to_binary,
+    split_clean_segmentation_to_multiclass,
+)
 
 
 def test_convert_plist_to_dict(fs):  # pylint: disable=invalid-name

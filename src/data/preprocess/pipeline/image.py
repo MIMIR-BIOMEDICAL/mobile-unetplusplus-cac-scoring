@@ -9,10 +9,12 @@ import pydicom as pdc
 from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
-from src.data.preprocess.lib.image import \
-    extract_patient_dicom_path  # pylint: disable=import-error,wrong-import-position
-from src.data.preprocess.lib.utils import \
-    patient_number_zfill_range  # pylint: disable=import-error,wrong-import-position
+from src.data.preprocess.lib.image import (  # pylint: disable=import-error,wrong-import-position
+    extract_patient_dicom_path,
+)
+from src.data.preprocess.lib.utils import (  # pylint: disable=import-error,wrong-import-position
+    patient_number_zfill_range,
+)
 
 
 def extract_patient_dicom_data_to_h5(
