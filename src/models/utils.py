@@ -1,7 +1,6 @@
 """Module containing utility function for UNet++ model"""
 import pathlib
 import sys
-
 from typing import Dict, List, Union
 
 import tensorflow as tf
