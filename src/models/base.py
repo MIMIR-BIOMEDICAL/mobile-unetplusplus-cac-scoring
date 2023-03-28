@@ -43,6 +43,7 @@ def base_unet_pp(config: UNetPPConfig):
 
     Returns:
         keras.Model: A compiled UNet++ model.
+        list: A list containing the output layer name, used for building later
 
     """
     model_mode_mapping = {
@@ -134,22 +135,28 @@ def base_unet_pp(config: UNetPPConfig):
     # This loop basicaclly make sure that a multihead deep supervision is possible
 
     output_lists = []
+    output_layer_name = []
     activation_dict = {"bin": "sigmoid", "mult": "softmax"}
 
     # Create a bunch of Conv 1x1 to the node with j = 0
     for out_name, nc in config.n_class.items():
         for node_num in range(1, config.depth):
-            model_dict[f"output_{node_num}_{out_name}_c{nc}"] = layers.Conv2D(
+            layer_name = f"output_{node_num}_{out_name}_c{nc}"
+            model_dict[layer_name] = layers.Conv2D(
                 filters=nc,
                 kernel_size=1,
-                name=f"output_{node_num}_{out_name}_c{nc}",
+                name=layer_name,
                 padding="same",
-                activation=activation_dict.get(out_name, "relu"),
+                activation=activation_dict.get(out_name, "sigmoid"),
             )(model_dict[f"0{node_num}"])
             output_lists.append(model_dict[f"output_{node_num}_{out_name}_c{nc}"])
+            output_layer_name.append(layer_name)
 
     if config.deep_supervision:
-        return keras.Model(inputs=model_dict["input"], outputs=output_lists)
+        return (
+            keras.Model(inputs=model_dict["input"], outputs=output_lists),
+            output_layer_name,
+        )
 
     # Get the index of the last node, with the added head
     n_head = len(list(config.n_class.keys()))
@@ -157,9 +164,18 @@ def base_unet_pp(config: UNetPPConfig):
         i - 1 for i in range(0, (config.depth - 1) * n_head + 1, config.depth - 1)
     ]
 
-    return keras.Model(
-        inputs=model_dict["input"],
-        outputs=output_lists[-1]
+    return (
+        keras.Model(
+            inputs=model_dict["input"],
+            outputs=output_lists[-1]
+            if n_head == 1
+            else [
+                output_lists[index] for index in non_deep_supervision_output_index[1:]
+            ],
+        ),
+        output_layer_name[-1]
         if n_head == 1
-        else [output_lists[index] for index in non_deep_supervision_output_index[1:]],
+        else [
+            output_layer_name[index] for index in non_deep_supervision_output_index[1:]
+        ],
     )

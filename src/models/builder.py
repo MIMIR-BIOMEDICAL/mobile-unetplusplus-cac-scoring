@@ -18,7 +18,7 @@ def build_unet_pp(config: UNetPPConfig, custom: bool = False) -> keras.Model:
         custom: Whether to build a custom model or use the default parameters.
 
     Returns:
-        A UNet++ model.
+        A UNet++ model and a list containing the output head name.
 
     Raises:
         ValueError: If the specified configuration is invalid.

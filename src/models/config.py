@@ -11,7 +11,7 @@ class UNetPPConfig:
      Attributes:
          input_dim (List[int]): a list of integers representing the input dimensions of the UNet++ model.
          depth (int): the depth of the UNet++ model, which corresponds to the number of times the feature map size is halved.
-         n_class (Dict[str, int]): a dictionary containing the number of classes for binary and/or multi-class segmentation tasks. The dictionary must have a string key of "bin" or "mult" and an integer value greater than or equal to 1.
+         n_class (Dict[str, int]): a dictionary containing the number of classes for binary and/or multi-class segmentation tasks. The dictionary must have a string key and an integer value greater than or equal to 1.
          deep_supervision (bool): a flag indicating whether or not to use deep supervision.
          batch_norm (bool): a flag indicating whether or not to use batch normalization.
          upsample_mode (str): the upsample mode for the model. Can be either "upsample" or "transpose".
@@ -104,10 +104,6 @@ class UNetPPConfig:
             Dict[str, int]: The validated input value.
         """
 
-        if "bin" not in value and "mult" not in value:
-            raise ValueError(
-                "n_class dictionary must contain either 'bin' or 'mult' as keys"
-            )
         if not all(isinstance(val, int) and val >= 1 for val in value.values()):
             raise ValueError(
                 "n_class dictionary values must be integers greater than or equal to 1"
