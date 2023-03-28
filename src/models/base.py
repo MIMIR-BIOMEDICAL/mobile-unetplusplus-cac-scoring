@@ -143,7 +143,7 @@ def base_unet_pp(config: UNetPPConfig):
                 kernel_size=1,
                 name=layer_name,
                 padding="same",
-                activation=activation_dict.get(out_name, "relu"),
+                activation=activation_dict.get(out_name, "sigmoid"),
             )(model_dict[f"0{node_num}"])
             output_lists.append(model_dict[f"output_{node_num}_{out_name}_c{nc}"])
             output_layer_name.append(layer_name)
