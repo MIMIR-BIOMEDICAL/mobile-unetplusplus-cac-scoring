@@ -7,7 +7,7 @@ import tensorflow as tf
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.models.config import UNetPPConfig
+from src.models.lib.config import UNetPPConfig
 
 
 def node_name_func(i: int, j: int) -> str:

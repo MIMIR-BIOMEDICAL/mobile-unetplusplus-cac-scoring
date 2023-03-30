@@ -2,11 +2,12 @@
 import pathlib
 import sys
 
-from tensorflow import keras  # pylint: disable=wrong-import-position,import-error
+from tensorflow import \
+    keras  # pylint: disable=wrong-import-position,import-error
 
 sys.path.append(pathlib.Path.cwd().parent.as_posix())
-from src.models.base import base_unet_pp
-from src.models.config import UNetPPConfig
+from src.models.lib.base import base_unet_pp
+from src.models.lib.config import UNetPPConfig
 
 
 def build_unet_pp(config: UNetPPConfig, custom: bool = False) -> keras.Model:
