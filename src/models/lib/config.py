@@ -9,6 +9,7 @@ class UNetPPConfig:
     UNetPPConfig: A dataclass for configuring a UNet++ model.
 
      Attributes:
+         model_name (str): The model name
          input_dim (List[int]): a list of integers representing the input dimensions of the UNet++ model.
          depth (int): the depth of the UNet++ model, which corresponds to the number of times the feature map size is halved.
          n_class (Dict[str, int]): a dictionary containing the number of classes for binary and/or multi-class segmentation tasks. The dictionary must have a string key and an integer value greater than or equal to 1.
@@ -27,6 +28,7 @@ class UNetPPConfig:
 
     """
 
+    model_name: str
     input_dim: List[int]
     depth: int
     n_class: Dict[str, int]
@@ -55,6 +57,19 @@ class UNetPPConfig:
             object.__setattr__(self, prop, validator(val) or val)
         else:
             super().__setattr__(prop, val)
+
+    def validate_model_name(self, value):
+        """Validates the model_name attribute.
+
+        Args:
+            value (str): The value to be validated.
+
+
+        Returns:
+            None
+        """
+        if not isinstance(value, str):
+            raise ValueError("model_name need to be string")
 
     def validate_input_dim(self, value):
         """Validates the input_dim attribute.

@@ -1,13 +1,13 @@
 """Module containing utility function for UNet++ model"""
 import pathlib
 import sys
-from typing import Dict, List, Union
+from typing import Callable, Dict, List, Union
 
 import tensorflow as tf
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.models.config import UNetPPConfig
+from src.models.lib.config import UNetPPConfig
 
 
 def node_name_func(i: int, j: int) -> str:
@@ -27,7 +27,7 @@ def node_name_func(i: int, j: int) -> str:
 def loss_dict_gen(
     config: UNetPPConfig,
     output_name_list: List[str],
-    loss_list: List[Union[str, tf.keras.losses.Loss]],
+    loss_list: List[Union[str, tf.keras.losses.Loss, Callable]],
 ) -> Dict[str, Union[str, tf.keras.losses.Loss]]:
     """
     Generates a dictionary of loss functions for each output head.
@@ -59,3 +59,20 @@ def loss_dict_gen(
             out_dict[name] = loss
 
     return out_dict
+
+
+def parse_list_string(list_string):
+    """
+    Parses a string representation of a list of integers, separated by commas,
+    into a Python list of integers.
+
+    Args:
+        list_string (str): A string representation of a list of integers, e.g.
+            "512,512,1".
+
+    Returns:
+        list: A list of integers parsed from the input string, e.g. [512, 512, 1].
+    """
+    out_list = list_string.split(",")
+    out_list = [int(num) for num in out_list]
+    return out_list

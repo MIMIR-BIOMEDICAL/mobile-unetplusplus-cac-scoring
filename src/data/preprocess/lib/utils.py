@@ -322,16 +322,16 @@ def train_test_val_split(input_list, split, random_seed=811):
 
     num_samples = len(data)
     num_train = int(num_samples * split[0])
-    num_test = int(num_samples * split[1])
+    num_val = int(num_samples * split[1])
 
     train_data = data[:num_train]
-    test_data = data[num_train : num_train + num_test]
-    val_data = data[num_train + num_test :]
+    val_data = data[num_train : num_train + num_val]
+    test_data = data[num_train + num_val :]
 
     return {
         "train": train_data,
-        "test": test_data,
         "val": val_data,
+        "test": test_data,
     }
 
 

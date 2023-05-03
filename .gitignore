@@ -2,6 +2,7 @@
 .cenv
 main/dataloader/data**
 data/**
+models/**
 
 # Cache
 .ipynb_checkpoints

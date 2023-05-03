@@ -47,6 +47,20 @@ def sparse_coord_feature(sparse_input: list):
     return tf.train.Feature(int64_list=tf.train.Int64List(value=sparse_input.flatten()))
 
 
+def float_feature(float_input: list):
+    """
+    A function that convert a list of list containing the index
+    of  sparse array/tensor into a tensorflow float32 feature
+
+    Args:
+        flaot_input:
+
+    Returns:
+
+    """
+    return tf.train.Feature(float_list=tf.train.FloatList(value=float_input.flatten()))
+
+
 def create_example_fn(combined_data_dict: dict):
     """
     A function that create an example based on the feature schema
@@ -65,6 +79,7 @@ def create_example_fn(combined_data_dict: dict):
         "img": image_feature(combined_data_dict["img"]),
         "bin_seg": sparse_coord_feature(combined_data_dict["bin_seg"]),
         "mult_seg": sparse_coord_feature(combined_data_dict["mult_seg"]),
+        "segment_val": float_feature(combined_data_dict["segment_val"]),
     }
     return tf.train.Example(features=tf.train.Features(feature=feature))
 
@@ -86,9 +101,12 @@ def parsed_example_fn(example):
         "img": tf.io.FixedLenFeature([], tf.string),
         "bin_seg": tf.io.VarLenFeature(tf.int64),
         "mult_seg": tf.io.VarLenFeature(tf.int64),
+        "segment_val": tf.io.VarLenFeature(tf.float32),
     }
     parsed_example = tf.io.parse_example(example, feature_description)
-    parsed_example["img"] = tf.io.parse_tensor(parsed_example["img"], tf.uint16)
+    parsed_example["img"] = tf.cast(
+        tf.io.parse_tensor(parsed_example["img"], tf.float64), tf.float32
+    )
 
     dense_bin_seg = tf.sparse.to_dense(parsed_example["bin_seg"])
     parsed_example["bin_seg"] = tf.reshape(dense_bin_seg, [len(dense_bin_seg) // 2, 2])
@@ -97,4 +115,7 @@ def parsed_example_fn(example):
     parsed_example["mult_seg"] = tf.reshape(
         dense_multi_seg, [len(dense_multi_seg) // 3, 3]
     )
+
+    dense_segment_val = tf.sparse.to_dense(parsed_example["segment_val"])
+    parsed_example["segment_val"] = tf.reshape(dense_segment_val, [-1])
     return parsed_example

@@ -5,8 +5,8 @@ import sys
 from tensorflow import keras  # pylint: disable=wrong-import-position,import-error
 
 sys.path.append(pathlib.Path.cwd().parent.as_posix())
-from src.models.base import base_unet_pp
-from src.models.config import UNetPPConfig
+from src.models.lib.base import base_unet_pp
+from src.models.lib.config import UNetPPConfig
 
 
 def build_unet_pp(config: UNetPPConfig, custom: bool = False) -> keras.Model:
@@ -41,6 +41,7 @@ def build_unet_pp(config: UNetPPConfig, custom: bool = False) -> keras.Model:
 
     if config.model_mode == "basic":
         model_conf = UNetPPConfig(
+            model_name=config.model_name,
             input_dim=[512, 512, 1],
             batch_norm=True,
             model_mode="basic",
@@ -53,9 +54,10 @@ def build_unet_pp(config: UNetPPConfig, custom: bool = False) -> keras.Model:
 
     elif config.model_mode == "mobile":
         model_conf = UNetPPConfig(
+            model_name=config.model_name,
             upsample_mode="upsample",
             depth=5,
-            input_dim=(512, 512, 1),
+            input_dim=[512, 512, 1],
             batch_norm=True,
             model_mode="mobile",
             n_class={"bin": 1, "mult": 4},

@@ -1,13 +1,9 @@
 """Module containing the building block function for the ml model"""
-import pathlib
-import sys
 from typing import Callable
 
 import keras
 import tensorflow as tf
 from tensorflow.keras import layers
-
-sys.path.append(pathlib.Path.cwd().as_posix())
 
 
 # original block

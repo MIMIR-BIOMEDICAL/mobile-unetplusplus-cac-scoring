@@ -9,13 +9,13 @@ from tensorflow.keras import (  # pylint: disable=wrong-import-position,import-e
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.models.block import (  # pylint: disable=wrong-import-position,import-error
+from src.models.lib.block import (  # pylint: disable=wrong-import-position,import-error
     conv_bn_relu_block,
     sequence_inv_res_bot_block,
     upsample_block,
 )
-from src.models.config import UNetPPConfig
-from src.models.utils import (  # pylint: disable=wrong-import-position,import-error
+from src.models.lib.config import UNetPPConfig
+from src.models.lib.utils import (  # pylint: disable=wrong-import-position,import-error
     node_name_func,
 )
 
@@ -166,6 +166,7 @@ def base_unet_pp(config: UNetPPConfig):
 
     return (
         keras.Model(
+            name=config.model_name,
             inputs=model_dict["input"],
             outputs=output_lists[-1]
             if n_head == 1
