@@ -42,6 +42,7 @@ def build_unet_pp(config: UNetPPConfig, custom: bool = False) -> keras.Model:
 
     if config.model_mode == "basic":
         model_conf = UNetPPConfig(
+            model_name=config.model_name,
             input_dim=[512, 512, 1],
             batch_norm=True,
             model_mode="basic",
@@ -54,9 +55,10 @@ def build_unet_pp(config: UNetPPConfig, custom: bool = False) -> keras.Model:
 
     elif config.model_mode == "mobile":
         model_conf = UNetPPConfig(
+            model_name=config.model_name,
             upsample_mode="upsample",
             depth=5,
-            input_dim=(512, 512, 1),
+            input_dim=[512, 512, 1],
             batch_norm=True,
             model_mode="mobile",
             n_class={"bin": 1, "mult": 4},

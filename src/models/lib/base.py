@@ -162,6 +162,7 @@ def base_unet_pp(config: UNetPPConfig):
 
     return (
         keras.Model(
+            name=config.model_name,
             inputs=model_dict["input"],
             outputs=output_lists[-1]
             if n_head == 1
