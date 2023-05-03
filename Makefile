@@ -20,4 +20,5 @@ preprocess\:tfrecord:
         $(if $(SPLIT_TYPE),-t $(SPLIT_TYPE)) \
         $(if $(SPLIT_DISTRIBUTION),-d $(SPLIT_DISTRIBUTION)) 
 		
-
+train:
+	python src/models/train_model.py

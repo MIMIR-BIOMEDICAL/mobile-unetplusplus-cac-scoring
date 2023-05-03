@@ -11,14 +11,10 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.data.preprocess.lib.tfrecord import (  # pylint: disable=wrong-import-position,import-error
-    create_example_fn,
-)
+from src.data.preprocess.lib.tfrecord import \
+    create_example_fn  # pylint: disable=wrong-import-position,import-error
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    get_patient_split,
-    get_pos_from_bin_list,
-    get_pos_from_mult_list,
-)
+    get_patient_split, get_pos_from_bin_list, get_pos_from_mult_list)
 
 
 def combine_to_tfrecord(
@@ -83,7 +79,7 @@ def combine_to_tfrecord(
                                 "patient_num": patient_index,
                                 "idx": img_index,
                                 "img": indexer[patient_index]["img"][img_index][
-                                    "img_arr"
+                                    "img_hu"
                                 ][:],
                             }
 
@@ -101,9 +97,15 @@ def combine_to_tfrecord(
                                         mult_seg_dict[patient_index], img_index
                                     )
                                 )
+                                patient_dict["segment_val"] = np.ones(
+                                    patient_dict["mult_seg"].shape[0]
+                                )
                             else:
-                                patient_dict["bin_seg"] = np.array([[-1, -1]])
-                                patient_dict["mult_seg"] = np.array([[-1, -1, -1]])
+                                patient_dict["bin_seg"] = np.array([[0, 0]])
+                                patient_dict["mult_seg"] = np.array([[0, 0, 0]])
+                                patient_dict["segment_val"] = np.zeros(
+                                    patient_dict["mult_seg"].shape[0]
+                                )
 
                             example = create_example_fn(patient_dict)
                             tf_record_file.write(example.SerializeToString())
@@ -142,7 +144,7 @@ def preprocess_tfrecord_pipeline(sample, split_type, distribution):
     multi_json_path = list(project_root_path.rglob("multi*.json"))[0]
 
     if split_type == "all":
-        for split in ["train", "test", "val"]:
+        for split in ["train", "val", "test"]:
             combine_to_tfrecord(
                 random_index_dict,
                 project_root_path,
