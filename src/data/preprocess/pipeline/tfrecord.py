@@ -11,14 +11,10 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.data.preprocess.lib.tfrecord import (  # pylint: disable=wrong-import-position,import-error
-    create_example_fn,
-)
+from src.data.preprocess.lib.tfrecord import \
+    create_example_fn  # pylint: disable=wrong-import-position,import-error
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    get_patient_split,
-    get_pos_from_bin_list,
-    get_pos_from_mult_list,
-)
+    get_patient_split, get_pos_from_bin_list, get_pos_from_mult_list)
 
 
 def combine_to_tfrecord(
@@ -58,8 +54,6 @@ def combine_to_tfrecord(
 
                 with tf.io.TFRecordWriter(tf_record_path.as_posix()) as tf_record_file:
                     for patient_index in tqdm(random_patient_index, desc="Patient"):
-                        segment_flag = True
-
                         if sample_mode:
                             try:
                                 patient_index_img_list = list(
@@ -70,14 +64,6 @@ def combine_to_tfrecord(
                         else:
                             patient_index_img_list = list(indexer[patient_index]["img"])
 
-                        patient_index_img_segment_list = list(
-                            map(lambda x: x["idx"], binary_seg_dict[patient_index])
-                        )
-
-                        # check if patient index not in segmentation json
-                        if patient_index not in list(binary_seg_dict.keys()):
-                            segment_flag = False
-
                         for img_index in patient_index_img_list:
                             patient_dict = {
                                 "patient_num": patient_index,
@@ -87,9 +73,15 @@ def combine_to_tfrecord(
                                 ][:],
                             }
 
-                            if (
-                                segment_flag
-                                and img_index in patient_index_img_segment_list
+                            # Add segmentation if patient index in bin_seg_dict keys (check if patient calc)
+                            # and the current img index is calc (check if image calc)
+                            if patient_index in list(
+                                binary_seg_dict.keys()
+                            ) and img_index in list(
+                                map(
+                                    lambda x: x["idx"],
+                                    binary_seg_dict.get(patient_index, [{"idx": -1}]),
+                                )
                             ):
                                 patient_dict["bin_seg"] = np.array(
                                     get_pos_from_bin_list(
