@@ -403,3 +403,28 @@ def get_patient_split(split_arr: list, random_seed=811):
         calc_split[split_type].extend(no_calc_split[split_type])
 
     return calc_split
+
+
+def split_list(lst, n):
+    """
+    Divides a list into a list of n sublists of approximately equal length.
+
+    Args:
+        lst (list): The list to split.
+        n (int): The number of sublists to create.
+
+    Returns:
+        A list of n sublists.
+    """
+    # Calculate the number of elements per sublist
+    quotient, remainder = divmod(len(lst), n)
+    sizes = [quotient + 1 if i < remainder else quotient for i in range(n)]
+
+    # Use list slicing to create sublists
+    sublists = []
+    start = 0
+    for size in sizes:
+        sublists.append(lst[start : start + size])
+        start += size
+
+    return sublists

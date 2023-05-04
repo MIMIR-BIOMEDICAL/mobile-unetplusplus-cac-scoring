@@ -18,6 +18,7 @@ from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-posi
     get_patient_split,
     get_pos_from_bin_list,
     get_pos_from_mult_list,
+    split_list,
 )
 
 
@@ -52,63 +53,98 @@ def combine_to_tfrecord(
             with h5py.File(h5_image_index_path, "r") as indexer:
                 random_patient_index = random_index_dict[split_mode]
 
-                tf_record_path = (
-                    project_root_path / "data" / "processed" / f"{split_mode}.tfrecord"
-                )
+                # NOTE: 1. create a sharded list of random_patient index
+                # NOTE: 2. Use enumerate to get each index of sharding + zfill i guess
+                # NOTE: 3. Add TFRecordOptions with compression type gzip and compression level 9
+                # NOTE: 4. Use it in TFRecordWriter
 
-                with tf.io.TFRecordWriter(tf_record_path.as_posix()) as tf_record_file:
-                    for patient_index in tqdm(random_patient_index, desc="Patient"):
-                        if sample_mode:
-                            try:
+                random_patient_index_shard = split_list(random_patient_index, 10)
+
+                for shard_count, patient_shard in enumerate(
+                    tqdm(
+                        random_patient_index_shard,
+                        desc=f"{split_mode} TFRecord Sharding",
+                        unit="shard",
+                    )
+                ):
+                    tf_record_path = (
+                        project_root_path
+                        / "data"
+                        / "processed"
+                        / f"{split_mode}-{str(shard_count).zfill(4)}.tfrecord"
+                    )
+                    with tf.io.TFRecordWriter(
+                        tf_record_path.as_posix(),
+                        options=tf.io.TFRecordOptions(
+                            compression_type="GZIP", compression_level=9
+                        ),
+                    ) as tf_record_file:
+                        for patient_index in tqdm(
+                            patient_shard,
+                            desc="Patient",
+                            unit="patient",
+                            leave=False,
+                        ):
+                            if sample_mode:
+                                try:
+                                    patient_index_img_list = list(
+                                        indexer[patient_index]["img"]
+                                    )
+                                except:  # pylint: disable=bare-except
+                                    continue
+                            else:
                                 patient_index_img_list = list(
                                     indexer[patient_index]["img"]
                                 )
-                            except:  # pylint: disable=bare-except
-                                continue
-                        else:
-                            patient_index_img_list = list(indexer[patient_index]["img"])
 
-                        for img_index in patient_index_img_list:
-                            patient_dict = {
-                                "patient_num": patient_index,
-                                "idx": img_index,
-                                "img": indexer[patient_index]["img"][img_index][
-                                    "img_hu"
-                                ][:],
-                            }
-
-                            # Add segmentation if patient index in bin_seg_dict keys (check if patient calc)
-                            # and the current img index is calc (check if image calc)
-                            if patient_index in list(
-                                binary_seg_dict.keys()
-                            ) and img_index in list(
-                                map(
-                                    lambda x: x["idx"],
-                                    binary_seg_dict.get(patient_index, [{"idx": -1}]),
-                                )
+                            for img_index in tqdm(
+                                patient_index_img_list,
+                                desc="Image",
+                                unit="image",
+                                leave=False,
                             ):
-                                patient_dict["bin_seg"] = np.array(
-                                    get_pos_from_bin_list(
-                                        binary_seg_dict[patient_index], img_index
-                                    )
-                                )
-                                patient_dict["mult_seg"] = np.array(
-                                    get_pos_from_mult_list(
-                                        mult_seg_dict[patient_index], img_index
-                                    )
-                                )
-                                patient_dict["segment_val"] = np.ones(
-                                    patient_dict["mult_seg"].shape[0]
-                                )
-                            else:
-                                patient_dict["bin_seg"] = np.array([[0, 0]])
-                                patient_dict["mult_seg"] = np.array([[0, 0, 0]])
-                                patient_dict["segment_val"] = np.zeros(
-                                    patient_dict["mult_seg"].shape[0]
-                                )
+                                patient_dict = {
+                                    "patient_num": patient_index,
+                                    "idx": img_index,
+                                    "img": indexer[patient_index]["img"][img_index][
+                                        "img_hu"
+                                    ][:],
+                                }
 
-                            example = create_example_fn(patient_dict)
-                            tf_record_file.write(example.SerializeToString())
+                                # Add segmentation if patient index in bin_seg_dict keys (check if patient calc)
+                                # and the current img index is calc (check if image calc)
+                                if patient_index in list(
+                                    binary_seg_dict.keys()
+                                ) and img_index in list(
+                                    map(
+                                        lambda x: x["idx"],
+                                        binary_seg_dict.get(
+                                            patient_index, [{"idx": -1}]
+                                        ),
+                                    )
+                                ):
+                                    patient_dict["bin_seg"] = np.array(
+                                        get_pos_from_bin_list(
+                                            binary_seg_dict[patient_index], img_index
+                                        )
+                                    )
+                                    patient_dict["mult_seg"] = np.array(
+                                        get_pos_from_mult_list(
+                                            mult_seg_dict[patient_index], img_index
+                                        )
+                                    )
+                                    patient_dict["segment_val"] = np.ones(
+                                        patient_dict["mult_seg"].shape[0]
+                                    )
+                                else:
+                                    patient_dict["bin_seg"] = np.array([[0, 0]])
+                                    patient_dict["mult_seg"] = np.array([[0, 0, 0]])
+                                    patient_dict["segment_val"] = np.zeros(
+                                        patient_dict["mult_seg"].shape[0]
+                                    )
+
+                                example = create_example_fn(patient_dict)
+                                tf_record_file.write(example.SerializeToString())
 
 
 @click.command()
