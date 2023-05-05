@@ -287,7 +287,7 @@ def main():
         input_dim=parsed_answer.get("input_dim", [1, 1, 1]),
         batch_norm=parsed_answer.get("batch_norm", True),
         model_mode=parsed_answer.get("model_mode"),
-        n_class={"bin": 1, "mult": 4},
+        n_class={"bin": 1, "mult": 5},
         deep_supervision=parsed_answer.get("deep_supervision", True),
         filter_list=parsed_answer.get("filter_list", [1, 1]),
         downsample_iteration=parsed_answer.get("downsample_iteration", [1, 1]),

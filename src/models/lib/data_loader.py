@@ -66,25 +66,31 @@ def create_sample(config: UNetPPConfig, features):
     )
 
     # Prepare multi-class segmentation tensor
-    mult_seg_dim = (input_dims[0], input_dims[1], config.n_class["mult"])
+    mult_seg_dim = (input_dims[0], input_dims[1], config.n_class["mult"] - 1)
     mult_seg_indices = tf.subtract(features["mult_seg"], [[0, 0, 1]])
-    mult_seg = tf.reshape(
-        (
-            tf.sparse.to_dense(
-                tf.sparse.reorder(
-                    tf.SparseTensor(
-                        dense_shape=mult_seg_dim,
-                        values=features["segment_val"],
-                        indices=tf.where(
-                            tf.equal(mult_seg_indices, -1),
-                            mult_seg_indices + 1,
-                            mult_seg_indices,
-                        ),
-                    )
-                )
+    mult_seg = tf.concat(
+        [
+            bin_seg,
+            tf.reshape(
+                (
+                    tf.sparse.to_dense(
+                        tf.sparse.reorder(
+                            tf.SparseTensor(
+                                dense_shape=mult_seg_dim,
+                                values=features["segment_val"],
+                                indices=tf.where(
+                                    tf.equal(mult_seg_indices, -1),
+                                    mult_seg_indices + 1,
+                                    mult_seg_indices,
+                                ),
+                            )
+                        )
+                    ),
+                ),
+                [input_dims[0], input_dims[1], config.n_class["mult"] - 1],
             ),
-        ),
-        [input_dims[0], input_dims[1], config.n_class["mult"]],
+        ],
+        2,  # axis,
     )
 
     return preprocessed_img, bin_seg, mult_seg
