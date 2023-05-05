@@ -71,6 +71,7 @@ def train_model(
     model_config: UNetPPConfig,
     custom: bool,
     batch_size: int,
+    shuffle_size: int,
     epochs: int,
     lost_function_list: list = [log_cosh_loss, "categorical_crossentropy"],
     metrics: list = ["acc"],
@@ -88,6 +89,8 @@ def train_model(
         The custom object for the model.
     batch_size : int
         The batch size for training.
+    shuffle_size : int
+        The size for shuffle buffer.
     epochs : int
         The number of epochs to train for.
     lost_function_list : list, optional
@@ -107,7 +110,7 @@ def train_model(
     # Create Dataset
     print("Loading Dataset...")
     coca_dataset = create_dataset(
-        project_root_path, model_config, model_layer_name, batch_size
+        project_root_path, model_config, model_layer_name, batch_size, shuffle_size
     )
 
     train_coca_dataset = coca_dataset["train"]
@@ -215,6 +218,7 @@ def start_prompt():
             ignore=lambda x: x["use_default_config"] or x["model_mode"] == "basic",
         ),
         inquirer.Text("batch_size", message="Batch Size", default="32"),
+        inquirer.Text("shuffle_size", message="Shuffle Size", default="64"),
         inquirer.Text("epochs", message="epochs", default="10000"),
     ]
 
@@ -250,6 +254,7 @@ def prompt_parser(answer) -> dict:
     )
 
     answer["batch_size"] = int(answer["batch_size"])
+    answer["shuffle_size"] = int(answer["shuffle_size"])
     answer["epochs"] = int(answer["epochs"])
 
     return answer
@@ -295,6 +300,7 @@ def main():
             config,
             custom=False,
             batch_size=parsed_answer.get("batch_size"),
+            shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
         )
     else:
@@ -303,6 +309,7 @@ def main():
             config,
             custom=True,
             batch_size=parsed_answer.get("batch_size"),
+            shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
         )
 
