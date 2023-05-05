@@ -123,6 +123,7 @@ def create_dataset(
     config: UNetPPConfig,
     output_layer_name_list: list,
     batch_size: int,
+    shuffle_size: int,
 ):
     """
     Creates a dictionary of datasets for training and validation splits by reading and parsing TFRecord files from
@@ -134,6 +135,7 @@ def create_dataset(
     - config (UNetPPConfig): An instance of the UNetPPConfig class containing the configuration parameters.
     - output_layer_name_list (list): A list of layer names to be used as output layers in the model.
     - batch_size (int): The size of each batch.
+    - shuffle_size (int): The size of shuffle buffer.
 
     Returns:
     - dataset_dict (dict): A dictionary containing the training and validation datasets, where the keys are "train" and "val",
@@ -142,13 +144,18 @@ def create_dataset(
 
     dataset_dict = {}
     for split in ["train", "val"]:
-        tfrecord_path = list(project_root_path.rglob(f"{split}.tfrecord"))[0]
+        tfrecord_path = list(project_root_path.rglob(f"{split}*.tfrecord"))[0]
+        tfrecord_path_pattern = tfrecord_path.parent / f"{split}*.tfrecord"
+        print(tf.data.Dataset.list_files(tfrecord_path_pattern.as_posix()))
         dataset_dict[split] = (
             tf.data.TFRecordDataset(
-                filenames=tfrecord_path, num_parallel_reads=tf.data.AUTOTUNE
+                filenames=tf.data.Dataset.list_files(tfrecord_path_pattern.as_posix()),
+                compression_type="GZIP",
+                num_parallel_reads=tf.data.AUTOTUNE,
             )
             .map(parsed_example_fn, num_parallel_calls=tf.data.AUTOTUNE)
             .map(partial(create_sample, config), num_parallel_calls=tf.data.AUTOTUNE)
+            .shuffle(shuffle_size)
             .batch(
                 batch_size,
                 num_parallel_calls=tf.data.AUTOTUNE,
@@ -157,6 +164,7 @@ def create_dataset(
                 partial(create_y_data, config, output_layer_name_list),
                 num_parallel_calls=tf.data.AUTOTUNE,
             )
+            .prefetch(tf.data.AUTOTUNE)
         )
 
     return dataset_dict
