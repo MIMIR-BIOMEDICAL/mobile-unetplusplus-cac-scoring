@@ -3,7 +3,7 @@ import keras.backend as K
 import tensorflow as tf
 
 
-def log_cosh_loss(y_true, y_pred):
+def log_cosh_dice_loss_func(y_true, y_pred):
     """
     An implementation of log cosh loss based on
     'A survey of loss functions for semantic segmentation'
@@ -26,5 +26,5 @@ def log_cosh_loss(y_true, y_pred):
     intersection = K.sum(y_true_f * y_pred_f)
     score = (2.0 * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
     dice_loss = 1 - score
-    log_cosh = tf.math.log((tf.exp(dice_loss) + tf.exp(-dice_loss)) / 2.0)
-    return log_cosh
+    log_cosh_dice_loss = tf.math.log((tf.exp(dice_loss) + tf.exp(-dice_loss)) / 2.0)
+    return log_cosh_dice_loss

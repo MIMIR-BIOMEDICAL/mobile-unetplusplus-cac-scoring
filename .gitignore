@@ -7,3 +7,5 @@ models/**
 # Cache
 .ipynb_checkpoints
 __pycache__
+
+serviceAccount.json
