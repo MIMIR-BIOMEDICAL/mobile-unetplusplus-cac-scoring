@@ -430,7 +430,8 @@ disable=raw-checker-failed,
         import-error,
         too-many-locals,
         too-many-instance-attributes,
-        dangerous-default-value
+        dangerous-default-value,
+        broad-exception-caught
         
         
 

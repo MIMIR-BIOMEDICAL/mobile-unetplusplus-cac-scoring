@@ -22,3 +22,6 @@ preprocess\:tfrecord:
 		
 train:
 	python src/models/train_model.py
+
+gcs-cli:
+	python src/data/gcs_cli.py
