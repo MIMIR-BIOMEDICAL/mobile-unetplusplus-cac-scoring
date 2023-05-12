@@ -6,7 +6,7 @@ authors = ["Aditya Wardianto <aditya.wardianto@zero-one-group.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.9.7 || >3.9.7,<3.11"
+python = ">=3.8,<3.9.7 || >3.9.7,<3.11"
 tensorflow = "^2.11.0"
 pydicom = "^2.3.1"
 numpy = "^1.23.5"
