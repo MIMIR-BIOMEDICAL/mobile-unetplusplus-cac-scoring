@@ -74,8 +74,11 @@ def train_model(
     batch_size: int,
     shuffle_size: int,
     epochs: int,
-    lost_function_list: list = [log_cosh_dice_loss_func, "categorical_crossentropy"],
-    metrics: list = ["acc"],
+    lost_function_list: list = [
+        log_cosh_dice_loss_func,
+        log_cosh_dice_loss_func,
+    ],
+    metrics=["acc"],
 ):
     """
     Train a model using the specified configuration.
@@ -103,13 +106,13 @@ def train_model(
     --------
     None
     """
-    print("Creating Model...")
+    print("[1] Creating Model...")
     # Create model
     model, model_layer_name = build_unet_pp(model_config, custom=custom)
-    print("Model Created")
+    print("--- Model Created")
 
     # Create Dataset
-    print("Loading Dataset...")
+    print("[2] Loading Dataset...")
     coca_dataset = create_dataset(
         project_root_path, model_config, model_layer_name, batch_size, shuffle_size
     )
@@ -117,26 +120,28 @@ def train_model(
     train_coca_dataset = coca_dataset["train"]
     val_coca_dataset = coca_dataset["val"]
 
-    print("Dataset Loaded")
+    print("--- Dataset Loaded")
     # Model Compilation and Training
 
-    print("Preparing Model for Training...")
+    print("[3] Preparing Model for Training...")
     loss_dict = loss_dict_gen(
         model_config,
         model_layer_name,
         lost_function_list,
     )
 
-    model.compile(optimizer="adam", loss=loss_dict, metrics=metrics)
+    model.compile(
+        optimizer=tf.keras.optimizers.legacy.Adam(), loss=loss_dict, metrics=metrics
+    )
 
     model_callback = SaveBestModel(model_config)
     history_callback = keras.callbacks.CSVLogger(
         f"models/{model_config.model_name}/history.csv"
     )
 
-    print("Model Prepared")
+    print("--- Model Prepared")
     try:
-        print("Start Model Training...")
+        print("[4] Start Model Training...")
         model.fit(
             x=train_coca_dataset,
             batch_size=batch_size,
@@ -144,15 +149,15 @@ def train_model(
             validation_data=val_coca_dataset,
             callbacks=[model_callback, history_callback],
         )
-        print("Training Finished")
-        print("Saving Latest Model...")
+        print("--- Training Finished")
+        print("--- Saving Latest Model...")
         model.save(f"models/{model_config.model_name}/model_epoch_latest.h5")
-        print("Latest Model Saved")
+        print("--- jLatest Model Saved")
     except KeyboardInterrupt:
-        print("Training Interrupted")
-        print("Saving Latest Model...")
+        print("--- Training Interrupted")
+        print("--- Saving Latest Model...")
         model.save(f"models/{model_config.model_name}/model_epoch_latest_interupted.h5")
-        print("Latest Model Saved")
+        print("--- Latest Model Saved")
 
 
 def start_prompt():
