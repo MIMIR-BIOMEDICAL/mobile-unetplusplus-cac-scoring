@@ -93,7 +93,7 @@ def create_sample(config: UNetPPConfig, features):
         2,  # axis,
     )
 
-    return preprocessed_img, bin_seg, mult_seg
+    return preprocessed_img, tf.cast(bin_seg, tf.float32), tf.cast(mult_seg, tf.float32)
 
 
 def create_y_data(config: UNetPPConfig, output_layer_name_list, x, y1, y2):
@@ -152,7 +152,6 @@ def create_dataset(
     for split in ["train", "val"]:
         tfrecord_path = list(project_root_path.rglob(f"{split}*.tfrecord"))[0]
         tfrecord_path_pattern = tfrecord_path.parent / f"{split}*.tfrecord"
-        print(tf.data.Dataset.list_files(tfrecord_path_pattern.as_posix()))
         dataset_dict[split] = (
             tf.data.TFRecordDataset(
                 filenames=tf.data.Dataset.list_files(tfrecord_path_pattern.as_posix()),

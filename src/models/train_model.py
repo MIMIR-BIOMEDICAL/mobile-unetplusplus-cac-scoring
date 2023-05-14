@@ -9,6 +9,7 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import inquirer
 import numpy as np
+import tensorflow as tf
 from tensorflow import keras
 
 sys.path.append(pathlib.Path.cwd().as_posix())
@@ -268,6 +269,18 @@ def main():
         None
 
     """
+
+    try:
+        tpu = tf.distribute.cluster_resolver.TPUClusterResolver()  # TPU detection
+    except ValueError:
+        tpu = None
+
+    if tpu:
+        policy = "mixed_bfloat16"
+    else:
+        policy = "mixed_float16"
+    tf.keras.mixed_precision.set_global_policy(policy)
+
     project_root_path = pathlib.Path.cwd()
 
     answer = start_prompt()

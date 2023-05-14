@@ -148,6 +148,7 @@ def base_unet_pp(config: UNetPPConfig):
                 name=layer_name,
                 padding="same",
                 activation=activation_dict.get(out_name, "sigmoid"),
+                dtype="float32",
             )(model_dict[f"0{node_num}"])
             output_lists.append(model_dict[f"output_{node_num}_{out_name}_c{nc}"])
             output_layer_name.append(layer_name)
