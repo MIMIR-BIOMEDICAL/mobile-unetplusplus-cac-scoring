@@ -152,7 +152,6 @@ def create_dataset(
     for split in ["train", "val"]:
         tfrecord_path = list(project_root_path.rglob(f"{split}*.tfrecord"))[0]
         tfrecord_path_pattern = tfrecord_path.parent / f"{split}*.tfrecord"
-        print(tf.data.Dataset.list_files(tfrecord_path_pattern.as_posix()))
         dataset_dict[split] = (
             tf.data.TFRecordDataset(
                 filenames=tf.data.Dataset.list_files(tfrecord_path_pattern.as_posix()),
