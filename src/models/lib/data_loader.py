@@ -93,7 +93,7 @@ def create_sample(config: UNetPPConfig, features):
         2,  # axis,
     )
 
-    return preprocessed_img, bin_seg, mult_seg
+    return preprocessed_img, tf.cast(bin_seg, tf.float32), tf.cast(mult_seg, tf.float32)
 
 
 def create_y_data(config: UNetPPConfig, output_layer_name_list, x, y1, y2):
