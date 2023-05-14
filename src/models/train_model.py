@@ -10,6 +10,7 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 import inquirer
 import numpy as np
 import tensorflow as tf
+from keras.utils.layer_utils import count_params
 from tensorflow import keras
 
 sys.path.append(pathlib.Path.cwd().as_posix())
@@ -69,6 +70,7 @@ class SaveBestModel(keras.callbacks.Callback):
 
 def train_model(
     project_root_path,
+    metadata: dict,
     model_config: UNetPPConfig,
     custom: bool,
     batch_size: int,
@@ -123,7 +125,16 @@ def train_model(
     print("--- Dataset Loaded")
     # Model Compilation and Training
 
-    print("[3] Preparing Model for Training...")
+    # Create model folder and save metadata
+    model_folder = project_root_path / "models" / metadata.get("model_name")
+    model_folder.mkdir(parents=True, exist_ok=True)
+
+    metadata["trainable_weights"] = count_params(model.trainable_weights)
+    metadata["non_trainable_weights"] = count_params(model.non_trainable_weights)
+    metadata["weights"] = count_params(model.weights)
+
+    (model_folder / "metadata.txt").write_text(json.dumps(metadata, indent=4))
+
     loss_dict = loss_dict_gen(
         model_config,
         model_layer_name,
@@ -292,11 +303,6 @@ def main():
 
     parsed_answer = prompt_parser(answer)
 
-    # Create model folder and save metadata
-    model_folder = project_root_path / "models" / parsed_answer.get("model_name")
-    model_folder.mkdir(parents=True, exist_ok=True)
-    (model_folder / "metadata.txt").write_text(json.dumps(parsed_answer, indent=4))
-
     # Create model configuration
     config = UNetPPConfig(
         model_name=parsed_answer.get("model_name"),
@@ -315,6 +321,7 @@ def main():
     if answer.get("use_default_config"):
         train_model(
             project_root_path,
+            parsed_answer,
             config,
             custom=False,
             batch_size=parsed_answer.get("batch_size"),
@@ -324,6 +331,7 @@ def main():
     else:
         train_model(
             project_root_path,
+            parsed_answer,
             config,
             custom=True,
             batch_size=parsed_answer.get("batch_size"),
