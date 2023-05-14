@@ -25,3 +25,7 @@ train:
 
 gcs-cli:
 	python src/data/gcs_cli.py
+
+gcs-cli-non:
+	python src/data/gcs_cli.py -n
+
