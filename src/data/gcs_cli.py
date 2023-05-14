@@ -1,5 +1,6 @@
 """CLI for gcs download and upload"""
 import os
+import sys
 
 import inquirer
 from google.cloud import storage
@@ -111,18 +112,24 @@ def download_from_gcs(credentials_obj, bucket_name, source_blob_name, local_file
 
 
 if __name__ == "__main__":
-    # Ask user for action
-    questions = [
-        inquirer.Text(
-            "creds_path", message="GCP Credentials path?", default="serviceAccount.json"
-        ),
-        inquirer.List(
-            "action",
-            message="What do you want to do?",
-            choices=["Upload", "Download"],
-        ),
-    ]
-    answer = inquirer.prompt(questions)
+    arg = sys.argv
+    if len(arg) == 2 and arg[1] == "-n":
+        answer = {"action": "Download", "creds_path": "serviceAccount.json"}
+    else:
+        # Ask user for action
+        questions = [
+            inquirer.Text(
+                "creds_path",
+                message="GCP Credentials path?",
+                default="serviceAccount.json",
+            ),
+            inquirer.List(
+                "action",
+                message="What do you want to do?",
+                choices=["Upload", "Download"],
+            ),
+        ]
+        answer = inquirer.prompt(questions)
 
     # Get credentials
     credentials = get_credentials(answer["creds_path"])
@@ -150,13 +157,21 @@ if __name__ == "__main__":
 
     # Download file from GCS
     elif answer["action"] == "Download":
-        # Ask for bucket name and file path
-        questions = [
-            inquirer.Text("bucket_name", message="Enter bucket name:"),
-            inquirer.Text("source_blob_name", message="Enter source blob name:"),
-            inquirer.Text("local_file_path", message="Enter local file path:"),
-        ]
-        answers = inquirer.prompt(questions)
+        if len(arg) == 2 and arg[1] == "-n":
+            answers = {
+                "bucket_name": "mobile-unet-bucket",
+                "source_blob_name": "dataset",
+                "local_file_path": "data/processed.tar.gz",
+            }
+
+        else:
+            # Ask for bucket name and file path
+            questions = [
+                inquirer.Text("bucket_name", message="Enter bucket name:"),
+                inquirer.Text("source_blob_name", message="Enter source blob name:"),
+                inquirer.Text("local_file_path", message="Enter local file path:"),
+            ]
+            answers = inquirer.prompt(questions)
 
         cli_bucket_name = answers["bucket_name"]
         cli_source_blob_name = answers["source_blob_name"]
