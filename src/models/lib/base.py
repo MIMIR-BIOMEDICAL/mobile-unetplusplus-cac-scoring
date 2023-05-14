@@ -85,7 +85,7 @@ def base_unet_pp(config: UNetPPConfig):
     for j in range(config.depth):
         for i in range(max(0, config.depth - j)):
             node_name = node_name_func(i, j)
-            print("Creating node ", node_name)
+            print(f"--- Creating model node {node_name}")
 
             if j == 0 and i != 0:
                 # Downsampling layer

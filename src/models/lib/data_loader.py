@@ -70,7 +70,7 @@ def create_sample(config: UNetPPConfig, features):
     mult_seg_indices = tf.subtract(features["mult_seg"], [[0, 0, 1]])
     mult_seg = tf.concat(
         [
-            bin_seg,
+            tf.cast(tf.where(bin_seg == 0, 1, 0), tf.float32),
             tf.reshape(
                 (
                     tf.sparse.to_dense(
