@@ -3,7 +3,9 @@ import pathlib
 import sys
 from typing import Callable, Dict, List, Union
 
+import numpy as np
 import tensorflow as tf
+from skimage.segmentation import flood_fill
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
@@ -129,3 +131,41 @@ def flood_fill_scanline(image, start_coord, new_value):
                     )  # Add neighboring pixels from the below row to the stack
 
     return image
+
+
+def fill_segmentation(segmentation, mode="skimage"):
+    """
+    Fill the segmentation using flood fill algorithm.
+
+    Args:
+        segmentation (tf.Tensor): Input segmentation as a 2D TensorFlow tensor.
+        mode (str): Mode for flood fill algorithm. Default is "skimage".
+
+    Returns:
+        tf.Tensor: Filled segmentation.
+
+    Raises:
+        ValueError: If an unsupported mode is provided.
+    """
+
+    squeeze_segmentation = tf.squeeze(segmentation)
+    # Convert to NumPy array
+    np_segmentation = squeeze_segmentation.numpy()
+    if mode == "skimage":
+        # Use flood_fill function from skimage
+        flood_filled_segmentation = flood_fill(
+            np_segmentation, (0, 0), 2, connectivity=1
+        )
+    elif mode == "scanline":
+        # Use custom scanline flood fill algorithm
+        flood_filled_segmentation = flood_fill_scanline(np_segmentation, (0, 0), 2)
+    else:
+        raise ValueError(f"Unsupported mode: {mode}")
+
+    flipped_segmentation = np.where(
+        flood_filled_segmentation == 2,
+        0,
+        np.where(flood_filled_segmentation == 0, 1, flood_filled_segmentation),
+    )
+
+    return tf.convert_to_tensor(flipped_segmentation, dtype=segmentation.dtype)
