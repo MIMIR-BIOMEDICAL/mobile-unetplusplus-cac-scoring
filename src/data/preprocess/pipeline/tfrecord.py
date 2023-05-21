@@ -19,6 +19,7 @@ from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-posi
     get_pos_from_bin_list,
     get_pos_from_mult_list,
     split_list,
+    fill_segmentation
 )
 
 
@@ -123,16 +124,30 @@ def combine_to_tfrecord(
                                         ),
                                     )
                                 ):
-                                    patient_dict["bin_seg"] = np.array(
+                                    raw_bin_seg = np.array(
                                         get_pos_from_bin_list(
                                             binary_seg_dict[patient_index], img_index
                                         )
                                     )
-                                    patient_dict["mult_seg"] = np.array(
+                                    raw_mult_seg = np.array(
                                         get_pos_from_mult_list(
                                             mult_seg_dict[patient_index], img_index
                                         )
                                     )
+
+                                    dense_bin = np.zeros((512,512))
+                                    dense_bin[tuple(zip(*raw_bin_seg))] = 1
+                                    flooded_bin = fill_segmentation(dense_bin)
+                                    patient_dict["bin_seg"] = np.argwhere(flooded_bin==1).tolist()
+                                    
+                                    dense_mult = np.zeros((512,512,5))
+                                    flooded_mult = np.zeros((512,512,5))
+                                    dense_mult[tuple(zip(*raw_mult_seg))] = 1
+                                    for i in range(1,5):
+                                        flooded_mult[:,:,i] = fill_segmentation(dense_mult[:,:,i])
+                                    patient_dict["mult_seg"] = np.argwhere(flooded_mult==1).tolist()
+
+                                    
                                     patient_dict["segment_val"] = np.ones(
                                         patient_dict["mult_seg"].shape[0]
                                     )
