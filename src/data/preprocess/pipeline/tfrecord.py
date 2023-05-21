@@ -143,7 +143,7 @@ def combine_to_tfrecord(
                                     dense_mult = np.zeros((512,512,5))
                                     flooded_mult = np.zeros((512,512,5))
                                     dense_mult[tuple(zip(*raw_mult_seg))] = 1
-                                    for i in range():
+                                    for i in range(1,5):
                                         flooded_mult[:,:,i] = fill_segmentation(dense_mult[:,:,i])
                                     patient_dict["mult_seg"] = np.argwhere(flooded_mult==1)
 
