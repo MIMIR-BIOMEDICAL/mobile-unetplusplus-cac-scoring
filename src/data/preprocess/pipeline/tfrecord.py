@@ -138,14 +138,14 @@ def combine_to_tfrecord(
                                     dense_bin = np.zeros((512,512))
                                     dense_bin[tuple(zip(*raw_bin_seg))] = 1
                                     flooded_bin = fill_segmentation(dense_bin)
-                                    patient_dict["bin_seg"] = np.argwhere(flooded_bin==1).tolist()
+                                    patient_dict["bin_seg"] = np.argwhere(flooded_bin==1)
                                     
                                     dense_mult = np.zeros((512,512,5))
                                     flooded_mult = np.zeros((512,512,5))
                                     dense_mult[tuple(zip(*raw_mult_seg))] = 1
-                                    for i in range(1,5):
+                                    for i in range():
                                         flooded_mult[:,:,i] = fill_segmentation(dense_mult[:,:,i])
-                                    patient_dict["mult_seg"] = np.argwhere(flooded_mult==1).tolist()
+                                    patient_dict["mult_seg"] = np.argwhere(flooded_mult==1)
 
                                     
                                     patient_dict["segment_val"] = np.ones(
