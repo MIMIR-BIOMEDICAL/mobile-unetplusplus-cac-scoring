@@ -76,3 +76,56 @@ def parse_list_string(list_string):
     out_list = list_string.split(",")
     out_list = [int(num) for num in out_list]
     return out_list
+
+
+def flood_fill_scanline(image, start_coord, new_value):
+    """
+    Performs flood fill using scanline algorithm on a 2D image.
+
+    Args:
+        image (numpy.ndarray): Input image as a 2D NumPy array.
+        start_coord (tuple): Starting coordinate (x, y) for flood fill.
+        new_value: Value to fill in the flooded area.
+
+    Returns:
+        numpy.ndarray: Flood-filled image.
+    """
+    rows, cols = image.shape
+    stack = [
+        (start_coord[0], start_coord[1])
+    ]  # Initialize the stack with the starting coordinate
+    start_value = image[
+        start_coord[0], start_coord[1]
+    ]  # Get the value at the starting coordinate
+
+    if start_value == new_value:
+        return image
+
+    while stack:
+        x, y = stack.pop()  # Pop the next coordinate from the stack
+        if image[x, y] != start_value:
+            continue  # Skip if the current pixel does not have the start value
+
+        left, right = y, y
+        while left >= 0 and image[x, left] == start_value:
+            left -= 1  # Find the left boundary of the flood area
+        while right < cols and image[x, right] == start_value:
+            right += 1  # Find the right boundary of the flood area
+
+        image[x, left + 1 : right] = new_value  # Fill the flood area with the new value
+
+        if x > 0:
+            for i in range(left + 1, right):
+                if image[x - 1, i] == start_value:
+                    stack.append(
+                        (x - 1, i)
+                    )  # Add neighboring pixels from the above row to the stack
+
+        if x < rows - 1:
+            for i in range(left + 1, right):
+                if image[x + 1, i] == start_value:
+                    stack.append(
+                        (x + 1, i)
+                    )  # Add neighboring pixels from the below row to the stack
+
+    return image
