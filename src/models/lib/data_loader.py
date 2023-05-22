@@ -4,7 +4,6 @@ import pathlib
 import sys
 from functools import partial
 
-from skimage import flood_fill
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
