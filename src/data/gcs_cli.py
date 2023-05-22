@@ -160,7 +160,7 @@ if __name__ == "__main__":
         if len(arg) == 2 and arg[1] == "-n":
             answers = {
                 "bucket_name": "mobile-unet-bucket",
-                "source_blob_name": "dataset",
+                "source_blob_name": "dataset_v2",
                 "local_file_path": "data/processed.tar.gz",
             }
 

@@ -68,29 +68,32 @@ def create_sample(config: UNetPPConfig, features):
     # Prepare multi-class segmentation tensor
     mult_seg_dim = (input_dims[0], input_dims[1], config.n_class["mult"] - 1)
     mult_seg_indices = tf.subtract(features["mult_seg"], [[0, 0, 1]])
+    # Convert bin_seg to mult_seg
+    bin_to_mult = tf.cast(tf.where(bin_seg == 0, 1, 0), tf.float32)
+
+    # Convert mult_seg_indices to dense mult_seg
+    converted_indices = tf.where(
+        tf.equal(mult_seg_indices, -1),
+        mult_seg_indices + 1,
+        mult_seg_indices,
+    )
+    dense_mult_seg = tf.sparse.to_dense(
+        tf.sparse.reorder(
+            tf.SparseTensor(
+                dense_shape=mult_seg_dim,
+                values=features["segment_val"],
+                indices=converted_indices,
+            )
+        )
+    )
+
+    # Concatenate bin_to_mult and dense_mult_seg along the last dimension
     mult_seg = tf.concat(
         [
-            tf.cast(tf.where(bin_seg == 0, 1, 0), tf.float32),
-            tf.reshape(
-                (
-                    tf.sparse.to_dense(
-                        tf.sparse.reorder(
-                            tf.SparseTensor(
-                                dense_shape=mult_seg_dim,
-                                values=features["segment_val"],
-                                indices=tf.where(
-                                    tf.equal(mult_seg_indices, -1),
-                                    mult_seg_indices + 1,
-                                    mult_seg_indices,
-                                ),
-                            )
-                        )
-                    ),
-                ),
-                [input_dims[0], input_dims[1], config.n_class["mult"] - 1],
-            ),
+            bin_to_mult,
+            tf.reshape(dense_mult_seg, mult_seg_dim),
         ],
-        2,  # axis,
+        axis=2,
     )
 
     return preprocessed_img, tf.cast(bin_seg, tf.float32), tf.cast(mult_seg, tf.float32)

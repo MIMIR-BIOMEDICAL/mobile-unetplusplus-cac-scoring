@@ -1,5 +1,6 @@
 """Module containing utility function for preprocessing"""
 import numpy as np
+from skimage.segmentation import flood_fill
 
 
 def string_to_int_tuple(string_input: str) -> list:
@@ -24,7 +25,7 @@ def string_to_int_tuple(string_input: str) -> list:
     return tuple(out_list)
 
 
-def artery_loc_to_abbr(string_input: str) -> str | None:
+def artery_loc_to_abbr(string_input: str):
     """
     Convert string artery location into its abbreviation, will
     return None if not found in conversion dict
@@ -333,6 +334,96 @@ def train_test_val_split(input_list, split, random_seed=811):
         "val": val_data,
         "test": test_data,
     }
+
+
+def flood_fill_scanline(image, start_coord, new_value):
+    """
+    Performs flood fill using scanline algorithm on a 2D image.
+
+    Args:
+        image (numpy.ndarray): Input image as a 2D NumPy array.
+        start_coord (tuple): Starting coordinate (x, y) for flood fill.
+        new_value: Value to fill in the flooded area.
+
+    Returns:
+        numpy.ndarray: Flood-filled image.
+    """
+    rows, cols = image.shape
+    stack = [
+        (start_coord[0], start_coord[1])
+    ]  # Initialize the stack with the starting coordinate
+    start_value = image[
+        start_coord[0], start_coord[1]
+    ]  # Get the value at the starting coordinate
+
+    if start_value == new_value:
+        return image
+
+    while stack:
+        x, y = stack.pop()  # Pop the next coordinate from the stack
+        if image[x, y] != start_value:
+            continue  # Skip if the current pixel does not have the start value
+
+        left, right = y, y
+        while left >= 0 and image[x, left] == start_value:
+            left -= 1  # Find the left boundary of the flood area
+        while right < cols and image[x, right] == start_value:
+            right += 1  # Find the right boundary of the flood area
+
+        image[x, left + 1 : right] = new_value  # Fill the flood area with the new value
+
+        if x > 0:
+            for i in range(left + 1, right):
+                if image[x - 1, i] == start_value:
+                    stack.append(
+                        (x - 1, i)
+                    )  # Add neighboring pixels from the above row to the stack
+
+        if x < rows - 1:
+            for i in range(left + 1, right):
+                if image[x + 1, i] == start_value:
+                    stack.append(
+                        (x + 1, i)
+                    )  # Add neighboring pixels from the below row to the stack
+
+    return image
+
+
+def fill_segmentation(segmentation, mode="skimage"):
+    """
+    Fill the segmentation using flood fill algorithm.
+
+    Args:
+        segmentation (np.array): Input segmentation as a 2D numpy tensor.
+        mode (str): Mode for flood fill algorithm. Default is "skimage".
+
+    Returns:
+        np.array: Filled segmentation.
+
+    Raises:
+        ValueError: If an unsupported mode is provided.
+    """
+
+    squeeze_segmentation = np.squeeze(segmentation)
+
+    if mode == "skimage":
+        # Use flood_fill function from skimage
+        flood_filled_segmentation = flood_fill(
+            squeeze_segmentation, (0, 0), 2, connectivity=1
+        )
+    elif mode == "scanline":
+        # Use custom scanline flood fill algorithm
+        flood_filled_segmentation = flood_fill_scanline(squeeze_segmentation, (0, 0), 2)
+    else:
+        raise ValueError(f"Unsupported mode: {mode}")
+
+    flipped_segmentation = np.where(
+        flood_filled_segmentation == 2,
+        0,
+        np.where(flood_filled_segmentation == 0, 1, flood_filled_segmentation),
+    )
+
+    return flipped_segmentation
 
 
 def get_pos_from_bin_list(bin_list, idx):
