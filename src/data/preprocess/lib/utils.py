@@ -25,7 +25,7 @@ def string_to_int_tuple(string_input: str) -> list:
     return tuple(out_list)
 
 
-def artery_loc_to_abbr(string_input: str) :
+def artery_loc_to_abbr(string_input: str):
     """
     Convert string artery location into its abbreviation, will
     return None if not found in conversion dict
@@ -335,6 +335,7 @@ def train_test_val_split(input_list, split, random_seed=811):
         "test": test_data,
     }
 
+
 def flood_fill_scanline(image, start_coord, new_value):
     """
     Performs flood fill using scanline algorithm on a 2D image.
@@ -404,7 +405,7 @@ def fill_segmentation(segmentation, mode="skimage"):
     """
 
     squeeze_segmentation = np.squeeze(segmentation)
-    
+
     if mode == "skimage":
         # Use flood_fill function from skimage
         flood_filled_segmentation = flood_fill(
@@ -423,6 +424,7 @@ def fill_segmentation(segmentation, mode="skimage"):
     )
 
     return flipped_segmentation
+
 
 def get_pos_from_bin_list(bin_list, idx):
     """
