@@ -5,7 +5,6 @@ from typing import Callable, Dict, List, Union
 
 import numpy as np
 import tensorflow as tf
-from skimage.segmentation import flood_fill
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
