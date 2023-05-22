@@ -25,7 +25,7 @@ def string_to_int_tuple(string_input: str) -> list:
     return tuple(out_list)
 
 
-def artery_loc_to_abbr(string_input: str) -> str | None:
+def artery_loc_to_abbr(string_input: str) :
     """
     Convert string artery location into its abbreviation, will
     return None if not found in conversion dict
