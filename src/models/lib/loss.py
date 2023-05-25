@@ -19,7 +19,7 @@ def generalized_dice_coefficient(y_true, y_pred):
     intersection=K.sum(y_true_f * y_pred_f)
     denom = K.sum(y_true_f + y_pred_f)
 
-    score = K.mean((2. * intersection) / (denom + smooth))
+    score = (2. * intersection) / (denom + smooth)
     return score
 
 def dice_loss( y_true, y_pred):
