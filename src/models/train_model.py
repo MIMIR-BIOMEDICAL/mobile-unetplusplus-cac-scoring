@@ -162,7 +162,7 @@ def train_model(
         print("--- Training Finished")
         print("--- Saving Latest Model...")
         model.save(f"models/{model_config.model_name}/model_epoch_latest.h5")
-        print("--- jLatest Model Saved")
+        print("--- Latest Model Saved")
     except KeyboardInterrupt:
         print("--- Training Interrupted")
         print("--- Saving Latest Model...")
