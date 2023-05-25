@@ -3,23 +3,13 @@ import keras.backend as K
 import tensorflow as tf
 
 
-def generalized_dice_coefficient_basic( y_true, y_pred):
-    smooth = 1.
+def generalized_dice_coefficient( y_true, y_pred):
+    smooth = 1e-7
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
     intersection=K.sum(y_true_f * y_pred_f, axis=-1)
     denom = K.sum(y_true_f + y_pred_f, axis=-1)
     score = (2. * intersection + smooth) / (denom + smooth)
-    return score
-
-def generalized_dice_coefficient(y_true, y_pred):
-    smooth = 1.
-    y_true_f = K.flatten(y_true[...,1:])
-    y_pred_f = K.flatten(y_pred[...,1:])
-    intersection=K.sum(y_true_f * y_pred_f)
-    denom = K.sum(y_true_f + y_pred_f)
-
-    score = (2. * intersection) / (denom + smooth)
     return score
 
 def dice_loss( y_true, y_pred):
