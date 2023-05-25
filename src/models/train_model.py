@@ -78,7 +78,6 @@ def train_model(
     epochs: int,
     lost_function_list: list = [
         log_cosh_dice_loss_func,
-        log_cosh_dice_loss_func,
     ],
     metrics=["acc"],
 ):
@@ -185,7 +184,7 @@ def start_prompt():
         inquirer.List(
             "model_mode",
             message="Model Mode",
-            choices=["basic", "mobile"],
+            choices=["basic", "mobile","sanity_check"],
             default="mobile",
         ),
         inquirer.Confirm(
@@ -304,6 +303,30 @@ def main():
     parsed_answer = prompt_parser(answer)
 
     # Create model configuration
+    if answer.get("model_mode") == "sanity_check":
+        config = UNetPPConfig(
+            model_name=parsed_answer.get("model_name"),
+            upsample_mode= "upsample",
+            depth=3,
+            input_dim= [512, 512, 1],
+            batch_norm= True,
+            model_mode="mobile",
+            n_class={"mult": 5},
+            deep_supervision= True,
+            filter_list=[2,2 ,2],
+            downsample_iteration= [1, 1, 1],
+        )
+        train_model(
+            project_root_path,
+            parsed_answer,
+            config,
+            custom=True,
+            batch_size=parsed_answer.get("batch_size"),
+            shuffle_size=parsed_answer.get("shuffle_size"),
+            epochs=parsed_answer.get("epochs"),
+        )
+        return
+        
     config = UNetPPConfig(
         model_name=parsed_answer.get("model_name"),
         upsample_mode=parsed_answer.get("upsample", "upsample"),
@@ -328,6 +351,7 @@ def main():
             shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
         )
+        return
     else:
         train_model(
             project_root_path,

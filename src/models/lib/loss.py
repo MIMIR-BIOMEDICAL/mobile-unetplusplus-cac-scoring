@@ -3,7 +3,20 @@ import keras.backend as K
 import tensorflow as tf
 
 
-def log_cosh_dice_loss_func(y_true, y_pred):
+def generalized_dice_coefficient( y_true, y_pred):
+        smooth = 1.
+        y_true_f = K.flatten(y_true)
+        y_pred_f = K.flatten(y_pred)
+        intersection = K.sum(y_true_f * y_pred_f)
+        score = (2. * intersection + smooth) / (
+                K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+        return score
+
+def dice_loss( y_true, y_pred):
+    loss = 1 - generalized_dice_coefficient(y_true, y_pred)
+    return loss
+    
+def log_cosh_dice_loss_func( y_true, y_pred):
     """
     An implementation of log cosh loss based on
     'A survey of loss functions for semantic segmentation'
@@ -20,11 +33,5 @@ def log_cosh_dice_loss_func(y_true, y_pred):
     Returns:
 
     """
-    smooth = 1.0
-    y_true_f = K.flatten(y_true)
-    y_pred_f = K.flatten(y_pred)
-    intersection = K.sum(y_true_f * y_pred_f)
-    score = (2.0 * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
-    dice_loss = 1 - score
-    log_cosh_dice_loss = tf.math.log((tf.exp(dice_loss) + tf.exp(-dice_loss)) / 2.0)
-    return log_cosh_dice_loss
+    x = dice_loss(y_true, y_pred)
+    return tf.math.log((tf.exp(x) + tf.exp(-x)) / 2.0)

@@ -3,7 +3,6 @@ import pathlib
 import sys
 from typing import Callable, Dict, List, Union
 
-import numpy as np
 import tensorflow as tf
 
 sys.path.append(pathlib.Path.cwd().as_posix())
