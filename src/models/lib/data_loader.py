@@ -135,7 +135,7 @@ def create_dataset(
     """
 
     dataset_dict = {}
-    for split in ["train", "val"]:
+    for split in ["train", "val","test"]:
         tfrecord_path = list(project_root_path.rglob(f"{split}*.tfrecord"))[0]
         tfrecord_path_pattern = tfrecord_path.parent / f"{split}*.tfrecord"
         dataset = (

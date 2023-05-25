@@ -120,6 +120,7 @@ def train_model(
 
     train_coca_dataset = coca_dataset["train"]
     val_coca_dataset = coca_dataset["val"]
+    test_coca_dataset = coca_dataset["test"]
 
     print("--- Dataset Loaded")
     # Model Compilation and Training
@@ -163,11 +164,15 @@ def train_model(
         print("--- Saving Latest Model...")
         model.save(f"models/{model_config.model_name}/model_epoch_latest.h5")
         print("--- Latest Model Saved")
+        print("--- [5] Evaluate on test dataset")
+        model.evaluate(test_coca_dataset)
     except KeyboardInterrupt:
         print("--- Training Interrupted")
         print("--- Saving Latest Model...")
         model.save(f"models/{model_config.model_name}/model_epoch_latest_interupted.h5")
         print("--- Latest Model Saved")
+        print("--- [5] Evaluate on test dataset")
+        model.evaluate(test_coca_dataset)
 
 
 def start_prompt():
