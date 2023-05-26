@@ -79,7 +79,13 @@ def train_model(
     lost_function_list: list = [
         asym_unified_focal_loss(),
     ],
-    metrics=[dice_coef()],
+    metrics=[
+        dice_coef(),
+        tf.keras.metrics.Accuracy(),
+        tf.keras.metrics.MeanIoU(num_classes=5,ignore_class=0),
+        tf.keras.metrics.Recall(),
+        tf.keras.metrics.Precision()
+    ],
 ):
     """
     Train a model using the specified configuration.
