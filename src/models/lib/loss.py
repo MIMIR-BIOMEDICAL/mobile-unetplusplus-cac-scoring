@@ -69,7 +69,7 @@ def asymmetric_focal_loss(delta=0.7, gamma=2.):
         fore_ce = cross_entropy[:,:,:,1:]
         fore_ce = delta * fore_ce
 
-        loss = K.mean(K.sum(tf.stack([back_ce, fore_ce],axis=-1),axis=-1))
+        loss = K.mean(K.sum(tf.concat([back_ce, fore_ce],axis=-1),axis=-1))
 
         return loss
 
@@ -104,7 +104,7 @@ def asymmetric_focal_tversky_loss(delta=0.7, gamma=0.75):
         fore_dice = (1-dice_class[:,1:]) * K.pow(1-dice_class[:,1:], -gamma) 
 
         # Average class scores
-        loss = K.mean(tf.stack([back_dice,fore_dice],axis=-1))
+        loss = K.mean(tf.concat([back_dice,fore_dice],axis=-1))
         return loss
 
     return loss_function
