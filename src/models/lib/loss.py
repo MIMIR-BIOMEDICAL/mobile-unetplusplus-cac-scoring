@@ -85,7 +85,7 @@ def dice_coef(delta = 0.5, smooth = 0.000001):
     smooth : float, optional
         smoothing constant to prevent division by zero errors, by default 0.000001
     """
-    def loss_function(y_true, y_pred):
+    def dice_coefficient(y_true, y_pred):
         axis = identify_axis(y_true.get_shape())
         # Calculate true positives (tp), false negatives (fn) and false positives (fp)   
         tp = K.sum(y_true * y_pred, axis=axis)
@@ -97,7 +97,7 @@ def dice_coef(delta = 0.5, smooth = 0.000001):
 
         return dice
 
-    return loss_function
+    return dice_coefficient
 
 ################################
 #          Combo loss          #
