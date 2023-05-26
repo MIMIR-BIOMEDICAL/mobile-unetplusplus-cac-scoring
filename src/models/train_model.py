@@ -121,7 +121,7 @@ def train_model(
     # Create Dataset
     print("[2] Loading Dataset...")
     coca_dataset = create_dataset(
-        project_root_path, model_config, model_layer_name, batch_size, shuffle_size
+        project_root_path, model_config, batch_size, shuffle_size
     )
 
     train_coca_dataset = coca_dataset["train"]

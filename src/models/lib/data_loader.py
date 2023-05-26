@@ -113,7 +113,6 @@ def create_y_data(config: UNetPPConfig, x, y):
 def create_dataset(
     project_root_path: pathlib.Path,
     config: UNetPPConfig,
-    output_layer_name_list: list,
     batch_size: int,
     shuffle_size: int,
 ):
