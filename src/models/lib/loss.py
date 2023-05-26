@@ -1,4 +1,4 @@
-"""Module for log cosh loss"""
+"""Module for unified focal loss from https://github.com/mlyg/unified-focal-loss"""
 from tensorflow.keras import backend as K
 import numpy as np
 import tensorflow as tf
