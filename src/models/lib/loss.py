@@ -65,7 +65,6 @@ def asymmetric_focal_loss(delta=0.7, gamma=2.):
         #calculate losses separately for each class, only suppressing background class
         back_ce = K.pow(1 - y_pred[:,:,:,0], gamma) * cross_entropy[:,:,:,0]
         back_ce =  (1 - delta) * back_ce
-        print(f"fl = {cross_entropy.get_shape()}")
 
         fore_ce = cross_entropy[:,:,:,1:]
         fore_ce = delta * fore_ce
@@ -99,11 +98,10 @@ def asymmetric_focal_tversky_loss(delta=0.7, gamma=0.75):
         fn = K.sum(y_true * (1-y_pred), axis=axis)
         fp = K.sum((1-y_true) * y_pred, axis=axis)
         dice_class = (tp + epsilon)/(tp + delta*fn + (1-delta)*fp + epsilon)
-        print(f"ftl = {dice_class.get_shape()}")
 
         #calculate losses separately for each class, only enhancing foreground class
         back_dice = (1-dice_class[:,0]) 
-        fore_dice = (1-dice_class[:,1:]) * K.pow(1-dice_class[:,1], -gamma) 
+        fore_dice = (1-dice_class[:,1:]) * K.pow(1-dice_class[:,1:], -gamma) 
 
         # Average class scores
         loss = K.mean(tf.stack([back_dice,fore_dice],axis=-1))
