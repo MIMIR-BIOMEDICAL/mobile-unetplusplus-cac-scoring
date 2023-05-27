@@ -45,29 +45,24 @@ def create_sample(config: UNetPPConfig, features):
     input_dims = config.input_dim
 
     # Preprocess input image
-    preprocessed_img = tf.reshape(
-        preprocess_img(features["img"]),
-        [input_dims[0], input_dims[1], input_dims[2]],
-    )
+    preprocessed_img = preprocess_img(features["img"])
+    preprocessed_img = tf.reshape(preprocessed_img, input_dims)
 
     # Prepare binary segmentation tensor
     bin_seg_dim = (input_dims[0], input_dims[1])
-    bin_seg = tf.reshape(
-        tf.sparse.to_dense(
-            tf.sparse.reorder(
-                tf.SparseTensor(
-                    dense_shape=bin_seg_dim,
-                    values=features["segment_val"],
-                    indices=features["bin_seg"],
-                )
-            )
-        ),
-        [input_dims[0], input_dims[1], 1],
+    bin_seg = tf.SparseTensor(
+        dense_shape=bin_seg_dim,
+        values=features["segment_val"],
+        indices=features["bin_seg"],
     )
+    bin_seg = tf.sparse.reorder(bin_seg)
+    bin_seg = tf.sparse.to_dense(bin_seg)
+    bin_seg = tf.reshape(bin_seg, [input_dims[0], input_dims[1], 1])
 
     # Prepare multi-class segmentation tensor
     mult_seg_dim = (input_dims[0], input_dims[1], config.n_class["mult"] - 1)
     mult_seg_indices = tf.subtract(features["mult_seg"], [[0, 0, 1]])
+
     # Convert bin_seg to mult_seg
     bin_to_mult = tf.cast(tf.where(bin_seg == 0, 1, 0), tf.float32)
 
@@ -77,15 +72,13 @@ def create_sample(config: UNetPPConfig, features):
         mult_seg_indices + 1,
         mult_seg_indices,
     )
-    dense_mult_seg = tf.sparse.to_dense(
-        tf.sparse.reorder(
-            tf.SparseTensor(
-                dense_shape=mult_seg_dim,
-                values=features["segment_val"],
-                indices=converted_indices,
-            )
-        )
+    dense_mult_seg = tf.SparseTensor(
+        dense_shape=mult_seg_dim,
+        values=features["segment_val"],
+        indices=converted_indices,
     )
+    dense_mult_seg = tf.sparse.reorder(dense_mult_seg)
+    dense_mult_seg = tf.sparse.to_dense(dense_mult_seg)
 
     # Concatenate bin_to_mult and dense_mult_seg along the last dimension
     mult_seg = tf.concat(
@@ -96,41 +89,32 @@ def create_sample(config: UNetPPConfig, features):
         axis=2,
     )
 
-    return preprocessed_img, tf.cast(bin_seg, tf.float32), tf.cast(mult_seg, tf.float32)
+    return preprocessed_img, tf.cast(mult_seg, tf.float32)
 
 
-def create_y_data(config: UNetPPConfig, output_layer_name_list, x, y1, y2):
+def create_y_data(config: UNetPPConfig, x, y):
     """
     Creates the target data for training the neural network based on the provided configuration and input data.
 
     Args:
         config (UNetPPConfig): The configuration object for the UNet++ model.
-        output_layer_name_list (list): The list of output layer names.
         x: The input data.
-        y1: The binary segmentation data.
-        y2: The multiclass segmentation data.
+        y: The multiclass segmentation data.
 
     Returns:
         tuple: A tuple containing the input data and the target data.
 
     """
     if config.deep_supervision:
-        y_list = [y1 for i in range(config.depth - 1)] + [
-            y2 for i in range(config.depth - 1)
-        ]
+        y_copies = tuple(tf.identity(y) for _ in range(config.depth - 1))
+        return x, y_copies
 
-        y_dict = {}
-        for layer_name, y in zip(output_layer_name_list, y_list):
-            y_dict[layer_name] = y
-        return x, y_dict
-
-    return x, (y1, y2)
+    return x, y
 
 
 def create_dataset(
     project_root_path: pathlib.Path,
     config: UNetPPConfig,
-    output_layer_name_list: list,
     batch_size: int,
     shuffle_size: int,
 ):
@@ -152,10 +136,10 @@ def create_dataset(
     """
 
     dataset_dict = {}
-    for split in ["train", "val"]:
+    for split in ["train", "val", "test"]:
         tfrecord_path = list(project_root_path.rglob(f"{split}*.tfrecord"))[0]
         tfrecord_path_pattern = tfrecord_path.parent / f"{split}*.tfrecord"
-        dataset_dict[split] = (
+        dataset = (
             tf.data.TFRecordDataset(
                 filenames=tf.data.Dataset.list_files(tfrecord_path_pattern.as_posix()),
                 compression_type="GZIP",
@@ -169,10 +153,11 @@ def create_dataset(
                 num_parallel_calls=tf.data.AUTOTUNE,
             )
             .map(
-                partial(create_y_data, config, output_layer_name_list),
+                partial(create_y_data, config),
                 num_parallel_calls=tf.data.AUTOTUNE,
             )
             .prefetch(tf.data.AUTOTUNE)
         )
+        dataset_dict[split] = dataset
 
     return dataset_dict

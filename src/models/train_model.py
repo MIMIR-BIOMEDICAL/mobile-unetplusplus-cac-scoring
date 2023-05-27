@@ -17,7 +17,7 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
-from src.models.lib.loss import log_cosh_dice_loss_func
+from src.models.lib.loss import asym_unified_focal_loss, dice_coef
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
 
@@ -77,10 +77,15 @@ def train_model(
     shuffle_size: int,
     epochs: int,
     lost_function_list: list = [
-        log_cosh_dice_loss_func,
-        log_cosh_dice_loss_func,
+        asym_unified_focal_loss(),
     ],
-    metrics=["acc"],
+    metrics=[
+        dice_coef(),
+        tf.keras.metrics.Accuracy(),
+        tf.keras.metrics.MeanIoU(num_classes=5, ignore_class=0),
+        tf.keras.metrics.Recall(),
+        tf.keras.metrics.Precision(),
+    ],
 ):
     """
     Train a model using the specified configuration.
@@ -116,11 +121,12 @@ def train_model(
     # Create Dataset
     print("[2] Loading Dataset...")
     coca_dataset = create_dataset(
-        project_root_path, model_config, model_layer_name, batch_size, shuffle_size
+        project_root_path, model_config, batch_size, shuffle_size
     )
 
     train_coca_dataset = coca_dataset["train"]
     val_coca_dataset = coca_dataset["val"]
+    test_coca_dataset = coca_dataset["test"]
 
     print("--- Dataset Loaded")
     # Model Compilation and Training
@@ -163,12 +169,16 @@ def train_model(
         print("--- Training Finished")
         print("--- Saving Latest Model...")
         model.save(f"models/{model_config.model_name}/model_epoch_latest.h5")
-        print("--- jLatest Model Saved")
+        print("--- Latest Model Saved")
+        print("--- [5] Evaluate on test dataset")
+        model.evaluate(test_coca_dataset)
     except KeyboardInterrupt:
         print("--- Training Interrupted")
         print("--- Saving Latest Model...")
         model.save(f"models/{model_config.model_name}/model_epoch_latest_interupted.h5")
         print("--- Latest Model Saved")
+        print("--- [5] Evaluate on test dataset")
+        model.evaluate(test_coca_dataset)
 
 
 def start_prompt():
@@ -185,7 +195,7 @@ def start_prompt():
         inquirer.List(
             "model_mode",
             message="Model Mode",
-            choices=["basic", "mobile"],
+            choices=["basic", "mobile", "sanity_check"],
             default="mobile",
         ),
         inquirer.Confirm(
@@ -304,6 +314,30 @@ def main():
     parsed_answer = prompt_parser(answer)
 
     # Create model configuration
+    if answer.get("model_mode") == "sanity_check":
+        config = UNetPPConfig(
+            model_name=parsed_answer.get("model_name"),
+            upsample_mode="upsample",
+            depth=3,
+            input_dim=[512, 512, 1],
+            batch_norm=True,
+            model_mode="mobile",
+            n_class={"mult": 5},
+            deep_supervision=True,
+            filter_list=[2, 2, 2],
+            downsample_iteration=[1, 1, 1],
+        )
+        train_model(
+            project_root_path,
+            parsed_answer,
+            config,
+            custom=True,
+            batch_size=parsed_answer.get("batch_size"),
+            shuffle_size=parsed_answer.get("shuffle_size"),
+            epochs=parsed_answer.get("epochs"),
+        )
+        return
+
     config = UNetPPConfig(
         model_name=parsed_answer.get("model_name"),
         upsample_mode=parsed_answer.get("upsample", "upsample"),
@@ -328,6 +362,7 @@ def main():
             shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
         )
+        return
     else:
         train_model(
             project_root_path,
