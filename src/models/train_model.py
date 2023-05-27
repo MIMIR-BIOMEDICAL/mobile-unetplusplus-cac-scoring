@@ -82,9 +82,9 @@ def train_model(
     metrics=[
         dice_coef(),
         tf.keras.metrics.Accuracy(),
-        tf.keras.metrics.MeanIoU(num_classes=5,ignore_class=0),
+        tf.keras.metrics.MeanIoU(num_classes=5, ignore_class=0),
         tf.keras.metrics.Recall(),
-        tf.keras.metrics.Precision()
+        tf.keras.metrics.Precision(),
     ],
 ):
     """
@@ -195,7 +195,7 @@ def start_prompt():
         inquirer.List(
             "model_mode",
             message="Model Mode",
-            choices=["basic", "mobile","sanity_check"],
+            choices=["basic", "mobile", "sanity_check"],
             default="mobile",
         ),
         inquirer.Confirm(
@@ -317,15 +317,15 @@ def main():
     if answer.get("model_mode") == "sanity_check":
         config = UNetPPConfig(
             model_name=parsed_answer.get("model_name"),
-            upsample_mode= "upsample",
+            upsample_mode="upsample",
             depth=3,
-            input_dim= [512, 512, 1],
-            batch_norm= True,
+            input_dim=[512, 512, 1],
+            batch_norm=True,
             model_mode="mobile",
             n_class={"mult": 5},
-            deep_supervision= True,
-            filter_list=[2,2 ,2],
-            downsample_iteration= [1, 1, 1],
+            deep_supervision=True,
+            filter_list=[2, 2, 2],
+            downsample_iteration=[1, 1, 1],
         )
         train_model(
             project_root_path,
@@ -337,7 +337,7 @@ def main():
             epochs=parsed_answer.get("epochs"),
         )
         return
-        
+
     config = UNetPPConfig(
         model_name=parsed_answer.get("model_name"),
         upsample_mode=parsed_answer.get("upsample", "upsample"),

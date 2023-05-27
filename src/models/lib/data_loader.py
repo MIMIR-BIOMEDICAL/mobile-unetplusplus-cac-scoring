@@ -29,6 +29,7 @@ def preprocess_img(image):
         tf.reduce_max(image) - tf.reduce_min(image)
     )
 
+
 def create_sample(config: UNetPPConfig, features):
     """
     Creates a sample by preprocessing the input image and generating corresponding target segmentation.
@@ -110,6 +111,7 @@ def create_y_data(config: UNetPPConfig, x, y):
 
     return x, y
 
+
 def create_dataset(
     project_root_path: pathlib.Path,
     config: UNetPPConfig,
@@ -134,7 +136,7 @@ def create_dataset(
     """
 
     dataset_dict = {}
-    for split in ["train", "val","test"]:
+    for split in ["train", "val", "test"]:
         tfrecord_path = list(project_root_path.rglob(f"{split}*.tfrecord"))[0]
         tfrecord_path_pattern = tfrecord_path.parent / f"{split}*.tfrecord"
         dataset = (
