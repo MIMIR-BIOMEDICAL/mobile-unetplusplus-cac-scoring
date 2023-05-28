@@ -4,6 +4,8 @@ import sys
 
 import numpy as np
 
+from src.data.preprocess.lib.utils import convert_num_to_abr
+
 sys.path.append(pathlib.Path.cwd().as_posix())
 
 
@@ -54,7 +56,8 @@ def ccl(img):
 
                     for neighbour in neighbours[non_zero_indices]:
                         if neighbour != min_label:
-                            hash_map.setdefault(min_label, []).append(neighbour)
+                            hash_map.setdefault(
+                                min_label, []).append(neighbour)
                             hash_map[min_label] = np.unique(
                                 hash_map[min_label]
                             ).tolist()
@@ -84,3 +87,100 @@ def ccl(img):
     count = len(np.unique(padded_img))
 
     return count, padded_img[1:-1, 1:-1]
+
+
+def get_lesion_dict(lesion_labels, lesion_stats):
+    """
+    Create a dictionary of lesion information from the labeled image and statistics.
+
+    Args:
+        lesion_labels (numpy.ndarray): Labeled image obtained from connected component labeling.
+        lesion_stats (numpy.ndarray): Statistics obtained from connected component labeling.
+
+    Returns:
+        dict: Dictionary containing lesion information with lesion index as keys.
+              Each entry in the dictionary has 'loc' and 'stats' attributes.
+              'loc' contains the coordinates of the lesion pixels.
+              'stats' contains the statistics of the lesion.
+
+    Note:
+        This function is designed to work with the output of cv2.connectedComponentsWithStats() function in OpenCV.
+    """
+    lesion_dict = {}
+    for index, stat in enumerate(lesion_stats):
+        # Skip the background (index 0)
+        if index == 0:
+            continue
+        lesion_dict[index] = {
+            "loc": np.argwhere(lesion_labels == index),
+            "stats": stat,
+        }
+
+    return lesion_dict
+
+
+def assign_lesion_type(prediction, lesion_dict):
+    """
+    Assign lesion types based on the prediction values to the lesion dictionary.
+
+    Args:
+        prediction (numpy.ndarray): 1D array containing the predicted values for lesion pixels.
+        lesion_dict (dict): Dictionary containing lesion information.
+
+    Returns:
+        dict: Updated lesion dictionary with assigned lesion types.
+
+    Note:
+        The prediction array should have the same length as the number of lesion pixels in the lesion dictionary.
+
+    """
+    for index, lesion in lesion_dict.items():
+        lesion_prediction = prediction[tuple(zip(*lesion["loc"]))]
+        unique, count = np.unique(lesion_prediction, return_counts=True)
+        lesion_dict[index]["type"] = unique[np.argmax(count)]
+    return lesion_dict
+
+
+def agatston(image_hu, lesion_dict, spacing_pair):
+    """
+    Calculate Agatston scores for lesions based on Hounsfield Unit (HU) values.
+
+    Args:
+        image_hu (numpy.ndarray): 2D array of Hounsfield Unit (HU) values.
+        lesion_dict (dict): Dictionary containing lesion information.
+        spacing_pair (tuple): Pair of values representing pixel spacing in millimeters.
+
+    Returns:
+        dict: Dictionary containing Agatston scores for each lesion type, as well as the total Agatston score.
+
+    Note:
+        The image_hu should be in raw format, without any preprocessing applied.
+
+    """
+    agatston_dict = {}
+    for lesion in lesion_dict.values():
+        # find max attenuation
+        max_att = np.max(image_hu[tuple(zip(*lesion["loc"]))])
+
+        # get weight
+        if max_att < 130:
+            w = 0
+        elif 130 <= max_att < 200:
+            w = 1
+        elif 200 <= max_att < 300:
+            w = 2
+        elif 300 <= max_att < 400:
+            w = 3
+        else:
+            w = 4
+
+        # find area
+        square_area = spacing_pair[0] * spacing_pair[1]
+        area = square_area * lesion["loc"].shape[0]
+
+        score = area * w
+        abbr = convert_num_to_abr(lesion["type"])
+        agatston_dict[abbr] = agatston_dict.get(abbr, 0) + score
+
+    agatston_dict["total"] = np.sum(list(agatston_dict.values()))
+    return agatston_dict
