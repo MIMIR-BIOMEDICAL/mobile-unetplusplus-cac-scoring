@@ -56,8 +56,7 @@ def ccl(img):
 
                     for neighbour in neighbours[non_zero_indices]:
                         if neighbour != min_label:
-                            hash_map.setdefault(
-                                min_label, []).append(neighbour)
+                            hash_map.setdefault(min_label, []).append(neighbour)
                             hash_map[min_label] = np.unique(
                                 hash_map[min_label]
                             ).tolist()
