@@ -89,13 +89,12 @@ def ccl(img):
     return count, padded_img[1:-1, 1:-1]
 
 
-def get_lesion_dict(lesion_labels, lesion_stats):
+def get_lesion_dict(lesion_info):
     """
-    Create a dictionary of lesion information from the labeled image and statistics.
+    Create a dictionary of lesion information from connected component labelling.
 
     Args:
-        lesion_labels (numpy.ndarray): Labeled image obtained from connected component labeling.
-        lesion_stats (numpy.ndarray): Statistics obtained from connected component labeling.
+        lesion_info (list): Output obtained from connected component labeling.
 
     Returns:
         dict: Dictionary containing lesion information with lesion index as keys.
@@ -107,13 +106,13 @@ def get_lesion_dict(lesion_labels, lesion_stats):
         This function is designed to work with the output of cv2.connectedComponentsWithStats() function in OpenCV.
     """
     lesion_dict = {}
-    for index, stat in enumerate(lesion_stats):
+    _, labels, _, _ = lesion_info
+    for index, label in enumerate(labels):
         # Skip the background (index 0)
         if index == 0:
             continue
         lesion_dict[index] = {
-            "loc": np.argwhere(lesion_labels == index),
-            "stats": stat,
+            "loc": np.argwhere(label == index),
         }
 
     return lesion_dict
