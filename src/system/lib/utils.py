@@ -106,8 +106,8 @@ def get_lesion_dict(lesion_info):
         This function is designed to work with the output of cv2.connectedComponentsWithStats() function in OpenCV.
     """
     lesion_dict = {}
-    _, labels, _, _ = lesion_info
-    for index, label in enumerate(labels):
+    _, label, stats, _ = lesion_info
+    for index, _ in enumerate(stats):
         # Skip the background (index 0)
         if index == 0:
             continue
