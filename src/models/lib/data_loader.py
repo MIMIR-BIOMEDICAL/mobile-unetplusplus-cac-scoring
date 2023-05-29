@@ -24,10 +24,17 @@ def preprocess_img(image):
         tf.Tensor: The preprocessed image tensor.
 
     """
-    # Normalize image by subtracting the minimum value and dividing by the range
-    return (image - tf.reduce_min(image)) / (
-        tf.reduce_max(image) - tf.reduce_min(image)
-    )
+
+    # Clip HU [-800,1200]
+    clipped_image = tf.clip_by_value(image, -800, 1200)
+
+    # Normalization
+    normalized_image = (clipped_image - -800) / (1200 - -800)
+
+    # Zero Centering
+    zero_centered_image = normalized_image - tf.reduce_mean(normalized_image)
+
+    return zero_centered_image
 
 
 def create_sample(config: UNetPPConfig, features):
