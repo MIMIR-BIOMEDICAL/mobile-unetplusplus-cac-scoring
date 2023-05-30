@@ -103,11 +103,13 @@ def dice_coef_slice(y_true, y_pred):
     return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
 
 
-def dice_coef(y_true, y_pred, numLabels=5):
-    dice = 0
-    for index in range(numLabels):
-        dice += dice_coef_slice(y_true[:, :, :, index], y_pred[:, :, :, index])
-    return dice
+def dice_coef( numLabels=5):
+    def dice_c(y_true,y_pred):
+        dice = 0
+        for index in range(numLabels):
+            dice += dice_coef_slice(y_true[:, :, :, index], y_pred[:, :, :, index])
+        return dice
+    return dice_c
 
 
 ################################
