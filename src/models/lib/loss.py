@@ -20,7 +20,8 @@ def dice_loss_from_tversky(y_true, y_pred):
     g1 = ones - y_true
 
     num = K.sum(p0 * g0, (0, 1, 2))
-    den = num + alpha * K.sum(p0 * g1, (0, 1, 2)) + beta * K.sum(p1 * g0, (0, 1, 2))
+    den = num + alpha * K.sum(p0 * g1, (0, 1, 2)) + \
+        beta * K.sum(p1 * g0, (0, 1, 2))
 
     # when summing over classes, T has dynamic range [0 Ncl]
     T = K.sum(num / den)
@@ -77,32 +78,19 @@ def identify_axis(shape):
         raise ValueError("Metric: Shape of tensor is neither 2D or 3D.")
 
 
-################################
-#       Dice coefficient       #
-################################
-def dice_coef(delta=0.5, smooth=0.000001):
-    """The Dice similarity coefficient, also known as the Sørensen–Dice index or simply Dice coefficient, is a statistical tool which measures the similarity between two sets of data.
-    Parameters
-    ----------
-    delta : float, optional
-        controls weight given to false positive and false negatives, by default 0.5
-    smooth : float, optional
-        smoothing constant to prevent division by zero errors, by default 0.000001
-    """
+def dice_coef_slice(y_true, y_pred):
+    smooth = K.epsilon()
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    return (2. * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
 
-    def dice_coefficient(y_true, y_pred):
-        axis = identify_axis(y_true.get_shape())
-        # Calculate true positives (tp), false negatives (fn) and false positives (fp)
-        tp = K.sum(y_true * y_pred, axis=axis)
-        fn = K.sum(y_true * (1 - y_pred), axis=axis)
-        fp = K.sum((1 - y_true) * y_pred, axis=axis)
-        dice_class = (tp + smooth) / (tp + delta * fn + (1 - delta) * fp + smooth)
-        # Average class scores
-        dice = K.mean(dice_class)
 
-        return dice
-
-    return dice_coefficient
+def dice_coef(y_true, y_pred, numLabels=5):
+    dice = 0
+    for index in range(numLabels):
+        dice += dice_coef_slice(y_true[:, :, :, index], y_pred[:, :, :, index])
+    return dice
 
 
 ################################
@@ -125,7 +113,8 @@ def asymmetric_focal_loss(delta=0.7, gamma=2.0):
         cross_entropy = -y_true * K.log(y_pred)
 
         # calculate losses separately for each class, only suppressing background class
-        back_ce = K.pow(1 - y_pred[:, :, :, 0], gamma) * cross_entropy[:, :, :, 0]
+        back_ce = K.pow(1 - y_pred[:, :, :, 0],
+                        gamma) * cross_entropy[:, :, :, 0]
         back_ce = (1 - delta) * back_ce
         back_ce = tf.expand_dims(back_ce, axis=-1)
 
@@ -162,12 +151,14 @@ def asymmetric_focal_tversky_loss(delta=0.7, gamma=0.75):
         tp = K.sum(y_true * y_pred, axis=axis)
         fn = K.sum(y_true * (1 - y_pred), axis=axis)
         fp = K.sum((1 - y_true) * y_pred, axis=axis)
-        dice_class = (tp + epsilon) / (tp + delta * fn + (1 - delta) * fp + epsilon)
+        dice_class = (tp + epsilon) / (tp + delta *
+                                       fn + (1 - delta) * fp + epsilon)
 
         # calculate losses separately for each class, only enhancing foreground class
         back_dice = 1 - dice_class[:, 0]
         back_dice = tf.expand_dims(back_dice, axis=-1)
-        fore_dice = (1 - dice_class[:, 1:]) * K.pow(1 - dice_class[:, 1:], -gamma)
+        fore_dice = (1 - dice_class[:, 1:]) * \
+            K.pow(1 - dice_class[:, 1:], -gamma)
 
         # Average class scores
         loss = K.mean(tf.concat([back_dice, fore_dice], axis=-1))
@@ -195,7 +186,8 @@ def asym_unified_focal_loss(weight=0.5, delta=0.6, gamma=0.5):
         asymmetric_ftl = asymmetric_focal_tversky_loss(delta=delta, gamma=gamma)(
             y_true, y_pred
         )
-        asymmetric_fl = asymmetric_focal_loss(delta=delta, gamma=gamma)(y_true, y_pred)
+        asymmetric_fl = asymmetric_focal_loss(
+            delta=delta, gamma=gamma)(y_true, y_pred)
         if weight is not None:
             return (weight * asymmetric_ftl) + ((1 - weight) * asymmetric_fl)
         else:
