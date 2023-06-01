@@ -246,7 +246,11 @@ def start_prompt():
         ),
         inquirer.Text("batch_size", message="Batch Size", default="32"),
         inquirer.Text("shuffle_size", message="Shuffle Size", default="64"),
-        inquirer.Text("epochs", message="epochs", default="10000"),
+        inquirer.Text("epochs", message="Epochs", default="10000"),
+        inquirer.Text("alpha", message="Focal Loss Alpha", default="0.001"),
+        inquirer.Text("gamma", message="Focal Loss Gamma", default="2"),
+        inquirer.Text("learning_rate", message="Learning Rate", default="0.001"),
+        inquirer.Text("learning_rate_decay", message="Learning Rate Decay", default="1"),
     ]
 
     try:
@@ -283,6 +287,11 @@ def prompt_parser(answer) -> dict:
     answer["batch_size"] = int(answer["batch_size"])
     answer["shuffle_size"] = int(answer["shuffle_size"])
     answer["epochs"] = int(answer["epochs"])
+    answer["epochs"] = int(answer["epochs"])
+    answer["learning_rate"] = float(answer["learning_rate"])
+    answer["learning_rate_decay"] = float(answer["learning_rate_decay"])
+    answer["alpha"] = float(answer["alpha"])
+    answer["gamma"] = float(answer["gamma"])
 
     return answer
 
