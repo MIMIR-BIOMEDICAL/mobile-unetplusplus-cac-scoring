@@ -271,7 +271,7 @@ def start_prompt():
         inquirer.Text("batch_size", message="Batch Size", default="32"),
         inquirer.Text("shuffle_size", message="Shuffle Size", default="64"),
         inquirer.Text("epochs", message="Epochs", default="10000"),
-        inquirer.Text("alpha", message="Focal Loss Alpha", default="0.001"),
+        inquirer.Text("alpha", message="Focal Loss Alpha", default="0.25"),
         inquirer.Text("gamma", message="Focal Loss Gamma", default="2"),
         inquirer.Text("learning_rate", message="Learning Rate", default="0.001"),
         inquirer.Text(
