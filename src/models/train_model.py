@@ -81,7 +81,7 @@ def train_model(
     decay,
     metrics=[
         dice_coef(),
-        tf.keras.metrics.MeanIoU(),
+        tf.keras.metrics.MeanIoU(num_classes=5),
         tf.keras.metrics.Recall(),
         tf.keras.metrics.Precision(),
     ],
