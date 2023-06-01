@@ -112,10 +112,62 @@ def train_model(
     --------
     None
     """
-    print("[1] Creating Model...")
-    # Create model
-    model, model_layer_name = build_unet_pp(model_config, custom=custom)
-    print("--- Model Created")
+    print("[1] Preparing Model...")
+
+    devices = tf.config.experimental.list_physical_devices("GPU")
+
+    if len(devices) > 1:
+        devices_names = [d.name.split("e:")[1] for d in devices]
+        strategy = tf.distribute.MirroredStrategy(devices_name)
+        with strategy.scope():
+            model, model_layer_name = build_unet_pp(model_config, custom=custom)
+
+            loss_dict = loss_dict_gen(
+                model_config,
+                model_layer_name,
+                loss_function_list,
+            )
+
+            model.compile(
+                optimizer=tf.keras.optimizers.legacy.Adam(
+                    learning_rate=learning_rate, decay=decay
+                ),
+                loss=loss_dict,
+                metrics=metrics,
+            )
+    else:
+        model, model_layer_name = build_unet_pp(model_config, custom=custom)
+
+        loss_dict = loss_dict_gen(
+            model_config,
+            model_layer_name,
+            loss_function_list,
+        )
+
+        model.compile(
+            optimizer=tf.keras.optimizers.legacy.Adam(
+                learning_rate=learning_rate, decay=decay
+            ),
+            loss=loss_dict,
+            metrics=metrics,
+        )
+
+    # Create model folder and save metadata
+    model_folder = project_root_path / "models" / metadata.get("model_name")
+    model_folder.mkdir(parents=True, exist_ok=True)
+
+    metadata["trainable_weights"] = count_params(model.trainable_weights)
+    metadata["non_trainable_weights"] = count_params(model.non_trainable_weights)
+    metadata["weights"] = count_params(model.weights)
+
+    (model_folder / "metadata.txt").write_text(json.dumps(metadata, indent=4))
+
+    model_callback = SaveBestModel(model_config)
+    history_callback = keras.callbacks.CSVLogger(
+        f"models/{model_config.model_name}/history.csv"
+    )
+
+    print("--- Model Prepared")
 
     # Create Dataset
     print("[2] Loading Dataset...")
@@ -128,40 +180,8 @@ def train_model(
     test_coca_dataset = coca_dataset["test"]
 
     print("--- Dataset Loaded")
-    # Model Compilation and Training
-
-    # Create model folder and save metadata
-    model_folder = project_root_path / "models" / metadata.get("model_name")
-    model_folder.mkdir(parents=True, exist_ok=True)
-
-    metadata["trainable_weights"] = count_params(model.trainable_weights)
-    metadata["non_trainable_weights"] = count_params(model.non_trainable_weights)
-    metadata["weights"] = count_params(model.weights)
-
-    (model_folder / "metadata.txt").write_text(json.dumps(metadata, indent=4))
-
-    loss_dict = loss_dict_gen(
-        model_config,
-        model_layer_name,
-        loss_function_list,
-    )
-
-    model.compile(
-        optimizer=tf.keras.optimizers.legacy.Adam(
-            learning_rate=learning_rate, decay=decay
-        ),
-        loss=loss_dict,
-        metrics=metrics,
-    )
-
-    model_callback = SaveBestModel(model_config)
-    history_callback = keras.callbacks.CSVLogger(
-        f"models/{model_config.model_name}/history.csv"
-    )
-
-    print("--- Model Prepared")
     try:
-        print("[4] Start Model Training...")
+        print("[3] Start Model Training...")
         model.fit(
             x=train_coca_dataset,
             batch_size=batch_size,
@@ -173,14 +193,14 @@ def train_model(
         print("--- Saving Latest Model...")
         model.save(f"models/{model_config.model_name}/model_epoch_latest.h5")
         print("--- Latest Model Saved")
-        print("--- [5] Evaluate on test dataset")
+        print("--- [4] Evaluate on test dataset")
         model.evaluate(test_coca_dataset)
     except KeyboardInterrupt:
         print("--- Training Interrupted")
         print("--- Saving Latest Model...")
         model.save(f"models/{model_config.model_name}/model_epoch_latest_interupted.h5")
         print("--- Latest Model Saved")
-        print("--- [5] Evaluate on test dataset")
+        print("--- [4] Evaluate on test dataset")
         model.evaluate(test_coca_dataset)
 
 
