@@ -17,7 +17,7 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
-from src.models.lib.loss import asym_unified_focal_loss, dice_coef
+from src.models.lib.loss import categorical_focal_loss, dice_coef
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
 
@@ -76,9 +76,9 @@ def train_model(
     batch_size: int,
     shuffle_size: int,
     epochs: int,
-    lost_function_list: list = [
-        asym_unified_focal_loss(),
-    ],
+    loss_function_list: list,
+    learning_rate,
+    decay,
     metrics=[
         dice_coef(),
         tf.keras.metrics.Accuracy(),
@@ -144,11 +144,15 @@ def train_model(
     loss_dict = loss_dict_gen(
         model_config,
         model_layer_name,
-        lost_function_list,
+        loss_function_list,
     )
 
     model.compile(
-        optimizer=tf.keras.optimizers.legacy.Adam(), loss=loss_dict, metrics=metrics
+        optimizer=tf.keras.optimizers.legacy.Adam(
+            learning_rate=learning_rate, decay=decay
+        ),
+        loss=loss_dict,
+        metrics=metrics,
     )
 
     model_callback = SaveBestModel(model_config)
@@ -250,7 +254,9 @@ def start_prompt():
         inquirer.Text("alpha", message="Focal Loss Alpha", default="0.001"),
         inquirer.Text("gamma", message="Focal Loss Gamma", default="2"),
         inquirer.Text("learning_rate", message="Learning Rate", default="0.001"),
-        inquirer.Text("learning_rate_decay", message="Learning Rate Decay", default="1"),
+        inquirer.Text(
+            "learning_rate_decay", message="Learning Rate Decay", default="1"
+        ),
     ]
 
     try:
@@ -322,6 +328,12 @@ def main():
 
     parsed_answer = prompt_parser(answer)
 
+    loss_func = [
+        categorical_focal_loss(
+            alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
+        )
+    ]
+
     # Create model configuration
     if answer.get("model_mode") == "sanity_check":
         config = UNetPPConfig(
@@ -344,6 +356,9 @@ def main():
             batch_size=parsed_answer.get("batch_size"),
             shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
+            lost_function_list=losts_func,
+            learning_rate=parsed_answer.get("learning_rate"),
+            decay=parsed_answer.get("learning_rate_decay"),
         )
         return
 
@@ -370,6 +385,9 @@ def main():
             batch_size=parsed_answer.get("batch_size"),
             shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
+            lost_function_list=losts_func,
+            learning_rate=parsed_answer.get("learning_rate"),
+            decay=parsed_answer.get("learning_rate_decay"),
         )
         return
     else:
@@ -381,6 +399,9 @@ def main():
             batch_size=parsed_answer.get("batch_size"),
             shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
+            lost_function_list=losts_func,
+            learning_rate=parsed_answer.get("learning_rate"),
+            decay=parsed_answer.get("learning_rate_decay"),
         )
 
 
