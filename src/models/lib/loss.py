@@ -2,10 +2,11 @@
 import tensorflow as tf
 from tensorflow.keras import backend as K
 
+
 def categorical_focal_loss(alpha=0.25, gamma=2.0):
     """
     https://github.com/umbertogriffo/focal-loss-keras
-    
+
     Softmax version of focal loss.
     When there is a skew between different categories/labels in your data set, you can try to apply this function as a
     loss.
@@ -67,8 +68,7 @@ def dice_coef(numLabels=5):
     def dice_c(y_true, y_pred):
         dice = 0
         for index in range(numLabels):
-            dice += dice_coef_slice(y_true[:, :,
-                                    :, index], y_pred[:, :, :, index])
+            dice += dice_coef_slice(y_true[:, :, :, index], y_pred[:, :, :, index])
         return dice
 
     return dice_c
