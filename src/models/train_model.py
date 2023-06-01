@@ -375,7 +375,7 @@ def main():
             batch_size=parsed_answer.get("batch_size"),
             shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
-            lost_function_list=loss_func,
+            loss_function_list=loss_func,
             learning_rate=parsed_answer.get("learning_rate"),
             decay=parsed_answer.get("learning_rate_decay"),
         )
@@ -404,7 +404,7 @@ def main():
             batch_size=parsed_answer.get("batch_size"),
             shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
-            lost_function_list=loss_func,
+            loss_function_list=loss_func,
             learning_rate=parsed_answer.get("learning_rate"),
             decay=parsed_answer.get("learning_rate_decay"),
         )
@@ -418,7 +418,7 @@ def main():
             batch_size=parsed_answer.get("batch_size"),
             shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
-            lost_function_list=loss_func,
+            loss_function_list=loss_func,
             learning_rate=parsed_answer.get("learning_rate"),
             decay=parsed_answer.get("learning_rate_decay"),
         )
