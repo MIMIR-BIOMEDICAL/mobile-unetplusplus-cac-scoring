@@ -154,25 +154,6 @@ def preprocess_segmentation_pipeline():
     get_binary_segmentation_json(project_root_path, clean_json_file_path)
     get_multiclass_segmentation_json(project_root_path, clean_json_file_path)
 
-    # # DEBUG
-    # from src.data.preprocess.lib.utils import \
-    #     find_duplicates  # pylint: disable=import-error,wrong-import-position
-    # binary_segmentation_path = (
-    #     project_root_path / "data" / "interim" / "binary_segmentation.json"
-    # )
-    #
-    # # Check duplicate in binary segmentation
-    # with binary_segmentation_path.open(mode="r") as json_file:
-    #     binary_segmentation_dict = json.load(json_file)
-    #
-    # for patient_num, image_list in binary_segmentation_dict.items():
-    #     for obj in image_list:
-    #         duplicates = find_duplicates(obj["pos"])
-    #         if len(duplicates) != 0:
-    #             print(
-    #                 f"Pixel overlap found on patient {patient_num} image {obj['idx']} on {duplicates}"
-    #             )
-
 
 if __name__ == "__main__":
     preprocess_segmentation_pipeline()
