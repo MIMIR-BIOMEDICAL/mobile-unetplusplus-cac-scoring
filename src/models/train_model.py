@@ -79,12 +79,6 @@ def train_model(
     loss_function_list: list,
     learning_rate,
     decay,
-    metrics=[
-        dice_coef(),
-        tf.keras.metrics.MeanIoU(num_classes=5),
-        tf.keras.metrics.Recall(),
-        tf.keras.metrics.Precision(),
-    ],
 ):
     """
     Train a model using the specified configuration.
@@ -118,9 +112,15 @@ def train_model(
 
     if len(devices) > 1:
         print("Using Multi GPU")
-        devices_names = [d.name.split("e:")[1] for d in devices]
+        devices_name = [d.name.split("e:")[1] for d in devices]
         strategy = tf.distribute.MirroredStrategy(devices_name)
         with strategy.scope():
+            metrics = [
+                dice_coef(),
+                tf.keras.metrics.MeanIoU(num_classes=5),
+                tf.keras.metrics.Recall(),
+                tf.keras.metrics.Precision(),
+            ]
             model, model_layer_name = build_unet_pp(model_config, custom=custom)
 
             loss_dict = loss_dict_gen(
@@ -137,6 +137,12 @@ def train_model(
                 metrics=metrics,
             )
     else:
+        metrics = [
+            dice_coef(),
+            tf.keras.metrics.MeanIoU(num_classes=5),
+            tf.keras.metrics.Recall(),
+            tf.keras.metrics.Precision(),
+        ]
         model, model_layer_name = build_unet_pp(model_config, custom=custom)
 
         loss_dict = loss_dict_gen(
