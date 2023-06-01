@@ -117,6 +117,7 @@ def train_model(
     devices = tf.config.experimental.list_physical_devices("GPU")
 
     if len(devices) > 1:
+        print("Using Multi GPU")
         devices_names = [d.name.split("e:")[1] for d in devices]
         strategy = tf.distribute.MirroredStrategy(devices_name)
         with strategy.scope():
