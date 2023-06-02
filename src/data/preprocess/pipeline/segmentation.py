@@ -8,11 +8,8 @@ from tqdm import tqdm
 sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.data.preprocess.lib.segmentation import (  # pylint: disable=import-error,wrong-import-position
-    clean_raw_segmentation_dict,
-    convert_plist_to_dict,
-    split_clean_segmentation_to_binary,
-    split_clean_segmentation_to_multiclass,
-)
+    clean_raw_segmentation_dict, convert_plist_to_dict,
+    split_clean_segmentation_to_binary, split_clean_segmentation_to_multiclass)
 
 
 def create_raw_segmentation_json(project_root_path: pathlib.Path):

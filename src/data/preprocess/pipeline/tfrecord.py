@@ -11,16 +11,11 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.data.preprocess.lib.tfrecord import (  # pylint: disable=wrong-import-position,import-error
-    create_example_fn,
-)
+from src.data.preprocess.lib.tfrecord import \
+    create_example_fn  # pylint: disable=wrong-import-position,import-error
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    fill_segmentation,
-    get_patient_split,
-    get_pos_from_bin_list,
-    get_pos_from_mult_list,
-    split_list,
-)
+    fill_segmentation, get_patient_split, get_pos_from_bin_list,
+    get_pos_from_mult_list, split_list)
 
 
 def combine_to_tfrecord(
@@ -124,33 +119,15 @@ def combine_to_tfrecord(
                                         ),
                                     )
                                 ):
-                                    raw_bin_seg = np.array(
+                                    patient_dict["bin_seg"] = np.array(
                                         get_pos_from_bin_list(
                                             binary_seg_dict[patient_index], img_index
                                         )
                                     )
-                                    raw_mult_seg = np.array(
+                                    patient_dict["mult_seg"] = np.array(
                                         get_pos_from_mult_list(
                                             mult_seg_dict[patient_index], img_index
                                         )
-                                    )
-
-                                    dense_bin = np.zeros((512, 512))
-                                    dense_bin[tuple(zip(*raw_bin_seg))] = 1
-                                    flooded_bin = fill_segmentation(dense_bin)
-                                    patient_dict["bin_seg"] = np.argwhere(
-                                        flooded_bin == 1
-                                    )
-
-                                    dense_mult = np.zeros((512, 512, 5))
-                                    flooded_mult = np.zeros((512, 512, 5))
-                                    dense_mult[tuple(zip(*raw_mult_seg))] = 1
-                                    for i in range(1, 5):
-                                        flooded_mult[:, :, i] = fill_segmentation(
-                                            dense_mult[:, :, i]
-                                        )
-                                    patient_dict["mult_seg"] = np.argwhere(
-                                        flooded_mult == 1
                                     )
 
                                     patient_dict["segment_val"] = np.ones(

@@ -3,20 +3,16 @@ import pathlib
 import plistlib
 import sys
 
+import numpy as np
 from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    artery_loc_to_abbr,
-    blacklist_invalid_dicom,
-    blacklist_mislabelled_roi,
-    blacklist_multiple_image_id_with_roi,
-    blacklist_no_image,
-    blacklist_pixel_overlap,
-    convert_abr_to_num,
-    string_to_int_tuple,
-)
+    artery_loc_to_abbr, blacklist_invalid_dicom, blacklist_mislabelled_roi,
+    blacklist_multiple_image_id_with_roi, blacklist_no_image,
+    blacklist_pixel_overlap, convert_abr_to_num, fill_segmentation,
+    string_to_int_tuple)
 
 
 def convert_plist_to_dict(plist_path: pathlib.Path) -> dict:
@@ -104,10 +100,17 @@ def clean_raw_segmentation_dict(raw_segmentation_dict: dict) -> dict:
                 ]
 
                 # Remove duplicate coords
-                int_pixel_coord_list = list(set(int_pixel_coord_list))
+                pixel_coord_list = list(set(int_pixel_coord_list))
+
+                # Flood fill
+                dense_arr = np.zeros((512, 512))
+                dense_arr[tuple(zip(*pixel_coord_list))] = 1
+                flooded_arr = fill_segmentation(dense_arr)
+                filled_pixel_coord = np.argwhere(flooded_arr == 1).tolist()
+
                 cleaned_roi = {
                     "loc": artery_abbreviation,
-                    "pos": int_pixel_coord_list,
+                    "pos": filled_pixel_coord,
                 }
                 cleaned_roi_list.append(cleaned_roi)
             # Skip adding to cleaned data if no roi is detected
