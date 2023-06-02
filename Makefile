@@ -27,5 +27,7 @@ gcs-cli:
 	python src/data/gcs_cli.py
 
 gcs-cli-non:
-	python src/data/gcs_cli.py -n
-
+	gcloud auth activate-service-account --project=tugas-akhir-385807 --key-file=serviceAccount.json
+	gcloud storage cp gs://mobile-unet-bucket/dataset_v2 data/processed.tar.gz
+	cd data
+	tar -xvf processed.tar.gz data
