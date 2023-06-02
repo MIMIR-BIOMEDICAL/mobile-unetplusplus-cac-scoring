@@ -152,9 +152,7 @@ def train_model(
         )
 
         model.compile(
-            optimizer=tf.keras.optimizers.legacy.Adam(
-                learning_rate=learning_rate, decay=decay
-            ),
+            optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=learning_rate),
             loss=loss_dict,
             metrics=metrics,
         )
