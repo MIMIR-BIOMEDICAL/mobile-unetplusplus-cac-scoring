@@ -17,7 +17,7 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
-from src.models.lib.loss import categorical_focal_loss, dice_coef
+from src.models.lib.loss import categorical_focal_loss, dice_coef, dice_loss_func
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
 
@@ -78,7 +78,6 @@ def train_model(
     epochs: int,
     loss_function_list: list,
     learning_rate,
-    decay,
 ):
     """
     Train a model using the specified configuration.
@@ -130,9 +129,7 @@ def train_model(
             )
 
             model.compile(
-                optimizer=tf.keras.optimizers.legacy.Adam(
-                    learning_rate=learning_rate, decay=decay
-                ),
+                optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=learning_rate),
                 loss=loss_dict,
                 metrics=metrics,
             )
@@ -275,12 +272,25 @@ def start_prompt():
         inquirer.Text("batch_size", message="Batch Size", default="32"),
         inquirer.Text("shuffle_size", message="Shuffle Size", default="64"),
         inquirer.Text("epochs", message="Epochs", default="10000"),
-        inquirer.Text("alpha", message="Focal Loss Alpha", default="0.25"),
-        inquirer.Text("gamma", message="Focal Loss Gamma", default="2"),
-        inquirer.Text("learning_rate", message="Learning Rate", default="0.001"),
-        inquirer.Text(
-            "learning_rate_decay", message="Learning Rate Decay", default="1"
+        inquirer.List(
+            "loss_func",
+            message="Loss Function",
+            choices=["Focal", "Dice"],
+            default="Focal",
         ),
+        inquirer.Text(
+            "alpha",
+            message="Focal Loss Alpha",
+            default="0.25",
+            ignore=lambda x: x["loss_func"] != "Focal",
+        ),
+        inquirer.Text(
+            "gamma",
+            message="Focal Loss Gamma",
+            default="2",
+            ignore=lambda x: x["loss_func"] != "Focal",
+        ),
+        inquirer.Text("learning_rate", message="Learning Rate", default="0.001"),
     ]
 
     try:
@@ -319,7 +329,6 @@ def prompt_parser(answer) -> dict:
     answer["epochs"] = int(answer["epochs"])
     answer["epochs"] = int(answer["epochs"])
     answer["learning_rate"] = float(answer["learning_rate"])
-    answer["learning_rate_decay"] = float(answer["learning_rate_decay"])
     answer["alpha"] = float(answer["alpha"])
     answer["gamma"] = float(answer["gamma"])
 
@@ -352,11 +361,14 @@ def main():
 
     parsed_answer = prompt_parser(answer)
 
-    loss_func = [
-        categorical_focal_loss(
-            alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
-        )
-    ]
+    if parsed_answer["loss_func"] == "Focal":
+        loss_func = [
+            categorical_focal_loss(
+                alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
+            )
+        ]
+    elif parsed_answer["loss_func"] == "Dice":
+        loss_func = [dice_loss_func()]
 
     # Create model configuration
     if answer.get("model_mode") == "sanity_check":
@@ -382,7 +394,6 @@ def main():
             epochs=parsed_answer.get("epochs"),
             loss_function_list=loss_func,
             learning_rate=parsed_answer.get("learning_rate"),
-            decay=parsed_answer.get("learning_rate_decay"),
         )
         return
 
@@ -411,7 +422,6 @@ def main():
             epochs=parsed_answer.get("epochs"),
             loss_function_list=loss_func,
             learning_rate=parsed_answer.get("learning_rate"),
-            decay=parsed_answer.get("learning_rate_decay"),
         )
         return
     else:
@@ -425,7 +435,6 @@ def main():
             epochs=parsed_answer.get("epochs"),
             loss_function_list=loss_func,
             learning_rate=parsed_answer.get("learning_rate"),
-            decay=parsed_answer.get("learning_rate_decay"),
         )
 
 
