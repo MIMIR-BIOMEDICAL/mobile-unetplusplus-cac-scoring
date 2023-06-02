@@ -17,7 +17,8 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
-from src.models.lib.loss import categorical_focal_loss, dice_coef, dice_loss_func
+from src.models.lib.loss import (categorical_focal_loss, dice_coef,
+                                 dice_loss_func, log_cosh_dice_loss)
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
 
@@ -275,7 +276,7 @@ def start_prompt():
         inquirer.List(
             "loss_func",
             message="Loss Function",
-            choices=["Focal", "Dice"],
+            choices=["Focal", "Dice", "Log Cosh Dice"],
             default="Focal",
         ),
         inquirer.Text(
@@ -369,6 +370,8 @@ def main():
         ]
     elif parsed_answer["loss_func"] == "Dice":
         loss_func = [dice_loss_func]
+    elif parsed_answer["loss_func"] == "Log Cosh Dice":
+        loss_func = [log_cosh_dice_loss]
 
     # Create model configuration
     if answer.get("model_mode") == "sanity_check":
