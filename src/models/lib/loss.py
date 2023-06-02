@@ -69,6 +69,17 @@ def dice_coef(numLabels=5):
         dice = 0
         for index in range(numLabels):
             dice += dice_coef_slice(y_true[:, :, :, index], y_pred[:, :, :, index])
-        return dice
+        return dice / numLabels
 
     return dice_c
+
+
+def dice_loss_func(y_true, y_pred):
+    dice = dice_coef()
+    loss = 1 - dice(y_true, y_pred)
+    return loss
+
+
+def log_cosh_dice_loss(y_true, y_pred):
+    dice_loss = dice_loss_func(y_true, y_pred)
+    return tf.math.log((tf.exp(dice_loss) + tf.exp(-dice_loss)) / 2.0)
