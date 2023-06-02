@@ -368,7 +368,7 @@ def main():
             )
         ]
     elif parsed_answer["loss_func"] == "Dice":
-        loss_func = [dice_loss_func()]
+        loss_func = [dice_loss_func]
 
     # Create model configuration
     if answer.get("model_mode") == "sanity_check":

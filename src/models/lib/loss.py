@@ -69,7 +69,7 @@ def dice_coef(numLabels=5):
         dice = 0
         for index in range(numLabels):
             dice += dice_coef_slice(y_true[:, :, :, index], y_pred[:, :, :, index])
-        return dice / 5
+        return dice / numLabels
 
     return dice_c
 
