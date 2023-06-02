@@ -158,6 +158,7 @@ def create_dataset(
             .batch(
                 batch_size,
                 num_parallel_calls=tf.data.AUTOTUNE,
+                drop_remainder=True,
             )
             .map(
                 partial(create_y_data, config),
