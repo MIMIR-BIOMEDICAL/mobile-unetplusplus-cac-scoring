@@ -94,8 +94,8 @@ def train_model(
             )
     else:
         metrics = [
-            dice_coef(),
-            tf.keras.metrics.MeanIoU(num_classes=5),
+            dice_coef_func(use_bg=False),
+            tf.keras.metrics.OneHotMeanIoU(num_classes=5),
             tf.keras.metrics.Recall(),
             tf.keras.metrics.Precision(),
         ]
