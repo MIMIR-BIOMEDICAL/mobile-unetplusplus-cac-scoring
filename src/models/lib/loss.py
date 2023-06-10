@@ -56,26 +56,25 @@ def categorical_focal_loss(alpha=0.25, gamma=2.0):
     return categorical_focal_loss_fixed
 
 
-def dice_coef_slice(y_true, y_pred):
-    smooth = K.epsilon()
-    y_true_f = K.flatten(y_true)
-    y_pred_f = K.flatten(y_pred)
-    intersection = K.sum(y_true_f * y_pred_f)
-    return (2.0 * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+def dice_coef_func(use_bg=True):
+    if use_bg:
+        last_axis = 0
+    else:
+        last_axis = 1
 
+    def dice_coef(y_true, y_pred):
+        smooth = K.epsilon()
+        y_true_f = K.flatten(y_true[:, :, :, last_axis:])
+        y_pred_f = K.flatten(y_pred[:, :, :, last_axis:])
+        intersect = K.sum(y_true_f * y_pred_f, axis=-1)
+        denom = K.sum(y_true_f + y_pred_f, axis=-1)
+        return K.mean((2.0 * intersect / (denom + smooth)))
 
-def dice_coef(numLabels=5):
-    def dice_c(y_true, y_pred):
-        dice = 0
-        for index in range(numLabels):
-            dice += dice_coef_slice(y_true[:, :, :, index], y_pred[:, :, :, index])
-        return dice / numLabels
-
-    return dice_c
+    return dice_coef
 
 
 def dice_loss_func(y_true, y_pred):
-    dice = dice_coef()
+    dice = dice_coef_func()
     loss = 1 - dice(y_true, y_pred)
     return loss
 

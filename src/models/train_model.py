@@ -17,13 +17,9 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
-from src.models.lib.loss import (
-    categorical_focal_loss,
-    dice_coef,
-    dice_loss_func,
-    log_cosh_dice_loss,
-    weighted_categorical_crossentropy,
-)
+from src.models.lib.loss import (categorical_focal_loss, dice_coef_func,
+                                 dice_loss_func, log_cosh_dice_loss,
+                                 weighted_categorical_crossentropy)
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
 
@@ -74,8 +70,8 @@ def train_model(
         strategy = tf.distribute.MirroredStrategy(devices_name)
         with strategy.scope():
             metrics = [
-                dice_coef(),
-                tf.keras.metrics.MeanIoU(num_classes=5),
+                dice_coef_func(use_bg=False),
+                tf.keras.metrics.OneHotMeanIoU(num_classes=5),
                 tf.keras.metrics.Recall(),
                 tf.keras.metrics.Precision(),
             ]
