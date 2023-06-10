@@ -62,7 +62,8 @@ def auto_cac(img_dcm_paths, model):
         output_dict[index]["pxl_spc"] = pxl_spc
 
         # Prepare image to correct dims (1,N,N,1)
-        expanded_img_batch = np.expand_dims(img_hu, axis=0)
+        preprocessed_img_hu = preprocess_img(img_hu)
+        expanded_img_batch = np.expand_dims(preprocessed_img_hu, axis=0)
         expanded_img_class = np.expand_dims(expanded_img_batch, axis=0)
 
         ## Model
