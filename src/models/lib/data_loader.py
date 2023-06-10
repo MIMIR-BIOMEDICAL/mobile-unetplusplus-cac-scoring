@@ -96,6 +96,9 @@ def create_sample(config: UNetPPConfig, features):
         axis=2,
     )
 
+    # Fix row column and x y mix up
+    mult_seg = tf.transpose(mult_seg, perm=(1, 0, 2))
+
     return preprocessed_img, tf.cast(mult_seg, tf.float32)
 
 
