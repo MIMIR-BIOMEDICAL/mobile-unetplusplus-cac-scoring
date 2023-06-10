@@ -81,13 +81,18 @@ def base_unet_pp(config: UNetPPConfig):
     h_params["n_filter"] = config.filter_list[0]
 
     model_dict["00"] = h_block(node_name="00", **h_params)(model_dict["input"])
+    print(
+        f"--- Creating model input node X00 f{config.filter_list[0]} t6 n{config.downsample_iteration[0]} s1"
+    )
 
     for j in range(config.depth):
         for i in range(max(0, config.depth - j)):
             node_name = node_name_func(i, j)
-            print(f"--- Creating model node {node_name}")
 
             if j == 0 and i != 0:
+                print(
+                    f"--- Creating model downsample node X{node_name} f{config.filter_list[i]} t6 n{config.downsample_iteration[i]} s2"
+                )
                 # Downsampling layer
                 down_layer_name = f"{node_name}_down"
                 down_layer_input = model_dict[node_name_func(i - 1, j)]
@@ -107,6 +112,9 @@ def base_unet_pp(config: UNetPPConfig):
                     )(down_layer_input)
 
             elif j > 0:
+                print(
+                    f"--- Creating model upsample node X{node_name} f {config.filter_list[i]} t6 n{config.downsample_iteration[i]} s1"
+                )
                 # Upsampling
                 upsample = upsample_block(
                     node_name=node_name,

@@ -22,6 +22,7 @@ from src.models.lib.loss import (
     dice_coef,
     dice_loss_func,
     log_cosh_dice_loss,
+    weighted_categorical_crossentropy,
 )
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
@@ -280,7 +281,12 @@ def start_prompt():
         inquirer.List(
             "loss_func",
             message="Loss Function",
-            choices=["Focal", "Dice", "Log Cosh Dice"],
+            choices=[
+                "Focal",
+                "Dice",
+                "Log Cosh Dice",
+                "Weighted Categorical Crossentropy",
+            ],
             default="Focal",
         ),
         inquirer.Text(
@@ -376,7 +382,18 @@ def main():
         loss_func = [dice_loss_func]
     elif parsed_answer["loss_func"] == "Log Cosh Dice":
         loss_func = [log_cosh_dice_loss]
-
+    elif parsed_answer["loss_func"] == "Weighted Categorical Crossentropy":
+        loss_func = [
+            weighted_categorical_crossentropy(
+                [
+                    0.010000347481757162,
+                    782.61385178081,
+                    760.2813517781574,
+                    1412.843535626247,
+                    5752.665350699007,
+                ]
+            )
+        ]
     # Create model configuration
     if answer.get("model_mode") == "sanity_check":
         config = UNetPPConfig(
