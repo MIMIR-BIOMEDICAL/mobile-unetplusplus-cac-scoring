@@ -135,7 +135,6 @@ def train_model(
         save_best_only=False,
         save_weights_only=False,
         mode="min",
-        save_freq=1,
     )
     best_callback = keras.callbacks.ModelCheckpoint(
         best_model_path,
@@ -144,7 +143,6 @@ def train_model(
         save_best_only=True,
         save_weights_only=False,
         mode="min",
-        save_freq=1,
     )
     history_callback = keras.callbacks.CSVLogger(
         f"models/{model_config.model_name}/history.csv"
