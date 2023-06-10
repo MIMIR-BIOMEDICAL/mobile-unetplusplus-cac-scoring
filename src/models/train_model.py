@@ -17,13 +17,9 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
-from src.models.lib.loss import (
-    categorical_focal_loss,
-    dice_coef_func,
-    dice_loss_func,
-    log_cosh_dice_loss,
-    weighted_categorical_crossentropy,
-)
+from src.models.lib.loss import (categorical_focal_loss, dice_coef_func,
+                                 dice_loss_func, log_cosh_dice_loss,
+                                 weighted_categorical_crossentropy)
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
 
@@ -226,13 +222,13 @@ def start_prompt():
         ),
         inquirer.Confirm(
             "batch_norm",
-            message="Batch Norm",
+            message="Use Batch Norm?",
             default=True,
             ignore=lambda x: x["use_default_config"],
         ),
         inquirer.Confirm(
             "deep_supervision",
-            message="Deep Supervision",
+            message="Use Deep Supervision?",
             default=True,
             ignore=lambda x: x["use_default_config"],
         ),
@@ -274,7 +270,21 @@ def start_prompt():
             default="2",
             ignore=lambda x: x["loss_func"] != "Focal",
         ),
+        inquirer.Confirm("use_lr_scheduler", message="Use LR Scheduler?", default=True),
+        inquirer.List(
+            "lr_scheduler",
+            message="LR Scheduler",
+            choices=["Exponential Decay", "Cosine Decay"],
+            default="Exponential Decay",
+            ignore=lambda x: x["use_lr_scheduler"] != True,
+        ),
         inquirer.Text("learning_rate", message="Learning Rate", default="0.001"),
+        inquirer.Text(
+            "learning_rate_step",
+            message="Learning Rate Step",
+            default="10",
+            ignore=lambda x: x["use_lr_scheduler"] != True,
+        ),
     ]
 
     try:
@@ -313,6 +323,7 @@ def prompt_parser(answer) -> dict:
     answer["epochs"] = int(answer["epochs"])
     answer["epochs"] = int(answer["epochs"])
     answer["learning_rate"] = float(answer["learning_rate"])
+    answer["learning_rate_step"] = int(answer["learning_rate_step"])
     answer["alpha"] = float(answer["alpha"])
     answer["gamma"] = float(answer["gamma"])
 
@@ -367,6 +378,23 @@ def main():
                 ]
             )
         ]
+
+    if parsed_answer["use_lr_scheduler"]:
+        lr_name = parsed_answer["lr_scheduler"]
+        if lr_name == "Exponential Decay":
+            lr = tf.keras.optimizers.schedules.ExponentialDecay(
+                parsed_answer["learning_rate"],
+                decay_steps=parsed_answer["learning_rate_step"],
+                decay_rate=0.9,
+            )
+        elif lr_name == "Cosine Decay":
+            lr = tf.keras.optimizers.schedules.CosineDecay(
+                parsed_answer["learning_rate"],
+                decay_steps=parsed_answer["learning_rate_step"],
+            )
+    else:
+        lr = parsed_answer["learning_rate"]
+
     # Create model configuration
     if answer.get("model_mode") == "sanity_check":
         config = UNetPPConfig(
@@ -390,7 +418,7 @@ def main():
             shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
             loss_function_list=loss_func,
-            learning_rate=parsed_answer.get("learning_rate"),
+            learning_rate=lr,
         )
         return
 
@@ -418,7 +446,7 @@ def main():
             shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
             loss_function_list=loss_func,
-            learning_rate=parsed_answer.get("learning_rate"),
+            learning_rate=lr,
         )
         return
     else:
@@ -431,7 +459,7 @@ def main():
             shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
             loss_function_list=loss_func,
-            learning_rate=parsed_answer.get("learning_rate"),
+            learning_rate=lr,
         )
 
 
