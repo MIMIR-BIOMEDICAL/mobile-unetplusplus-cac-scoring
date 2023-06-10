@@ -17,61 +17,10 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
-from src.models.lib.loss import (
-    categorical_focal_loss,
-    dice_coef,
-    dice_loss_func,
-    log_cosh_dice_loss,
-    weighted_categorical_crossentropy,
-)
+from src.models.lib.loss import (categorical_focal_loss, dice_coef,
+                                 dice_loss_func, log_cosh_dice_loss,
+                                 weighted_categorical_crossentropy)
 from src.models.lib.utils import loss_dict_gen, parse_list_string
-
-
-class SaveBestModel(keras.callbacks.Callback):
-    """
-    Keras callback that saves the best model based on the average validation loss.
-
-    Args:
-        config (UNetPPConfig): Configuration object for the UNet++ model.
-
-    Attributes:
-        config (UNetPPConfig): Configuration object for the UNet++ model.
-        best_loss (float): The best average validation loss seen so far.
-        filepath (str): The path to save the best model to.
-
-    Methods:
-        on_epoch_end(epoch, logs): Keras callback that saves the model if the average validation loss
-            is better than the current best loss.
-    """
-
-    def __init__(self, config: UNetPPConfig):
-        super().__init__()
-        self.config = config
-        self.best_loss = float("inf")
-        self.filepath = f"models/{config.model_name}"
-
-    def on_epoch_end(self, epoch, logs=None):
-        """
-        Keras callback that saves the model if the average validation loss is better than the current best loss.
-
-        Args:
-            epoch (int): The current epoch number.
-            logs (dict): Dictionary containing the training and validation loss values.
-
-        Returns:
-            None
-        """
-        loss_keys = [key for key in logs.keys() if "val" in key]
-
-        loss_values = [logs[key] for key in loss_keys]
-
-        avg_loss = np.mean(loss_values)
-
-        if avg_loss < self.best_loss:
-            self.best_loss = avg_loss
-            filename = f"{self.filepath}/model_epoch_{str(epoch).zfill(7)}.h5"
-            self.model.save(filename)
-            print(f"Saved model at {filename} with avg_loss {avg_loss:.4f}")
 
 
 def train_model(
@@ -170,7 +119,33 @@ def train_model(
 
     (model_folder / "metadata.txt").write_text(json.dumps(metadata, indent=4))
 
-    model_callback = SaveBestModel(model_config)
+    per_epoch_path = (
+        f"models/{model_config.model_name}/"
+        + "model-epoch-{epoch:02d}-{val_loss:.2f}.h5"
+    )
+    best_model_path = (
+        f"models/{model_config.model_name}/"
+        + "best-model-epoch-{epoch:02d}-{val_loss:.2f}.h5"
+    )
+
+    epoch_callback = keras.callbacks.ModelCheckpoint(
+        per_epoch_path,
+        monitor="val_loss",
+        verbose=0,
+        save_best_only=False,
+        save_weights_only=False,
+        mode="min",
+        period=1,
+    )
+    best_callback = keras.callbacks.ModelCheckpoint(
+        best_model_path,
+        monitor="val_loss",
+        verbose=1,
+        save_best_only=True,
+        save_weights_only=False,
+        mode="min",
+        period=1,
+    )
     history_callback = keras.callbacks.CSVLogger(
         f"models/{model_config.model_name}/history.csv"
     )
@@ -195,7 +170,7 @@ def train_model(
             batch_size=batch_size,
             epochs=epochs,
             validation_data=val_coca_dataset,
-            callbacks=[model_callback, history_callback],
+            callbacks=[history_callback, best_callback, epoch_callback],
         )
         print("--- Training Finished")
         print("--- Saving Latest Model...")
