@@ -2,18 +2,22 @@
 import pathlib
 import sys
 
-from tensorflow import \
-    keras  # pylint: disable=wrong-import-position,import-error
-from tensorflow.keras import \
-    layers  # pylint: disable=wrong-import-position,import-error
+from tensorflow import keras  # pylint: disable=wrong-import-position,import-error
+from tensorflow.keras import (  # pylint: disable=wrong-import-position,import-error
+    layers,
+)
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.models.lib.block import (  # pylint: disable=wrong-import-position,import-error
-    conv_bn_relu_block, sequence_inv_res_bot_block, upsample_block)
+    conv_bn_relu_block,
+    sequence_inv_res_bot_block,
+    upsample_block,
+)
 from src.models.lib.config import UNetPPConfig
-from src.models.lib.utils import \
-    node_name_func  # pylint: disable=wrong-import-position,import-error
+from src.models.lib.utils import (  # pylint: disable=wrong-import-position,import-error
+    node_name_func,
+)
 
 
 def base_unet_pp(config: UNetPPConfig):
@@ -80,7 +84,7 @@ def base_unet_pp(config: UNetPPConfig):
     print(
         f"--- Creating model input node X00 f{config.filter_list[0]} t6 n{config.downsample_iteration[0]} s1"
     )
-    
+
     for j in range(config.depth):
         for i in range(max(0, config.depth - j)):
             node_name = node_name_func(i, j)
