@@ -19,7 +19,7 @@ from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
 from src.models.lib.loss import (
     categorical_focal_loss,
-    dice_coef,
+    dice_coef_func,
     dice_loss_func,
     log_cosh_dice_loss,
     weighted_categorical_crossentropy,
@@ -74,8 +74,8 @@ def train_model(
         strategy = tf.distribute.MirroredStrategy(devices_name)
         with strategy.scope():
             metrics = [
-                dice_coef(),
-                tf.keras.metrics.MeanIoU(num_classes=5),
+                dice_coef_func(use_bg=False),
+                tf.keras.metrics.OneHotMeanIoU(num_classes=5),
                 tf.keras.metrics.Recall(),
                 tf.keras.metrics.Precision(),
             ]
@@ -94,8 +94,8 @@ def train_model(
             )
     else:
         metrics = [
-            dice_coef(),
-            tf.keras.metrics.MeanIoU(num_classes=5),
+            dice_coef_func(use_bg=False),
+            tf.keras.metrics.OneHotMeanIoU(num_classes=5),
             tf.keras.metrics.Recall(),
             tf.keras.metrics.Precision(),
         ]
@@ -123,13 +123,9 @@ def train_model(
 
     (model_folder / "metadata.txt").write_text(json.dumps(metadata, indent=4))
 
-    per_epoch_path = (
-        f"models/{model_config.model_name}/"
-        + "model-epoch-{epoch:02d}-{val_loss:.2f}.h5"
-    )
+    per_epoch_path = f"models/{model_config.model_name}/" + "model-epoch-{epoch:02d}.h5"
     best_model_path = (
-        f"models/{model_config.model_name}/"
-        + "best-model-epoch-{epoch:02d}-{val_loss:.2f}.h5"
+        f"models/{model_config.model_name}/" + "best-model-epoch-{epoch:02d}.h5"
     )
 
     epoch_callback = keras.callbacks.ModelCheckpoint(
@@ -139,7 +135,7 @@ def train_model(
         save_best_only=False,
         save_weights_only=False,
         mode="min",
-        period=1,
+        save_freq=1,
     )
     best_callback = keras.callbacks.ModelCheckpoint(
         best_model_path,
@@ -148,7 +144,7 @@ def train_model(
         save_best_only=True,
         save_weights_only=False,
         mode="min",
-        period=1,
+        save_freq=1,
     )
     history_callback = keras.callbacks.CSVLogger(
         f"models/{model_config.model_name}/history.csv"
