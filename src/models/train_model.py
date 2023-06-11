@@ -388,7 +388,7 @@ def main():
         ],
     }
 
-    loss_func = loss_func_dict(parsed_answer["loss_func"])
+    loss_func = loss_func_dict[parsed_answer["loss_func"]]
 
     lr_scheduler_dict = {
         "Exponential Decay": tf.keras.optimizers.schedules.ExponentialDecay(

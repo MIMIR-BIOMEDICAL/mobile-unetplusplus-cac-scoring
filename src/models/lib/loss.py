@@ -87,7 +87,7 @@ def dice_focal(alpha=0.25, gamma=2.0):
         focal_loss = focal_func(y_true, y_pred)
         return dice_loss + focal_loss
 
-    return losss
+    return loss
 
 
 def log_cosh_dice_loss(y_true, y_pred):
