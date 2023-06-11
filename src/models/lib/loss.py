@@ -56,24 +56,7 @@ def categorical_focal_loss(alpha=0.25, gamma=2.0):
     return categorical_focal_loss_fixed
 
 
-def dice_coef_func(use_bg=True):
-    if use_bg:
-        last_axis = 0
-    else:
-        last_axis = 1
-
-    def dice_coef(y_true, y_pred):
-        smooth = K.epsilon()
-        y_true_f = K.flatten(y_true[:, :, :, last_axis:])
-        y_pred_f = K.flatten(y_pred[:, :, :, last_axis:])
-        intersect = K.sum(y_true_f * y_pred_f, axis=-1)
-        denom = K.sum(y_true_f + y_pred_f, axis=-1)
-        return K.mean((2.0 * intersect / (denom + smooth)))
-
-    return dice_coef
-
-
-def dice_coef_with_bg(y_true, y_pred):
+def dice_coef(y_true, y_pred):
     smooth = K.epsilon()
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
@@ -82,9 +65,24 @@ def dice_coef_with_bg(y_true, y_pred):
     return K.mean((2.0 * intersect / (denom + smooth)))
 
 
-def dice_loss_func(y_true, y_pred):
-    dice = dice_coef_func()
-    loss = 1 - dice(y_true, y_pred)
+def dice_loss(y_true, y_pred):
+    dice = dice_coef(y_true, y_pred)
+    loss = 1 - dice
+    return loss
+
+
+def dice_coef_no_bg(y_true, y_pred):
+    smooth = K.epsilon()
+    y_true_f = K.flatten(y_true[:, :, :, 1:])
+    y_pred_f = K.flatten(y_pred[:, :, :, 1:])
+    intersect = K.sum(y_true_f * y_pred_f, axis=-1)
+    denom = K.sum(y_true_f + y_pred_f, axis=-1)
+    return K.mean((2.0 * intersect / (denom + smooth)))
+
+
+def dice_loss_no_bg(y_true, y_pred):
+    dice = dice_coef_no_bg(y_true, y_pred)
+    loss = 1 - dice
     return loss
 
 
@@ -92,16 +90,32 @@ def dice_focal(alpha=0.25, gamma=2.0):
     focal_func = categorical_focal_loss(alpha=alpha, gamma=gamma)
 
     def loss(y_true, y_pred):
-        dice_loss = dice_loss_func(y_true, y_pred)
+        dice = dice_loss(y_true, y_pred)
         focal_loss = focal_func(y_true, y_pred)
-        return dice_loss + focal_loss
+        return dice + focal_loss
+
+    return loss
+
+
+def dice_focal_no_bg(alpha=0.25, gamma=2.0):
+    focal_func = categorical_focal_loss(alpha=alpha, gamma=gamma)
+
+    def loss(y_true, y_pred):
+        dice = dice_loss_no_bg(y_true, y_pred)
+        focal_loss = focal_func(y_true, y_pred)
+        return dice + focal_loss
 
     return loss
 
 
 def log_cosh_dice_loss(y_true, y_pred):
-    dice_loss = dice_loss_func(y_true, y_pred)
-    return tf.math.log((tf.exp(dice_loss) + tf.exp(-dice_loss)) / 2.0)
+    dice = dice_loss(y_true, y_pred)
+    return tf.math.log((tf.exp(dice) + tf.exp(-dice)) / 2.0)
+
+
+def log_cosh_dice_loss_no_bg(y_true, y_pred):
+    dice = dice_loss_no_bg(y_true, y_pred)
+    return tf.math.log((tf.exp(dice) + tf.exp(-dice)) / 2.0)
 
 
 def weighted_categorical_crossentropy(weights):
