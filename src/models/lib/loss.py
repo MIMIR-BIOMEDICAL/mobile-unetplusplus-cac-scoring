@@ -73,6 +73,15 @@ def dice_coef_func(use_bg=True):
     return dice_coef
 
 
+def dice_coef_with_bg(y_true, y_pred):
+    smooth = K.epsilon()
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersect = K.sum(y_true_f * y_pred_f, axis=-1)
+    denom = K.sum(y_true_f + y_pred_f, axis=-1)
+    return K.mean((2.0 * intersect / (denom + smooth)))
+
+
 def dice_loss_func(y_true, y_pred):
     dice = dice_coef_func()
     loss = 1 - dice(y_true, y_pred)

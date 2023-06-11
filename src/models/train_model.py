@@ -20,6 +20,7 @@ from src.models.lib.data_loader import create_dataset
 from src.models.lib.loss import (
     categorical_focal_loss,
     dice_coef_func,
+    dice_coef_with_bg,
     dice_focal,
     dice_loss_func,
     log_cosh_dice_loss,
@@ -76,6 +77,7 @@ def train_model(
         with strategy.scope():
             metrics = [
                 dice_coef_func(use_bg=False),
+                dice_coef_with_bg,
                 tf.keras.metrics.OneHotMeanIoU(num_classes=5),
                 tf.keras.metrics.Recall(),
                 tf.keras.metrics.Precision(),
@@ -96,6 +98,7 @@ def train_model(
     else:
         metrics = [
             dice_coef_func(use_bg=False),
+            dice_coef_with_bg,
             tf.keras.metrics.OneHotMeanIoU(num_classes=5),
             tf.keras.metrics.Recall(),
             tf.keras.metrics.Precision(),
