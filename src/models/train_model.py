@@ -20,6 +20,8 @@ from src.models.lib.data_loader import create_dataset
 from src.models.lib.loss import (
     categorical_focal_loss,
     dice_coef_func,
+    dice_coef_with_bg,
+    dice_focal,
     dice_loss_func,
     log_cosh_dice_loss,
     weighted_categorical_crossentropy,
@@ -75,6 +77,7 @@ def train_model(
         with strategy.scope():
             metrics = [
                 dice_coef_func(use_bg=False),
+                dice_coef_with_bg,
                 tf.keras.metrics.OneHotMeanIoU(num_classes=5),
                 tf.keras.metrics.Recall(),
                 tf.keras.metrics.Precision(),
@@ -95,6 +98,7 @@ def train_model(
     else:
         metrics = [
             dice_coef_func(use_bg=False),
+            dice_coef_with_bg,
             tf.keras.metrics.OneHotMeanIoU(num_classes=5),
             tf.keras.metrics.Recall(),
             tf.keras.metrics.Precision(),
@@ -259,6 +263,7 @@ def start_prompt():
                 "Dice",
                 "Log Cosh Dice",
                 "Weighted Categorical Crossentropy",
+                "Dice Focal",
             ],
             default="Focal",
         ),
@@ -266,13 +271,13 @@ def start_prompt():
             "alpha",
             message="Focal Loss Alpha",
             default="0.25",
-            ignore=lambda x: x["loss_func"] != "Focal",
+            ignore=lambda x: x["loss_func"] not in ["Focal", "Dice Focal"],
         ),
         inquirer.Text(
             "gamma",
             message="Focal Loss Gamma",
             default="2",
-            ignore=lambda x: x["loss_func"] != "Focal",
+            ignore=lambda x: x["loss_func"] not in ["Focal", "Dice Focal"],
         ),
         inquirer.Confirm("use_lr_scheduler", message="Use LR Scheduler?", default=True),
         inquirer.List(
@@ -360,18 +365,15 @@ def main():
 
     parsed_answer = prompt_parser(answer)
 
-    if parsed_answer["loss_func"] == "Focal":
-        loss_func = [
+    loss_func_dict = {
+        "Focal": [
             categorical_focal_loss(
                 alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
             )
-        ]
-    elif parsed_answer["loss_func"] == "Dice":
-        loss_func = [dice_loss_func]
-    elif parsed_answer["loss_func"] == "Log Cosh Dice":
-        loss_func = [log_cosh_dice_loss]
-    elif parsed_answer["loss_func"] == "Weighted Categorical Crossentropy":
-        loss_func = [
+        ],
+        "Dice": [dice_loss_func],
+        "Log Cosh Dice": [log_cosh_dice_loss],
+        "Weighted Categorical Crossentropy": [
             weighted_categorical_crossentropy(
                 [
                     0.010000347481757162,
@@ -381,21 +383,31 @@ def main():
                     5752.665350699007,
                 ]
             )
-        ]
+        ],
+        "Dice Focal": [
+            dice_focal(
+                alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
+            )
+        ],
+    }
+
+    loss_func = loss_func_dict[parsed_answer["loss_func"]]
+
+    lr_scheduler_dict = {
+        "Exponential Decay": tf.keras.optimizers.schedules.ExponentialDecay(
+            parsed_answer["learning_rate"],
+            decay_steps=parsed_answer["learning_rate_step"],
+            decay_rate=0.9,
+        ),
+        "Cosine Decay": tf.keras.optimizers.schedules.CosineDecay(
+            parsed_answer["learning_rate"],
+            decay_steps=parsed_answer["learning_rate_step"],
+        ),
+    }
 
     if parsed_answer["use_lr_scheduler"]:
         lr_name = parsed_answer["lr_scheduler"]
-        if lr_name == "Exponential Decay":
-            lr = tf.keras.optimizers.schedules.ExponentialDecay(
-                parsed_answer["learning_rate"],
-                decay_steps=parsed_answer["learning_rate_step"],
-                decay_rate=0.9,
-            )
-        elif lr_name == "Cosine Decay":
-            lr = tf.keras.optimizers.schedules.CosineDecay(
-                parsed_answer["learning_rate"],
-                decay_steps=parsed_answer["learning_rate_step"],
-            )
+        lr = lr_scheduler_dict(lr_name)
     else:
         lr = parsed_answer["learning_rate"]
 
