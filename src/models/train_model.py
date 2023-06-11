@@ -20,8 +20,8 @@ from src.models.lib.data_loader import create_dataset
 from src.models.lib.loss import (
     categorical_focal_loss,
     dice_coef_func,
-    dice_loss_func,
     dice_focal,
+    dice_loss_func,
     log_cosh_dice_loss,
     weighted_categorical_crossentropy,
 )
@@ -260,7 +260,7 @@ def start_prompt():
                 "Dice",
                 "Log Cosh Dice",
                 "Weighted Categorical Crossentropy",
-                "Dice Focal"
+                "Dice Focal",
             ],
             default="Focal",
         ),
@@ -268,13 +268,13 @@ def start_prompt():
             "alpha",
             message="Focal Loss Alpha",
             default="0.25",
-            ignore=lambda x: x["loss_func"] not in ["Focal","Dice Focal"],
+            ignore=lambda x: x["loss_func"] not in ["Focal", "Dice Focal"],
         ),
         inquirer.Text(
             "gamma",
             message="Focal Loss Gamma",
             default="2",
-            ignore=lambda x: x["loss_func"] not in ["Focal","Dice Focal"],
+            ignore=lambda x: x["loss_func"] not in ["Focal", "Dice Focal"],
         ),
         inquirer.Confirm("use_lr_scheduler", message="Use LR Scheduler?", default=True),
         inquirer.List(
@@ -392,15 +392,14 @@ def main():
 
     lr_scheduler_dict = {
         "Exponential Decay": tf.keras.optimizers.schedules.ExponentialDecay(
-                parsed_answer["learning_rate"],
-                decay_steps=parsed_answer["learning_rate_step"],
-                decay_rate=0.9,
-            ),
+            parsed_answer["learning_rate"],
+            decay_steps=parsed_answer["learning_rate_step"],
+            decay_rate=0.9,
+        ),
         "Cosine Decay": tf.keras.optimizers.schedules.CosineDecay(
-                parsed_answer["learning_rate"],
-                decay_steps=parsed_answer["learning_rate_step"],
-            )
-
+            parsed_answer["learning_rate"],
+            decay_steps=parsed_answer["learning_rate_step"],
+        ),
     }
 
     if parsed_answer["use_lr_scheduler"]:
