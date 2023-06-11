@@ -79,7 +79,7 @@ def train_model(
         strategy = tf.distribute.MirroredStrategy(devices_name)
         with strategy.scope():
             metrics = [
-                dice_coef_bg,
+                dice_coef,
                 dice_coef_no_bg,
                 tf.keras.metrics.OneHotMeanIoU(num_classes=5),
                 tf.keras.metrics.Recall(),
@@ -100,7 +100,7 @@ def train_model(
             )
     else:
         metrics = [
-            dice_coef_bg,
+            dice_coef,
             dice_coef_no_bg,
             tf.keras.metrics.OneHotMeanIoU(num_classes=5),
             tf.keras.metrics.Recall(),
