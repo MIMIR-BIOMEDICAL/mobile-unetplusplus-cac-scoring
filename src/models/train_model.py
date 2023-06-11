@@ -19,11 +19,14 @@ from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
 from src.models.lib.loss import (
     categorical_focal_loss,
-    dice_coef_func,
-    dice_coef_with_bg,
+    dice_coef,
+    dice_coef_no_bg,
     dice_focal,
-    dice_loss_func,
+    dice_focal_no_bg,
+    dice_loss,
+    dice_loss_no_bg,
     log_cosh_dice_loss,
+    log_cosh_dice_loss_no_bg,
     weighted_categorical_crossentropy,
 )
 from src.models.lib.utils import loss_dict_gen, parse_list_string
@@ -76,8 +79,8 @@ def train_model(
         strategy = tf.distribute.MirroredStrategy(devices_name)
         with strategy.scope():
             metrics = [
-                dice_coef_func(use_bg=False),
-                dice_coef_with_bg,
+                dice_coef_bg,
+                dice_coef_no_bg,
                 tf.keras.metrics.OneHotMeanIoU(num_classes=5),
                 tf.keras.metrics.Recall(),
                 tf.keras.metrics.Precision(),
@@ -97,8 +100,8 @@ def train_model(
             )
     else:
         metrics = [
-            dice_coef_func(use_bg=False),
-            dice_coef_with_bg,
+            dice_coef_bg,
+            dice_coef_no_bg,
             tf.keras.metrics.OneHotMeanIoU(num_classes=5),
             tf.keras.metrics.Recall(),
             tf.keras.metrics.Precision(),
@@ -262,8 +265,11 @@ def start_prompt():
                 "Focal",
                 "Dice",
                 "Log Cosh Dice",
-                "Weighted Categorical Crossentropy",
                 "Dice Focal",
+                "Dice No BG",
+                "Log Cosh Dice No BG",
+                "Dice Focal No BG",
+                "Weighted Categorical Crossentropy",
             ],
             default="Focal",
         ),
@@ -371,8 +377,20 @@ def main():
                 alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
             )
         ],
-        "Dice": [dice_loss_func],
+        "Dice": [dice_loss],
+        "Dice Focal": [
+            dice_focal(
+                alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
+            )
+        ],
         "Log Cosh Dice": [log_cosh_dice_loss],
+        "Dice No BG": [dice_loss_no_bg],
+        "Dice Focal No BG": [
+            dice_focal_no_bg(
+                alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
+            )
+        ],
+        "Log Cosh Dice No BG": [log_cosh_dice_loss_no_bg],
         "Weighted Categorical Crossentropy": [
             weighted_categorical_crossentropy(
                 [
@@ -382,11 +400,6 @@ def main():
                     1412.843535626247,
                     5752.665350699007,
                 ]
-            )
-        ],
-        "Dice Focal": [
-            dice_focal(
-                alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
             )
         ],
     }
