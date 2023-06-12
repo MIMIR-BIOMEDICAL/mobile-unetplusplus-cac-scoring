@@ -246,17 +246,17 @@ def start_prompt():
         inquirer.Text(
             "filter_list",
             message="Number of Filter per layer",
-            default="16,32,64,128,256",
+            default="8,16,32,64,128",
             ignore=lambda x: x["use_default_config"],
         ),
         inquirer.Text(
             "downsample_iteration",
             message="Number of downsample iteration per layer",
-            default="1,2,3,3,2",
+            default="3,3,2,2,1",
             ignore=lambda x: x["use_default_config"] or x["model_mode"] == "basic",
         ),
-        inquirer.Text("batch_size", message="Batch Size", default="32"),
-        inquirer.Text("shuffle_size", message="Shuffle Size", default="64"),
+        inquirer.Text("batch_size", message="Batch Size", default="8"),
+        inquirer.Text("shuffle_size", message="Shuffle Size", default="256"),
         inquirer.Text("epochs", message="Epochs", default="10000"),
         inquirer.List(
             "loss_func",
