@@ -295,6 +295,12 @@ def start_prompt():
         ),
         inquirer.Text("learning_rate", message="Learning Rate", default="0.001"),
         inquirer.Text(
+            "learning_rate_decay",
+            message="Learning Rate Decay",
+            default="0.95",
+            ignore=lambda x: x["lr_scheduler"] != "Exponential Decay",
+        ),
+        inquirer.Text(
             "learning_rate_step",
             message="Learning Rate Step",
             default="10",
@@ -338,6 +344,7 @@ def prompt_parser(answer) -> dict:
     answer["epochs"] = int(answer["epochs"])
     answer["epochs"] = int(answer["epochs"])
     answer["learning_rate"] = float(answer["learning_rate"])
+    answer["learning_rate_decay"] = float(answer["learning_rate_decay"])
     answer["learning_rate_step"] = int(answer["learning_rate_step"])
     answer["alpha"] = float(answer["alpha"])
     answer["gamma"] = float(answer["gamma"])
@@ -410,7 +417,7 @@ def main():
         "Exponential Decay": tf.keras.optimizers.schedules.ExponentialDecay(
             parsed_answer["learning_rate"],
             decay_steps=parsed_answer["learning_rate_step"],
-            decay_rate=0.9,
+            decay_rate=parsed_answer["learning_rate_decay"],
         ),
         "Cosine Decay": tf.keras.optimizers.schedules.CosineDecay(
             parsed_answer["learning_rate"],
