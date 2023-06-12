@@ -55,15 +55,15 @@ def build_unet_pp(config: UNetPPConfig, custom: bool = False) -> keras.Model:
     elif config.model_mode == "mobile":
         model_conf = UNetPPConfig(
             model_name=config.model_name,
-            upsample_mode="upsample",
+            upsample_mode="transpose",
             depth=5,
             input_dim=[512, 512, 1],
             batch_norm=True,
             model_mode="mobile",
             n_class={"mult": 5},
             deep_supervision=True,
-            filter_list=[16, 32, 64, 128, 256],
-            downsample_iteration=[1, 2, 3, 3, 2],
+            filter_list=[8, 16, 32, 64, 128],
+            downsample_iteration=[3, 3, 2, 2, 1],
         )
     else:
         raise ValueError(f"Invalid model mode: {config.model_mode}")
