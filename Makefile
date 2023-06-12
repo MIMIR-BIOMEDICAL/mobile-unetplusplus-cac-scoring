@@ -28,6 +28,6 @@ gcs-cli:
 
 gcs-cli-non:
 	gcloud auth activate-service-account --project=tugas-akhir-385807 --key-file=serviceAccount.json
-	gcloud storage cp gs://mobile-unet-bucket/dataset_v2 data/processed.tar.gz
+	gcloud storage cp gs://mobile-unet-bucket/dataset_v3 data/processed.tar.gz
 	cd data
-	tar -xvf processed.tar.gz data
+	tar -xvf processed.tar.gz processed
