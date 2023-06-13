@@ -427,7 +427,7 @@ def main():
 
     if parsed_answer["use_lr_scheduler"]:
         lr_name = parsed_answer["lr_scheduler"]
-        lr = lr_scheduler_dict(lr_name)
+        lr = lr_scheduler_dict[lr_name]
     else:
         lr = parsed_answer["learning_rate"]
 
