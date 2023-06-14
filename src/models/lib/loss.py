@@ -3,6 +3,113 @@ import tensorflow as tf
 from tensorflow.keras import backend as K
 
 
+def identify_axis(shape):
+    # Three dimensional
+    if len(shape) == 5:
+        return [1, 2, 3]
+    # Two dimensional
+    elif len(shape) == 4:
+        return [1, 2]
+    # Exception - Unknown
+    else:
+        raise ValueError("Metric: Shape of tensor is neither 2D or 3D.")
+
+
+def asymmetric_focal_loss(delta=0.7, gamma=2.0):
+    def loss_function(y_true, y_pred):
+        """
+        For Imbalanced datasets
+
+        Parameters
+        ----------
+        delta : float, optional
+            controls weight given to false positive and false negatives, by default 0.7
+        gamma : float, optional
+            Focal Tversky loss' focal parameter controls degree of down-weighting of easy examples, by default 2.0
+        """
+
+        epsilon = K.epsilon()
+        y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)
+        cross_entropy = -y_true * K.log(y_pred)
+
+        # calculate losses separately for each class, suppressing background class
+        background_ce = K.pow(1 - y_pred[:, :, :, 0], gamma) * cross_entropy[:, :, :, 0]
+        background_ce = (1 - delta) * background_ce
+
+        foreground_ce = cross_entropy[:, :, :, 1:]
+        foreground_ce = delta * foreground_ce
+
+        loss = K.mean(
+            K.sum(tf.concat([background_ce, foreground_ce], axis=-1), axis=-1)
+        )
+
+        return loss
+
+    return loss_function
+
+
+def asymmetric_focal_tversky_loss(delta=0.7, gamma=0.75):
+    """
+    This is the implementation for multiclass segmentation.
+
+    Parameters
+    ----------
+    delta : float, optional
+        controls weight given to false positive and false negatives, by default 0.7
+    gamma : float, optional
+        focal parameter controls degree of down-weighting of easy examples, by default 0.75
+    """
+
+    def loss_function(y_true, y_pred):
+        # Clip values to prevent division by zero error
+        epsilon = K.epsilon()
+        y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)
+
+        axis = identify_axis(y_true.get_shape())
+
+        # Calculate true positives (tp), false negatives (fn), and false positives (fp) for each class
+        tp = K.sum(y_true * y_pred, axis=axis)
+        fn = K.sum(y_true * (1 - y_pred), axis=axis)
+        fp = K.sum((1 - y_true) * y_pred, axis=axis)
+        dice_class = (tp + epsilon) / (tp + delta * fn + (1 - delta) * fp + epsilon)
+
+        # Calculate losses separately for each class, enhancing foreground classes
+        background_dice = 1 - dice_class[:, 0]
+        foreground_dice = (1 - dice_class[:, 1:]) * K.pow(1 - dice_class[:, 1:], -gamma)
+
+        # Average class scores
+        loss = K.mean(tf.concat([background_dice, foreground_dice], axis=-1))
+
+        return loss
+
+    return loss_function
+
+
+def asym_unified_focal_loss(weight=0.5, delta=0.6, gamma=0.5):
+    """The Unified Focal loss is a new compound loss function that unifies Dice-based and cross entropy-based loss functions into a single framework.
+    Parameters
+    ----------
+    weight : float, optional
+        represents lambda parameter and controls weight given to asymmetric Focal Tversky loss and asymmetric Focal loss, by default 0.5
+    delta : float, optional
+        controls weight given to each class, by default 0.6
+    gamma : float, optional
+        focal parameter controls the degree of background suppression and foreground enhancement, by default 0.5
+    """
+
+    def loss_function(y_true, y_pred):
+        asymmetric_ftl = asymmetric_focal_tversky_loss(delta=delta, gamma=gamma)(
+            y_true, y_pred
+        )
+        asymmetric_fl = asymmetric_focal_loss(delta=delta, gamma=gamma)(y_true, y_pred)
+        if weight is not None:
+            return (weight * asymmetric_ftl) + ((1 - weight) * asymmetric_fl)
+        else:
+            return asymmetric_ftl + asymmetric_fl
+
+    return loss_function
+
+
 def categorical_focal_loss(alpha=0.25, gamma=2.0):
     """
     https://github.com/umbertogriffo/focal-loss-keras

@@ -18,6 +18,7 @@ from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
 from src.models.lib.loss import (
+    asym_unified_focal_loss,
     categorical_focal_loss,
     dice_coef,
     dice_coef_no_bg,
@@ -270,6 +271,7 @@ def start_prompt():
                 "Log Cosh Dice No BG",
                 "Dice Focal No BG",
                 "Weighted Categorical Crossentropy",
+                "Asym Unified Focal Loss",
             ],
             default="Focal",
         ),
@@ -280,10 +282,23 @@ def start_prompt():
             ignore=lambda x: x["loss_func"] not in ["Focal", "Dice Focal"],
         ),
         inquirer.Text(
+            "weight",
+            message="Focal Loss Weight",
+            default="0.5",
+            ignore=lambda x: x["loss_func"] not in ["Asym Unified Focal Loss"],
+        ),
+        inquirer.Text(
+            "delta",
+            message="Focal Loss Gamma",
+            default="0.6",
+            ignore=lambda x: x["loss_func"] not in ["Asym Unified Focal Loss"],
+        ),
+        inquirer.Text(
             "gamma",
             message="Focal Loss Gamma",
-            default="2",
-            ignore=lambda x: x["loss_func"] not in ["Focal", "Dice Focal"],
+            default="2" if x["loss_func"] in ["Focal", "Dice_Focal"] else "0.5",
+            ignore=lambda x: x["loss_func"]
+            not in ["Focal", "Dice Focal", "Asym Unified Focal Loss"],
         ),
         inquirer.Confirm("use_lr_scheduler", message="Use LR Scheduler?", default=True),
         inquirer.List(
@@ -347,7 +362,9 @@ def prompt_parser(answer) -> dict:
     answer["learning_rate_decay"] = float(answer["learning_rate_decay"])
     answer["learning_rate_step"] = int(answer["learning_rate_step"])
     answer["alpha"] = float(answer["alpha"])
+    answer["weight"] = float(answer["weight"])
     answer["gamma"] = float(answer["gamma"])
+    answer["delta"] = float(answer["delta"])
 
     return answer
 
@@ -407,6 +424,13 @@ def main():
                     1412.843535626247,
                     5752.665350699007,
                 ]
+            )
+        ],
+        "Asym Unified Focal Loss": [
+            asym_unified_focal_loss(
+                weight=parsed_answer.get("weight"),
+                delta=parsed_answer.get("delta"),
+                gamma=parsed_answer.get("gamma"),
             )
         ],
     }
