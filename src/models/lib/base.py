@@ -3,9 +3,9 @@ import pathlib
 import sys
 
 from tensorflow import keras  # pylint: disable=wrong-import-position,import-error
-from tensorflow.keras import (
+from tensorflow.keras import (  # pylint: disable=wrong-import-position,import-error
     layers,
-)  # pylint: disable=wrong-import-position,import-error
+)
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
@@ -15,9 +15,9 @@ from src.models.lib.block import (  # pylint: disable=wrong-import-position,impo
     upsample_block,
 )
 from src.models.lib.config import UNetPPConfig
-from src.models.lib.utils import (
+from src.models.lib.utils import (  # pylint: disable=wrong-import-position,import-error
     node_name_func,
-)  # pylint: disable=wrong-import-position,import-error
+)
 
 
 def base_unet_pp(config: UNetPPConfig):
