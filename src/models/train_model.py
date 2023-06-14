@@ -296,7 +296,9 @@ def start_prompt():
         inquirer.Text(
             "gamma",
             message="Focal Loss Gamma",
-            default="2" if x["loss_func"] in ["Focal", "Dice_Focal"] else "0.5",
+            default=lambda x: "2"
+            if x["loss_func"] in ["Focal", "Dice_Focal"]
+            else "0.5",
             ignore=lambda x: x["loss_func"]
             not in ["Focal", "Dice Focal", "Asym Unified Focal Loss"],
         ),
