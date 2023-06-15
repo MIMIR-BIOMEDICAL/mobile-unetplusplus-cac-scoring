@@ -175,15 +175,10 @@ def categorical_focal_loss(alpha=0.25, gamma=2.0):
 
 def dice_coef(y_true, y_pred):
     smooth = K.epsilon()
-    delta = 0.5
-    axis = identify_axis(y_true.get_shape())
-    # Calculate true positives (tp), false negatives (fn) and false positives (fp)
-    tp = K.sum(y_true * y_pred, axis=axis)
-    fn = K.sum(y_true * (1 - y_pred), axis=axis)
-    fp = K.sum((1 - y_true) * y_pred, axis=axis)
-    dice_class = (tp + smooth) / (tp + delta * fn + (1 - delta) * fp + smooth)
-    # Average class scores
-    dice = K.mean(dice_class)
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    dice = (2.0 * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
     return dice
 
 
