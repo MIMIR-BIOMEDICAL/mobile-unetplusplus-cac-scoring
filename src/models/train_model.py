@@ -313,7 +313,8 @@ def start_prompt():
             "learning_rate_decay",
             message="Learning Rate Decay",
             default="0.95",
-            ignore=lambda x: x["lr_scheduler"] != "Exponential Decay",
+            ignore=lambda x: x["lr_scheduler"] != "Exponential Decay"
+            and x["use_lr_scheduler"] != True,
         ),
         inquirer.Text(
             "learning_rate_step",
