@@ -94,9 +94,7 @@ def train_model(
             )
 
             model.compile(
-                optimizer=tf.keras.optimizers.legacy.Adam(
-                    learning_rate=learning_rate, clipnorm=1.0
-                ),
+                optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=learning_rate),
                 loss=loss_dict,
                 metrics=metrics,
             )
@@ -116,9 +114,7 @@ def train_model(
         )
 
         model.compile(
-            optimizer=tf.keras.optimizers.legacy.Adam(
-                learning_rate=learning_rate, clipnorm=1.0
-            ),
+            optimizer=tf.keras.optimizers.legacy.Adam(learning_rate=learning_rate),
             loss=loss_dict,
             metrics=metrics,
         )
