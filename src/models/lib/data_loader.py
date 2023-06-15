@@ -66,40 +66,10 @@ def create_sample(config: UNetPPConfig, features):
     bin_seg = tf.sparse.to_dense(bin_seg)
     bin_seg = tf.reshape(bin_seg, [input_dims[0], input_dims[1], 1])
 
-    # Prepare multi-class segmentation tensor
-    mult_seg_dim = (input_dims[0], input_dims[1], config.n_class["mult"] - 1)
-    mult_seg_indices = tf.subtract(features["mult_seg"], [[0, 0, 1]])
-
-    # Convert bin_seg to mult_seg
-    bin_to_mult = tf.cast(tf.where(bin_seg == 0, 1, 0), tf.float32)
-
-    # Convert mult_seg_indices to dense mult_seg
-    converted_indices = tf.where(
-        tf.equal(mult_seg_indices, -1),
-        mult_seg_indices + 1,
-        mult_seg_indices,
-    )
-    dense_mult_seg = tf.SparseTensor(
-        dense_shape=mult_seg_dim,
-        values=features["segment_val"],
-        indices=converted_indices,
-    )
-    dense_mult_seg = tf.sparse.reorder(dense_mult_seg)
-    dense_mult_seg = tf.sparse.to_dense(dense_mult_seg)
-
-    # Concatenate bin_to_mult and dense_mult_seg along the last dimension
-    mult_seg = tf.concat(
-        [
-            bin_to_mult,
-            tf.reshape(dense_mult_seg, mult_seg_dim),
-        ],
-        axis=2,
-    )
-
     # Fix row column and x y mix up
-    mult_seg = tf.transpose(mult_seg, perm=(1, 0, 2))
+    bin_seg= tf.transpose(bin_seg, perm=(1, 0, 2))
 
-    return preprocessed_img, tf.cast(mult_seg, tf.float32)
+    return preprocessed_img, tf.cast(bin_seg, tf.float32)
 
 
 def create_y_data(config: UNetPPConfig, x, y):

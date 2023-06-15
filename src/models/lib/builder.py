@@ -2,7 +2,8 @@
 import pathlib
 import sys
 
-from tensorflow import keras  # pylint: disable=wrong-import-position,import-error
+from tensorflow import \
+    keras  # pylint: disable=wrong-import-position,import-error
 
 sys.path.append(pathlib.Path.cwd().parent.as_posix())
 from src.models.lib.base import base_unet_pp
@@ -46,7 +47,7 @@ def build_unet_pp(config: UNetPPConfig, custom: bool = False) -> keras.Model:
             batch_norm=True,
             model_mode="basic",
             depth=5,
-            n_class={"mult": 5},
+            n_class={"bin": 1},
             deep_supervision=True,
             upsample_mode="transpose",
             filter_list=[32, 64, 128, 256, 512],
@@ -60,10 +61,10 @@ def build_unet_pp(config: UNetPPConfig, custom: bool = False) -> keras.Model:
             input_dim=[512, 512, 1],
             batch_norm=True,
             model_mode="mobile",
-            n_class={"mult": 5},
+            n_class={"bin": 1},
             deep_supervision=True,
-            filter_list=[8, 16, 32, 64, 128],
-            downsample_iteration=[3, 3, 2, 2, 1],
+            filter_list=[16, 32, 64, 128, 256],
+            downsample_iteration=[4, 3, 2, 2, 1],
         )
     else:
         raise ValueError(f"Invalid model mode: {config.model_mode}")
