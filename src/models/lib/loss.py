@@ -167,7 +167,7 @@ def categorical_focal_loss(alpha=0.25, gamma=2.0):
         # Calculate focal loss
         loss = weight * cross_entropy
         # Sum the losses in mini_batch
-        loss = K.mean(K.sum(loss, axis=1))
+        loss = K.mean(K.sum(loss, axis=-1))
         return loss
 
     return categorical_focal_loss_fixed
