@@ -82,9 +82,13 @@ def train_model(
         with strategy.scope():
             metrics = [
                 dice_coef,
-                tf.keras.metrics.MeanIoU(num_classes=2),
+                tf.keras.metrics.BinaryIoU(),
                 tf.keras.metrics.Recall(),
                 tf.keras.metrics.Precision(),
+                tf.keras.metrics.TruePositives(),
+                tf.keras.metrics.TrueNegatives(),
+                tf.keras.metrics.FalseNegatives(),
+                tf.keras.metrics.FalsePositives(),
             ]
             model, model_layer_name = build_unet_pp(model_config, custom=custom)
 
@@ -102,9 +106,13 @@ def train_model(
     else:
         metrics = [
             dice_coef,
-            tf.keras.metrics.MeanIoU(num_classes=2),
+            tf.keras.metrics.BinaryIoU(),
             tf.keras.metrics.Recall(),
             tf.keras.metrics.Precision(),
+            tf.keras.metrics.TruePositives(),
+            tf.keras.metrics.TrueNegatives(),
+            tf.keras.metrics.FalseNegatives(),
+            tf.keras.metrics.FalsePositives(),
         ]
         model, model_layer_name = build_unet_pp(model_config, custom=custom)
 
@@ -492,7 +500,7 @@ def main():
 
     config = UNetPPConfig(
         model_name=parsed_answer.get("model_name"),
-        upsample_mode=parsed_answer.get("upsample", "upsample"),
+        upsample_mode=parsed_answer.get("upsample_mode", "upsample"),
         depth=parsed_answer.get("depth", 2),
         input_dim=parsed_answer.get("input_dim", [1, 1, 1]),
         batch_norm=parsed_answer.get("batch_norm", True),
