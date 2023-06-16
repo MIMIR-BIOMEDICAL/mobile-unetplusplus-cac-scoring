@@ -117,28 +117,6 @@ def get_lesion_dict(lesion_info):
     return lesion_dict
 
 
-def assign_lesion_type(prediction, lesion_dict):
-    """
-    Assign lesion types based on the prediction values to the lesion dictionary.
-
-    Args:
-        prediction (numpy.ndarray): 1D array containing the predicted values for lesion pixels.
-        lesion_dict (dict): Dictionary containing lesion information.
-
-    Returns:
-        dict: Updated lesion dictionary with assigned lesion types.
-
-    Note:
-        The prediction array should have the same length as the number of lesion pixels in the lesion dictionary.
-
-    """
-    for index, lesion in lesion_dict.items():
-        lesion_prediction = prediction[tuple(zip(*lesion["loc"]))]
-        unique, count = np.unique(lesion_prediction, return_counts=True)
-        lesion_dict[index]["type"] = unique[np.argmax(count)]
-    return lesion_dict
-
-
 def agatston(image_hu, lesion_dict, spacing_pair):
     """
     Calculate Agatston scores for lesions based on Hounsfield Unit (HU) values.
@@ -155,7 +133,7 @@ def agatston(image_hu, lesion_dict, spacing_pair):
         The image_hu should be in raw format, without any preprocessing applied.
 
     """
-    agatston_dict = {}
+    agatston_score = 0
     for lesion in lesion_dict.values():
         # find max attenuation
         max_att = np.max(image_hu[tuple(zip(*lesion["loc"]))])
@@ -177,8 +155,5 @@ def agatston(image_hu, lesion_dict, spacing_pair):
         area = square_area * lesion["loc"].shape[0]
 
         score = area * w
-        abbr = convert_num_to_abr(lesion["type"])
-        agatston_dict[abbr] = agatston_dict.get(abbr, 0) + score
-
-    agatston_dict["total"] = np.sum(list(agatston_dict.values()))
-    return agatston_dict
+        agatston_score += score
+    return agatston_score

@@ -9,7 +9,7 @@ import pydicom as pdc
 sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.models.lib.data_loader import preprocess_img
-from src.system.lib.utils import agatston, assign_lesion_type, ccl, get_lesion_dict
+from src.system.lib.utils import agatston, ccl, get_lesion_dict
 
 
 def call_ccl(img, mode="cv2"):
@@ -49,17 +49,32 @@ def extract_dcm(img_dcm_path):
     return img_hu, pxl_spc
 
 
-def auto_cac(img_dcm_paths, model):
-    output_dict = {}
+def classify_risk(total_agatston):
+    if total_agaston == 0:
+        class_label = "Absent"
+    elif 1 <= total_agaston <= 100:
+        class_label = "Discrete"
+    elif 101 <= total_agaston <= 400:
+        class_label = "Moderate"
+    elif total_agaston > 400:
+        class_label = "Accentuated"
+    else:
+        class_label = None
 
+    return class_label
+
+
+def auto_cac(img_dcm_paths, model, mem_opt=False):
+    output_dict = {}
+    output_dict["slice"] = {}
+
+    # Loop over  image path(s)
     for index, img_dcm_path in enumerate(img_dcm_paths):
-        output_dict[index] = {}
+        output_dict["slice"][index] = {}
 
         ## Preprocessing
         # Get Image HU and pixel spacing
         img_hu, pxl_spc = extract_dcm(img_dcm_path)
-        output_dict[index]["img_hu"] = img_hu
-        output_dict[index]["pxl_spc"] = pxl_spc
 
         # Prepare image to correct dims (1,N,N,1)
         preprocessed_img_hu = preprocess_img(img_hu)
@@ -68,31 +83,69 @@ def auto_cac(img_dcm_paths, model):
 
         ## Model
         # Inference
-        output_dict[index]["img_pred_one_hot"] = model.predict(expanded_img_class)
+        pred_sigmoid = model.predict(expanded_img_class)
 
         ## Postprocessing
         # Reverse one-hot encoding
-        img_pred_batchless = np.squeeze(output_dict[index]["img_pred_one_hot"], axis=0)
-        output_dict[index]["img_pred"] = np.argmax(img_pred_batchless, axis=-1)
+        pred_batchless = np.squeeze(pred_sigmoid, axis=0)
+        pred_bin = (pred_batchless > 0.5) * 1
 
         # Connected Component
-        connected_lesion = call_ccl(output_dict[index]["img_pred"], mode="cv2")
+        connected_lesion = call_ccl(pred_bin, mode="cv2")
         lesion_dict = get_lesion_dict(connected_lesion)
 
-        # Agatston scoring
-        output_dict[index]["lesion"] = assign_lesion_type(
-            output_dict[index]["img_pred"], lesion_dict
+        # Agatston scoring (per slice score)
+        agatston_score = agatston(img_hu, lesion_dict, pxl_spc)
+
+        if not mem_opt:
+            output_dict["slice"][index]["img_hu"] = img_hu
+            output_dict["slice"][index]["pxl_spc"] = pxl_spc
+            output_dict["slice"][index]["pred_sigmoid"] = pred_sigmoid
+            output_dict["slice"][index]["pred_bin"] = pred_bin
+            output_dict["slice"][index]["lesion"] = lesion_dict
+            output_dict["slice"][index]["agatston_slice_score"] = agatston_score
+
+        output_dict["total_agaston"] = (
+            output_dict.get("total_agatston", 0) + agatston_score
         )
 
-        output_dict["agatston"] = agatston(
-            output_dict[index]["img_pred"],
-            output_dict[index]["lesion"],
-            output_dict[index]["lesion"],
+    output_dict["class"] = classify_risk(output_dict["total_agatston"])
+
+    return output_dict
+
+
+def ground_truth_auto_cac(img_dcm_paths, loc_lists, mem_opt=False):
+    output_dict = {}
+    output_dict["slice"] = {}
+
+    # Loop over  image path(s)
+    for index, (img_dcm_path, loc_list) in enumerate(zip(img_dcm_paths, loc_lists)):
+        output_dict["slice"][index] = {}
+
+        ## Preprocessing
+        # Get Image HU and pixel spacing
+        img_hu, pxl_spc = extract_dcm(img_dcm_path)
+
+        temp = np.zeros((512, 512))
+        temp[tuple(zip(*loc_list))] = 1
+        temp = np.transpose(temp)
+
+        # Connected Component
+        connected_lesion = call_ccl(temp, mode="cv2")
+        lesion_dict = get_lesion_dict(connected_lesion)
+
+        # Agatston scoring (per slice score)
+        agatston_score = agatston(img_hu, lesion_dict, pxl_spc)
+
+        if not mem_opt:
+            output_dict["slice"][index]["img_hu"] = img_hu
+            output_dict["slice"][index]["pxl_spc"] = pxl_spc
+            output_dict["slice"][index]["lesion"] = lesion_dict
+            output_dict["slice"][index]["agatston_slice_score"] = agatston_score
+
+        output_dict["total_agaston"] = (
+            output_dict.get("total_agatston", 0) + agatston_score
         )
 
-    for values in output_dict.values():
-        for key_name in ["total", "LAD", "RCA", "LCX", "LCA"]:
-            output_dict[key_name] = (
-                output_dict.get(key_name, 0) + values["agatston"][key_name]
-            )
+    output_dict["class"] = classify_risk(output_dict["total_agatston"])
     return output_dict
