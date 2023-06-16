@@ -17,20 +17,13 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
-from src.models.lib.loss import (
-    asym_unified_focal_loss,
-    categorical_focal_loss,
-    dice_coef,
-    dice_coef_no_bg,
-    dice_focal,
-    dice_focal_no_bg,
-    dice_loss,
-    dice_loss_no_bg,
-    log_cosh_dice_focal,
-    log_cosh_dice_loss,
-    log_cosh_dice_loss_no_bg,
-    weighted_categorical_crossentropy,
-)
+from src.models.lib.loss import (asym_unified_focal_loss,
+                                 categorical_focal_loss, dice_coef,
+                                 dice_coef_no_bg, dice_focal, dice_focal_no_bg,
+                                 dice_loss, dice_loss_no_bg,
+                                 log_cosh_dice_focal, log_cosh_dice_loss,
+                                 log_cosh_dice_loss_no_bg,
+                                 weighted_categorical_crossentropy)
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
 
@@ -82,7 +75,7 @@ def train_model(
         with strategy.scope():
             metrics = [
                 dice_coef,
-                tf.keras.metrics.OneHotMeanIoU(num_classes=2),
+                tf.keras.metrics.MeanIoU(num_classes=2),
                 tf.keras.metrics.Recall(),
                 tf.keras.metrics.Precision(),
             ]
@@ -102,7 +95,7 @@ def train_model(
     else:
         metrics = [
             dice_coef,
-            tf.keras.metrics.OneHotMeanIoU(num_classes=2),
+            tf.keras.metrics.MeanIoU(num_classes=2),
             tf.keras.metrics.Recall(),
             tf.keras.metrics.Precision(),
         ]
