@@ -17,20 +17,13 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
-from src.models.lib.loss import (
-    asym_unified_focal_loss,
-    categorical_focal_loss,
-    dice_coef,
-    dice_coef_no_bg,
-    dice_focal,
-    dice_focal_no_bg,
-    dice_loss,
-    dice_loss_no_bg,
-    log_cosh_dice_focal,
-    log_cosh_dice_loss,
-    log_cosh_dice_loss_no_bg,
-    weighted_categorical_crossentropy,
-)
+from src.models.lib.loss import (asym_unified_focal_loss,
+                                 categorical_focal_loss, dice_coef,
+                                 dice_coef_no_bg, dice_focal, dice_focal_no_bg,
+                                 dice_loss, dice_loss_no_bg,
+                                 log_cosh_dice_focal, log_cosh_dice_loss,
+                                 log_cosh_dice_loss_no_bg,
+                                 weighted_categorical_crossentropy)
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
 
@@ -492,7 +485,7 @@ def main():
 
     config = UNetPPConfig(
         model_name=parsed_answer.get("model_name"),
-        upsample_mode=parsed_answer.get("upsample", "upsample"),
+        upsample_mode=parsed_answer.get("upsample_mode", "upsample"),
         depth=parsed_answer.get("depth", 2),
         input_dim=parsed_answer.get("input_dim", [1, 1, 1]),
         batch_norm=parsed_answer.get("batch_norm", True),
