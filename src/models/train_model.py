@@ -26,6 +26,7 @@ from src.models.lib.loss import (
     dice_focal_no_bg,
     dice_loss,
     dice_loss_no_bg,
+    log_cosh_dice_focal,
     log_cosh_dice_loss,
     log_cosh_dice_loss_no_bg,
     weighted_categorical_crossentropy,
@@ -81,8 +82,7 @@ def train_model(
         with strategy.scope():
             metrics = [
                 dice_coef,
-                dice_coef_no_bg,
-                tf.keras.metrics.OneHotMeanIoU(num_classes=5),
+                tf.keras.metrics.MeanIoU(num_classes=2),
                 tf.keras.metrics.Recall(),
                 tf.keras.metrics.Precision(),
             ]
@@ -102,8 +102,7 @@ def train_model(
     else:
         metrics = [
             dice_coef,
-            dice_coef_no_bg,
-            tf.keras.metrics.OneHotMeanIoU(num_classes=5),
+            tf.keras.metrics.MeanIoU(num_classes=2),
             tf.keras.metrics.Recall(),
             tf.keras.metrics.Precision(),
         ]
@@ -247,13 +246,13 @@ def start_prompt():
         inquirer.Text(
             "filter_list",
             message="Number of Filter per layer",
-            default="8,16,32,64,128",
+            default="16,32,64,128,256",
             ignore=lambda x: x["use_default_config"],
         ),
         inquirer.Text(
             "downsample_iteration",
             message="Number of downsample iteration per layer",
-            default="3,3,2,2,1",
+            default="4,3,2,2,1",
             ignore=lambda x: x["use_default_config"] or x["model_mode"] == "basic",
         ),
         inquirer.Text("batch_size", message="Batch Size", default="8"),
@@ -267,6 +266,7 @@ def start_prompt():
                 "Dice",
                 "Log Cosh Dice",
                 "Dice Focal",
+                "Log Cosh Dice Focal",
                 "Dice No BG",
                 "Log Cosh Dice No BG",
                 "Dice Focal No BG",
@@ -315,7 +315,8 @@ def start_prompt():
             "learning_rate_decay",
             message="Learning Rate Decay",
             default="0.95",
-            ignore=lambda x: x["lr_scheduler"] != "Exponential Decay",
+            ignore=lambda x: x["lr_scheduler"] != "Exponential Decay"
+            or x["use_lr_scheduler"] != True,
         ),
         inquirer.Text(
             "learning_rate_step",
@@ -410,6 +411,11 @@ def main():
             )
         ],
         "Log Cosh Dice": [log_cosh_dice_loss],
+        "Log Cosh Dice Focal": [
+            log_cosh_dice_focal(
+                alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
+            )
+        ],
         "Dice No BG": [dice_loss_no_bg],
         "Dice Focal No BG": [
             dice_focal_no_bg(
@@ -466,7 +472,7 @@ def main():
             input_dim=[512, 512, 1],
             batch_norm=True,
             model_mode="mobile",
-            n_class={"mult": 5},
+            n_class={"bin": 1},
             deep_supervision=True,
             filter_list=[2, 2, 2],
             downsample_iteration=[1, 1, 1],
@@ -491,7 +497,7 @@ def main():
         input_dim=parsed_answer.get("input_dim", [1, 1, 1]),
         batch_norm=parsed_answer.get("batch_norm", True),
         model_mode=parsed_answer.get("model_mode"),
-        n_class={"mult": 5},
+        n_class={"bin": 1},
         deep_supervision=parsed_answer.get("deep_supervision", True),
         filter_list=parsed_answer.get("filter_list", [1, 1]),
         downsample_iteration=parsed_answer.get("downsample_iteration", [1, 1]),

@@ -15,44 +15,45 @@ def identify_axis(shape):
         raise ValueError("Metric: Shape of tensor is neither 2D or 3D.")
 
 
+################################
+#     Asymmetric Focal loss    #
+################################
 def asymmetric_focal_loss(delta=0.7, gamma=2.0):
-    def loss_function(y_true, y_pred):
-        """
-        For Imbalanced datasets
+    """For Imbalanced datasets
+    Parameters
+    ----------
+    delta : float, optional
+        controls weight given to false positive and false negatives, by default 0.7
+    gamma : float, optional
+        Focal Tversky loss' focal parameter controls degree of down-weighting of easy examples, by default 2.0
+    """
 
-        Parameters
-        ----------
-        delta : float, optional
-            controls weight given to false positive and false negatives, by default 0.7
-        gamma : float, optional
-            Focal Tversky loss' focal parameter controls degree of down-weighting of easy examples, by default 2.0
-        """
+    def loss_function(y_true, y_pred):
+        axis = identify_axis(y_true.get_shape())
 
         epsilon = K.epsilon()
         y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)
         cross_entropy = -y_true * K.log(y_pred)
 
-        # calculate losses separately for each class, suppressing background class
-        background_ce = K.pow(1 - y_pred[:, :, :, 0], gamma) * cross_entropy[:, :, :, 0]
-        background_ce = (1 - delta) * background_ce
-        background_ce = tf.expand_dims(background_ce, axis=3)
+        # calculate losses separately for each class, only suppressing background class
+        back_ce = K.pow(1 - y_pred[:, :, :, 0], gamma) * cross_entropy[:, :, :, 0]
+        back_ce = (1 - delta) * back_ce
 
-        foreground_ce = cross_entropy[:, :, :, 1:]
-        foreground_ce = delta * foreground_ce
+        fore_ce = cross_entropy[:, :, :, 1]
+        fore_ce = delta * fore_ce
 
-        loss = K.mean(
-            K.sum(tf.concat([background_ce, foreground_ce], axis=-1), axis=-1)
-        )
+        loss = K.mean(K.sum(tf.stack([back_ce, fore_ce], axis=-1), axis=-1))
 
         return loss
 
     return loss_function
 
 
+#################################
+# Asymmetric Focal Tversky loss #
+#################################
 def asymmetric_focal_tversky_loss(delta=0.7, gamma=0.75):
-    """
-    This is the implementation for multiclass segmentation.
-
+    """This is the implementation for binary segmentation.
     Parameters
     ----------
     delta : float, optional
@@ -67,26 +68,26 @@ def asymmetric_focal_tversky_loss(delta=0.7, gamma=0.75):
         y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)
 
         axis = identify_axis(y_true.get_shape())
-
-        # Calculate true positives (tp), false negatives (fn), and false positives (fp) for each class
+        # Calculate true positives (tp), false negatives (fn) and false positives (fp)
         tp = K.sum(y_true * y_pred, axis=axis)
         fn = K.sum(y_true * (1 - y_pred), axis=axis)
         fp = K.sum((1 - y_true) * y_pred, axis=axis)
         dice_class = (tp + epsilon) / (tp + delta * fn + (1 - delta) * fp + epsilon)
 
-        # Calculate losses separately for each class, enhancing foreground classes
-        background_dice = 1 - dice_class[:, 0]
-        background_dice = tf.expand_dims(background_dice, axis=1)
-        foreground_dice = (1 - dice_class[:, 1:]) * K.pow(1 - dice_class[:, 1:], -gamma)
+        # calculate losses separately for each class, only enhancing foreground class
+        back_dice = 1 - dice_class[:, 0]
+        fore_dice = (1 - dice_class[:, 1]) * K.pow(1 - dice_class[:, 1], -gamma)
 
         # Average class scores
-        loss = K.mean(tf.concat([background_dice, foreground_dice], axis=-1))
-
+        loss = K.mean(tf.stack([back_dice, fore_dice], axis=-1))
         return loss
 
     return loss_function
 
 
+###########################################
+#      Asymmetric Unified Focal loss      #
+###########################################
 def asym_unified_focal_loss(weight=0.5, delta=0.6, gamma=0.5):
     """The Unified Focal loss is a new compound loss function that unifies Dice-based and cross entropy-based loss functions into a single framework.
     Parameters
@@ -148,30 +149,36 @@ def categorical_focal_loss(alpha=0.25, gamma=2.0):
         :param y_pred: A tensor resulting from a softmax
         :return: Output tensor.
         """
-
-        # Clip the prediction value to prevent NaN's and Inf's
+        y_true = tf.cast(y_true, tf.float32)
+        # Define epsilon so that the back-propagation will not result in NaN for 0 divisor case
         epsilon = K.epsilon()
+        # Add the epsilon to prediction value
+        # y_pred = y_pred + epsilon
+        # Clip the prediciton value
         y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)
-
-        # Calculate Cross Entropy
-        cross_entropy = -y_true * K.log(y_pred)
-
-        # Calculate Focal Loss
-        loss = alpha * K.pow(1 - y_pred, gamma) * cross_entropy
-
-        # Compute mean loss in mini_batch
-        return K.mean(K.sum(loss, axis=-1))
+        # Calculate p_t
+        p_t = tf.where(K.equal(y_true, 1), y_pred, 1 - y_pred)
+        # Calculate alpha_t
+        alpha_factor = K.ones_like(y_true) * alpha
+        alpha_t = tf.where(K.equal(y_true, 1), alpha_factor, 1 - alpha_factor)
+        # Calculate cross entropy
+        cross_entropy = -K.log(p_t)
+        weight = alpha_t * K.pow((1 - p_t), gamma)
+        # Calculate focal loss
+        loss = weight * cross_entropy
+        # Sum the losses in mini_batch
+        loss = K.mean(K.sum(loss, axis=-1))
+        return loss
 
     return categorical_focal_loss_fixed
 
 
 def dice_coef(y_true, y_pred):
-    smooth = K.epsilon()
-    y_true_f = K.flatten(y_true)
-    y_pred_f = K.flatten(y_pred)
-    intersect = K.sum(y_true_f * y_pred_f, axis=-1)
-    denom = K.sum(y_true_f + y_pred_f, axis=-1)
-    return K.mean((2.0 * intersect / (denom + smooth)))
+    smooth = 1e-6
+    intersection = K.sum(y_true * y_pred, axis=[1, 2, 3])
+    union = K.sum(y_true, axis=[1, 2, 3]) + K.sum(y_pred, axis=[1, 2, 3])
+    dice = K.mean((2.0 * intersection + smooth) / (union + smooth), axis=0)
+    return dice
 
 
 def dice_loss(y_true, y_pred):
@@ -225,6 +232,17 @@ def log_cosh_dice_loss(y_true, y_pred):
 def log_cosh_dice_loss_no_bg(y_true, y_pred):
     dice = dice_loss_no_bg(y_true, y_pred)
     return tf.math.log((tf.exp(dice) + tf.exp(-dice)) / 2.0)
+
+
+def log_cosh_dice_focal(alpha=0.25, gamma=2.0):
+    focal_func = categorical_focal_loss(alpha=alpha, gamma=gamma)
+
+    def loss(y_true, y_pred):
+        dice = log_cosh_dice_loss(y_true, y_pred)
+        focal_loss = focal_func(y_true, y_pred)
+        return dice + focal_loss
+
+    return loss
 
 
 def weighted_categorical_crossentropy(weights):
