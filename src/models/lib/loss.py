@@ -234,6 +234,17 @@ def log_cosh_dice_loss_no_bg(y_true, y_pred):
     return tf.math.log((tf.exp(dice) + tf.exp(-dice)) / 2.0)
 
 
+def log_cosh_dice_focal(alpha=0.25, gamma=2.0):
+    focal_func = categorical_focal_loss(alpha=alpha, gamma=gamma)
+
+    def loss(y_true, y_pred):
+        dice = log_cosh_dice_loss(y_true, y_pred)
+        focal_loss = focal_func(y_true, y_pred)
+        return dice + focal_loss
+
+    return loss
+
+
 def weighted_categorical_crossentropy(weights):
     """
     A weighted version of keras.objectives.categorical_crossentropy
