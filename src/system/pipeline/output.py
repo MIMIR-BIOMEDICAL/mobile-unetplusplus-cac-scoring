@@ -50,13 +50,13 @@ def extract_dcm(img_dcm_path):
 
 
 def classify_risk(total_agatston):
-    if total_agaston == 0:
+    if total_agatston == 0:
         class_label = "Absent"
-    elif 1 <= total_agaston <= 100:
+    elif 1 <= total_agatston <= 100:
         class_label = "Discrete"
-    elif 101 <= total_agaston <= 400:
+    elif 101 <= total_agatston <= 400:
         class_label = "Moderate"
-    elif total_agaston > 400:
+    elif total_agatston > 400:
         class_label = "Accentuated"
     else:
         class_label = None
@@ -105,7 +105,7 @@ def auto_cac(img_dcm_paths, model, mem_opt=False):
             output_dict["slice"][index]["lesion"] = lesion_dict
             output_dict["slice"][index]["agatston_slice_score"] = agatston_score
 
-        output_dict["total_agaston"] = (
+        output_dict["total_agatston"] = (
             output_dict.get("total_agatston", 0) + agatston_score
         )
 
@@ -143,7 +143,7 @@ def ground_truth_auto_cac(img_dcm_paths, loc_lists, mem_opt=False):
             output_dict["slice"][index]["lesion"] = lesion_dict
             output_dict["slice"][index]["agatston_slice_score"] = agatston_score
 
-        output_dict["total_agaston"] = (
+        output_dict["total_agatston"] = (
             output_dict.get("total_agatston", 0) + agatston_score
         )
 
