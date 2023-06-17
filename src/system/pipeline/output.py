@@ -98,6 +98,8 @@ def auto_cac(img_dcm_paths, model, mem_opt=False):
         agatston_score = agatston(img_hu, lesion_dict, pxl_spc)
 
         if not mem_opt:
+            output_dict["slice"] = output_dict.get("slice", {})
+            output_dict["slice"][index] = {}
             output_dict["slice"][index]["img_hu"] = img_hu
             output_dict["slice"][index]["pxl_spc"] = pxl_spc
             output_dict["slice"][index]["pred_sigmoid"] = pred_sigmoid
@@ -116,12 +118,9 @@ def auto_cac(img_dcm_paths, model, mem_opt=False):
 
 def ground_truth_auto_cac(img_dcm_paths, loc_lists, mem_opt=False):
     output_dict = {}
-    output_dict["slice"] = {}
 
     # Loop over  image path(s)
     for index, (img_dcm_path, loc_list) in enumerate(zip(img_dcm_paths, loc_lists)):
-        output_dict["slice"][index] = {}
-
         ## Preprocessing
         # Get Image HU and pixel spacing
         img_hu, pxl_spc = extract_dcm(img_dcm_path)
@@ -138,6 +137,8 @@ def ground_truth_auto_cac(img_dcm_paths, loc_lists, mem_opt=False):
         agatston_score = agatston(img_hu, lesion_dict, pxl_spc)
 
         if not mem_opt:
+            output_dict["slice"] = output_dict.get("slice", {})
+            output_dict["slice"][index] = {}
             output_dict["slice"][index]["img_hu"] = img_hu
             output_dict["slice"][index]["pxl_spc"] = pxl_spc
             output_dict["slice"][index]["lesion"] = lesion_dict

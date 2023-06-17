@@ -136,12 +136,14 @@ def agatston(image_hu, lesion_dict, spacing_pair):
     agatston_score = 0
     for lesion in lesion_dict.values():
         # find max attenuation
-        max_att = np.max(image_hu[tuple(zip(*lesion["loc"]))])
+        lesion_val = image_hu[tuple(zip(*lesion["loc"]))]
+        max_att = np.max(lesion_val)
 
         # get weight
         if max_att < 130:
-            w = 0
-        elif 130 <= max_att < 200:
+            # No need to  count, if w =0
+            continue
+        if 130 <= max_att < 200:
             w = 1
         elif 200 <= max_att < 300:
             w = 2
