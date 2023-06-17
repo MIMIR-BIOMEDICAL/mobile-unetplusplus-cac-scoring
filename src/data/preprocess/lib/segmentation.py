@@ -46,7 +46,7 @@ def convert_plist_to_dict(plist_path: pathlib.Path) -> dict:
     return output
 
 
-def clean_raw_segmentation_dict(raw_segmentation_dict: dict) -> dict:
+def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) -> dict:
     """
     This function convert a dictionary parsed from raw segmentation json
     to a clean segmentation dictionary
@@ -123,8 +123,22 @@ def clean_raw_segmentation_dict(raw_segmentation_dict: dict) -> dict:
             if len(cleaned_roi_list) == 0:
                 continue
 
+            # Get patient root path
+            if patient_number != "000":
+                patient_idx = int(patient_number.lstrip("0"))
+            else:
+                patient_idx = 0
+            patient_root_path = next(project_root_path.rglob(f"patient/{patient_idx}"))
+
+            # Get the amount dicom file in patient folder
+            patient_dcm_len = len(list(patient_root_path.rglob("*.dcm")))
+
+            # Image index in metadata is reversed from the actual image index in
+            # patient folder, so true index needed to be calculated
+            true_image_index = (patient_dcm_len + 1) - image_dict["ImageIndex"]
+
             patient_img_list.append(
-                {"idx": str(image_dict["ImageIndex"]).zfill(3), "roi": cleaned_roi_list}
+                {"idx": str(true_image_index).zfill(3), "roi": cleaned_roi_list}
             )
 
         clean_output_dict[patient_number] = patient_img_list
