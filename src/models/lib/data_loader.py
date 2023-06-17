@@ -122,7 +122,6 @@ def create_dataset(
         dataset = (
             tf.data.TFRecordDataset(
                 filenames=tf.data.Dataset.list_files(tfrecord_path_pattern.as_posix()),
-                compression_type="GZIP",
                 num_parallel_reads=tf.data.AUTOTUNE,
             )
             .map(parsed_example_fn, num_parallel_calls=tf.data.AUTOTUNE)

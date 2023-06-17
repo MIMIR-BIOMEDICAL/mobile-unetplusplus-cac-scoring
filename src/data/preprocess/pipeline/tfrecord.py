@@ -11,9 +11,9 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.data.preprocess.lib.tfrecord import (  # pylint: disable=wrong-import-position,import-error
+from src.data.preprocess.lib.tfrecord import (
     create_example_fn,
-)
+)  # pylint: disable=wrong-import-position,import-error
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
     fill_segmentation,
     get_patient_split,
@@ -79,9 +79,6 @@ def combine_to_tfrecord(
                     )
                     with tf.io.TFRecordWriter(
                         tf_record_path.as_posix(),
-                        options=tf.io.TFRecordOptions(
-                            compression_type="GZIP", compression_level=9
-                        ),
                     ) as tf_record_file:
                         for patient_index in tqdm(
                             patient_shard,
