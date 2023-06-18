@@ -488,11 +488,10 @@ def get_patient_split(split_arr: list, random_seed=811):
     no_calc_patient_arr = filtered_patient_number_zfill_range(451, 789)
 
     calc_split = train_test_val_split(calc_patient_arr, split_arr, random_seed)
-    no_calc_split = train_test_val_split(
-        no_calc_patient_arr, [0.5, 0.3, 0.2], random_seed
-    )
+    no_calc_split = train_test_val_split(no_calc_patient_arr, split_arr, random_seed)
 
-    calc_split["test"].extend(no_calc_split["train"])
+    for split_type in ["train", "val", "test"]:
+        calc_split[split_type].extend(no_calc_split[split_type])
 
     return calc_split
 
