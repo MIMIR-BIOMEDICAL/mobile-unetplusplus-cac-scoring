@@ -16,7 +16,6 @@ from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-posi
     blacklist_no_image,
     blacklist_pixel_overlap,
     convert_abr_to_num,
-    fill_segmentation,
     string_to_int_tuple,
 )
 
@@ -108,16 +107,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                 # Remove duplicate coords
                 pixel_coord_list = list(set(int_pixel_coord_list))
 
-                # Flood fill
-                dense_arr = np.zeros((512, 512))
-                dense_arr[tuple(zip(*pixel_coord_list))] = 1
-                flooded_arr = fill_segmentation(dense_arr)
-                filled_pixel_coord = np.argwhere(flooded_arr == 1).tolist()
-
-                cleaned_roi = {
-                    "loc": artery_abbreviation,
-                    "pos": filled_pixel_coord,
-                }
+                cleaned_roi = {"loc": artery_abbreviation, "pos": pixel_coord_list}
                 cleaned_roi_list.append(cleaned_roi)
             # Skip adding to cleaned data if no roi is detected
             if len(cleaned_roi_list) == 0:

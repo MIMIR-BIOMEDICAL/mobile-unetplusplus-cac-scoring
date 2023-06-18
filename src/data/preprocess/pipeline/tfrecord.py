@@ -15,7 +15,6 @@ from src.data.preprocess.lib.tfrecord import (  # pylint: disable=wrong-import-p
     create_example_fn,
 )
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    fill_segmentation,
     get_patient_split,
     get_pos_from_bin_list,
     get_pos_from_mult_list,
