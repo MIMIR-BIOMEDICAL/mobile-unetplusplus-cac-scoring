@@ -16,7 +16,6 @@ from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-posi
     blacklist_no_image,
     blacklist_pixel_overlap,
     convert_abr_to_num,
-    fill_segmentation,
     string_to_int_tuple,
 )
 
@@ -46,7 +45,7 @@ def convert_plist_to_dict(plist_path: pathlib.Path) -> dict:
     return output
 
 
-def clean_raw_segmentation_dict(raw_segmentation_dict: dict) -> dict:
+def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) -> dict:
     """
     This function convert a dictionary parsed from raw segmentation json
     to a clean segmentation dictionary
@@ -108,23 +107,28 @@ def clean_raw_segmentation_dict(raw_segmentation_dict: dict) -> dict:
                 # Remove duplicate coords
                 pixel_coord_list = list(set(int_pixel_coord_list))
 
-                # Flood fill
-                dense_arr = np.zeros((512, 512))
-                dense_arr[tuple(zip(*pixel_coord_list))] = 1
-                flooded_arr = fill_segmentation(dense_arr)
-                filled_pixel_coord = np.argwhere(flooded_arr == 1).tolist()
-
-                cleaned_roi = {
-                    "loc": artery_abbreviation,
-                    "pos": filled_pixel_coord,
-                }
+                cleaned_roi = {"loc": artery_abbreviation, "pos": pixel_coord_list}
                 cleaned_roi_list.append(cleaned_roi)
             # Skip adding to cleaned data if no roi is detected
             if len(cleaned_roi_list) == 0:
                 continue
 
+            # Get patient root path
+            if patient_number != "000":
+                patient_idx = int(patient_number.lstrip("0"))
+            else:
+                patient_idx = 0
+            patient_root_path = next(project_root_path.rglob(f"patient/{patient_idx}"))
+
+            # Get the amount dicom file in patient folder
+            patient_dcm_len = len(list(patient_root_path.rglob("*.dcm")))
+
+            # Image index in metadata is reversed from the actual image index in
+            # patient folder, so true index needed to be calculated
+            true_image_index = (patient_dcm_len + 1) - image_dict["ImageIndex"]
+
             patient_img_list.append(
-                {"idx": str(image_dict["ImageIndex"]).zfill(3), "roi": cleaned_roi_list}
+                {"idx": str(true_image_index).zfill(3), "roi": cleaned_roi_list}
             )
 
         clean_output_dict[patient_number] = patient_img_list

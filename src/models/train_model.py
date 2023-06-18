@@ -18,18 +18,12 @@ from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
 from src.models.lib.loss import (
-    asym_unified_focal_loss,
     categorical_focal_loss,
     dice_coef,
-    dice_coef_no_bg,
     dice_focal,
-    dice_focal_no_bg,
     dice_loss,
-    dice_loss_no_bg,
     log_cosh_dice_focal,
     log_cosh_dice_loss,
-    log_cosh_dice_loss_no_bg,
-    weighted_categorical_crossentropy,
 )
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
@@ -275,11 +269,6 @@ def start_prompt():
                 "Log Cosh Dice",
                 "Dice Focal",
                 "Log Cosh Dice Focal",
-                "Dice No BG",
-                "Log Cosh Dice No BG",
-                "Dice Focal No BG",
-                "Weighted Categorical Crossentropy",
-                "Asym Unified Focal Loss",
             ],
             default="Focal",
         ),
@@ -422,31 +411,6 @@ def main():
         "Log Cosh Dice Focal": [
             log_cosh_dice_focal(
                 alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
-            )
-        ],
-        "Dice No BG": [dice_loss_no_bg],
-        "Dice Focal No BG": [
-            dice_focal_no_bg(
-                alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
-            )
-        ],
-        "Log Cosh Dice No BG": [log_cosh_dice_loss_no_bg],
-        "Weighted Categorical Crossentropy": [
-            weighted_categorical_crossentropy(
-                [
-                    0.010000347481757162,
-                    782.61385178081,
-                    760.2813517781574,
-                    1412.843535626247,
-                    5752.665350699007,
-                ]
-            )
-        ],
-        "Asym Unified Focal Loss": [
-            asym_unified_focal_loss(
-                weight=parsed_answer.get("weight"),
-                delta=parsed_answer.get("delta"),
-                gamma=parsed_answer.get("gamma"),
             )
         ],
     }

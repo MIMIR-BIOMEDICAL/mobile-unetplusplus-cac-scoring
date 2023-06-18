@@ -76,7 +76,7 @@ def clean_raw_segmentation_json(
     with json_path.open(mode="r") as json_file:
         raw_json_dict = json.load(json_file)
 
-    clean_output_dict = clean_raw_segmentation_dict(raw_json_dict)
+    clean_output_dict = clean_raw_segmentation_dict(project_root_path, raw_json_dict)
 
     # Output Path
     clean_json_file_path = (

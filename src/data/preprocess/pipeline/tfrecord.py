@@ -15,7 +15,6 @@ from src.data.preprocess.lib.tfrecord import (  # pylint: disable=wrong-import-p
     create_example_fn,
 )
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    fill_segmentation,
     get_patient_split,
     get_pos_from_bin_list,
     get_pos_from_mult_list,
@@ -45,9 +44,6 @@ def combine_to_tfrecord(
         split_mode ():
         sample_mode ():
     """
-    np.random.seed(811)
-    log = {}
-    cac = 2391
     with binary_json_path.open(mode="r") as binary_json_file:
         binary_seg_dict = json.load(binary_json_file)
 
@@ -79,9 +75,6 @@ def combine_to_tfrecord(
                     )
                     with tf.io.TFRecordWriter(
                         tf_record_path.as_posix(),
-                        options=tf.io.TFRecordOptions(
-                            compression_type="GZIP", compression_level=9
-                        ),
                     ) as tf_record_file:
                         for patient_index in tqdm(
                             patient_shard,
@@ -142,9 +135,7 @@ def combine_to_tfrecord(
                                         patient_dict["mult_seg"].shape[0]
                                     )
 
-                                    img_is_cac = True
                                 else:
-                                    img_is_cac = False
                                     patient_dict["bin_seg"] = np.array([[0, 0]])
                                     patient_dict["mult_seg"] = np.array([[0, 0, 0]])
                                     patient_dict["segment_val"] = np.zeros(
@@ -153,38 +144,7 @@ def combine_to_tfrecord(
 
                                 example = create_example_fn(patient_dict)
 
-                                if img_is_cac:
-                                    log_key = f"{split_mode}-img-cac"
-                                    if split_mode == "train":
-                                        diff = 12112 - log.get(log_key, 0)
-
-                                        if diff <= cac and diff > 0:
-                                            diff = 1
-
-                                        n_loop = np.random.choice(
-                                            np.arange(3, 10), size=1
-                                        )[0]
-
-                                        n_loop_min = np.min([diff, n_loop])
-                                        log[n_loop_min] = log.get(n_loop_min, 0) + 1
-
-                                        for _ in range(n_loop_min):
-                                            log[log_key] = log.get(log_key, 0) + 1
-                                            tf_record_file.write(
-                                                example.SerializeToString()
-                                            )
-                                        cac -= 1
-                                    else:
-                                        log[log_key] = log.get(log_key, 0) + 1
-                                        tf_record_file.write(
-                                            example.SerializeToString()
-                                        )
-                                else:
-                                    log_key = f"{split_mode}-img-non-cac"
-                                    log[log_key] = log.get(log_key, 0) + 1
-                                    tf_record_file.write(example.SerializeToString())
-
-    print(log)
+                                tf_record_file.write(example.SerializeToString())
 
 
 @click.command()
