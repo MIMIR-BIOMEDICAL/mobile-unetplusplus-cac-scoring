@@ -156,7 +156,7 @@ def combine_to_tfrecord(
                                     if split_mode == "train":
                                         diff = 2391 - log.get(log_key, 0)
 
-                                        if diff < 0:
+                                        if diff <= 0:
                                             continue
                                         else:
                                             skip = np.random.choice(
