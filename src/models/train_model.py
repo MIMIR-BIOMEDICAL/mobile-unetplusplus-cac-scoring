@@ -79,10 +79,6 @@ def train_model(
                 tf.keras.metrics.BinaryIoU(),
                 tf.keras.metrics.Recall(),
                 tf.keras.metrics.Precision(),
-                tf.keras.metrics.TruePositives(),
-                tf.keras.metrics.TrueNegatives(),
-                tf.keras.metrics.FalseNegatives(),
-                tf.keras.metrics.FalsePositives(),
             ]
             model, model_layer_name = build_unet_pp(model_config, custom=custom)
 
@@ -103,10 +99,6 @@ def train_model(
             tf.keras.metrics.BinaryIoU(),
             tf.keras.metrics.Recall(),
             tf.keras.metrics.Precision(),
-            tf.keras.metrics.TruePositives(),
-            tf.keras.metrics.TrueNegatives(),
-            tf.keras.metrics.FalseNegatives(),
-            tf.keras.metrics.FalsePositives(),
         ]
         model, model_layer_name = build_unet_pp(model_config, custom=custom)
 

@@ -145,7 +145,7 @@ def base_unet_pp(config: UNetPPConfig):
     # Create a bunch of Conv 1x1 to the node with j = 0
     for out_name, nc in config.n_class.items():
         for node_num in range(1, config.depth):
-            layer_name = f"{out_name}{nc}_out_{node_num}"
+            layer_name = f"ds_{node_num}"
             model_dict[layer_name] = layers.Conv2D(
                 filters=nc,
                 kernel_size=1,
