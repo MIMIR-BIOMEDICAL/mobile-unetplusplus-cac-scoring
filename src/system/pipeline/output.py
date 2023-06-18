@@ -79,15 +79,15 @@ def auto_cac(img_dcm_paths, model, mem_opt=False):
         # Prepare image to correct dims (1,N,N,1)
         preprocessed_img_hu = preprocess_img(img_hu)
         expanded_img_batch = np.expand_dims(preprocessed_img_hu, axis=0)
-        expanded_img_class = np.expand_dims(expanded_img_batch, axis=0)
+        expanded_img_class = np.expand_dims(expanded_img_batch, axis=3)
 
         ## Model
         # Inference
-        pred_sigmoid = model.predict(expanded_img_class)
+        pred_sigmoid = model.predict(expanded_img_class, verbose=0)
 
         ## Postprocessing
         # Reverse one-hot encoding
-        pred_batchless = np.squeeze(pred_sigmoid, axis=0)
+        pred_batchless = np.squeeze(pred_sigmoid[-1])
         pred_bin = (pred_batchless > 0.5) * 1
 
         # Connected Component
@@ -147,6 +147,8 @@ def ground_truth_auto_cac(img_dcm_paths, loc_lists, mem_opt=False):
         output_dict["total_agatston"] = (
             output_dict.get("total_agatston", 0) + agatston_score
         )
+
+    output_dict["total_agatston"] = int(output_dict["total_agatston"])
 
     output_dict["class"] = classify_risk(output_dict["total_agatston"])
     return output_dict
