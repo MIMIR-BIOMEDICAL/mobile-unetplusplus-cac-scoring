@@ -50,13 +50,13 @@ def extract_dcm(img_dcm_path):
 
 
 def classify_risk(total_agatston):
-    if total_agaston == 0:
+    if total_agatston == 0:
         class_label = "Absent"
-    elif 1 <= total_agaston <= 100:
+    elif 1 <= total_agatston <= 100:
         class_label = "Discrete"
-    elif 101 <= total_agaston <= 400:
+    elif 101 <= total_agatston <= 400:
         class_label = "Moderate"
-    elif total_agaston > 400:
+    elif total_agatston > 400:
         class_label = "Accentuated"
     else:
         class_label = None
@@ -98,6 +98,8 @@ def auto_cac(img_dcm_paths, model, mem_opt=False):
         agatston_score = agatston(img_hu, lesion_dict, pxl_spc)
 
         if not mem_opt:
+            output_dict["slice"] = output_dict.get("slice", {})
+            output_dict["slice"][index] = {}
             output_dict["slice"][index]["img_hu"] = img_hu
             output_dict["slice"][index]["pxl_spc"] = pxl_spc
             output_dict["slice"][index]["pred_sigmoid"] = pred_sigmoid
@@ -105,7 +107,7 @@ def auto_cac(img_dcm_paths, model, mem_opt=False):
             output_dict["slice"][index]["lesion"] = lesion_dict
             output_dict["slice"][index]["agatston_slice_score"] = agatston_score
 
-        output_dict["total_agaston"] = (
+        output_dict["total_agatston"] = (
             output_dict.get("total_agatston", 0) + agatston_score
         )
 
@@ -116,12 +118,9 @@ def auto_cac(img_dcm_paths, model, mem_opt=False):
 
 def ground_truth_auto_cac(img_dcm_paths, loc_lists, mem_opt=False):
     output_dict = {}
-    output_dict["slice"] = {}
 
     # Loop over  image path(s)
     for index, (img_dcm_path, loc_list) in enumerate(zip(img_dcm_paths, loc_lists)):
-        output_dict["slice"][index] = {}
-
         ## Preprocessing
         # Get Image HU and pixel spacing
         img_hu, pxl_spc = extract_dcm(img_dcm_path)
@@ -138,12 +137,14 @@ def ground_truth_auto_cac(img_dcm_paths, loc_lists, mem_opt=False):
         agatston_score = agatston(img_hu, lesion_dict, pxl_spc)
 
         if not mem_opt:
+            output_dict["slice"] = output_dict.get("slice", {})
+            output_dict["slice"][index] = {}
             output_dict["slice"][index]["img_hu"] = img_hu
             output_dict["slice"][index]["pxl_spc"] = pxl_spc
             output_dict["slice"][index]["lesion"] = lesion_dict
             output_dict["slice"][index]["agatston_slice_score"] = agatston_score
 
-        output_dict["total_agaston"] = (
+        output_dict["total_agatston"] = (
             output_dict.get("total_agatston", 0) + agatston_score
         )
 
