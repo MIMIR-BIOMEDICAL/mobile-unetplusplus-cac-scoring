@@ -268,7 +268,8 @@ def start_prompt():
             "alpha",
             message="Focal Loss Alpha",
             default="0.25",
-            ignore=lambda x: x["loss_func"] not in ["Focal", "Dice Focal"],
+            ignore=lambda x: x["loss_func"]
+            not in ["Focal", "Dice Focal", "Log Cosh Dice Focal"],
         ),
         inquirer.Text(
             "weight",
@@ -286,10 +287,15 @@ def start_prompt():
             "gamma",
             message="Focal Loss Gamma",
             default=lambda x: "2"
-            if x["loss_func"] in ["Focal", "Dice_Focal"]
+            if x["loss_func"] in ["Focal", "Dice_Focal", "Log Cosh Dice Focal"]
             else "0.5",
             ignore=lambda x: x["loss_func"]
-            not in ["Focal", "Dice Focal", "Asym Unified Focal Loss"],
+            not in [
+                "Focal",
+                "Dice Focal",
+                "Asym Unified Focal Loss",
+                "Log Cosh Dice Focal",
+            ],
         ),
         inquirer.Confirm("use_lr_scheduler", message="Use LR Scheduler?", default=True),
         inquirer.List(
