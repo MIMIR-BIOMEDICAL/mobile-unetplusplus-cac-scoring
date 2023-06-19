@@ -11,11 +11,15 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.data.preprocess.lib.tfrecord import \
-    create_example_fn  # pylint: disable=wrong-import-position,import-error
+from src.data.preprocess.lib.tfrecord import (  # pylint: disable=wrong-import-position,import-error
+    create_example_fn,
+)
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    get_patient_split, get_pos_from_bin_list, get_pos_from_mult_list,
-    split_list)
+    get_patient_split,
+    get_pos_from_bin_list,
+    get_pos_from_mult_list,
+    split_list,
+)
 
 
 def combine_to_tfrecord(
