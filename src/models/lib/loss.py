@@ -147,9 +147,7 @@ def dyn_weighted_bincrossentropy(true, pred):
     zero_weight = K.sum(true) / num_pred + K.epsilon()
 
     # get weight of values in 'false' category
-    one_weight = (
-        K.sum(keras.backend.cast(pred < 0.5, true.dtype)) / num_pred + K.epsilon()
-    )
+    one_weight = K.sum(K.cast(pred < 0.5, true.dtype)) / num_pred + K.epsilon()
 
     # calculate the weight vector
     weights = (1.0 - true) * zero_weight + true * one_weight
