@@ -34,6 +34,15 @@ def categorical_focal_loss(alpha=0.25, gamma=2.0):
     """
 
     # def categorical_focal_loss_fixed(y_true, y_pred):
+
+    def focal_loss_fixed(y_true, y_pred):
+        pt_1 = tf.where(tf.equal(y_true, 1), y_pred, tf.ones_like(y_pred))
+        pt_0 = tf.where(tf.equal(y_true, 0), y_pred, tf.zeros_like(y_pred))
+        return -K.mean(
+            alpha * K.pow(1.0 - pt_1, gamma) * K.log(pt_1 + K.epsilon())
+        ) - K.mean((1 - alpha) * K.pow(pt_0, gamma) * K.log(1.0 - pt_0 + K.epsilon()))
+
+    return focal_loss_fixed
     # """
     # :param y_true: A tensor of the same shape as `y_pred`
     # :param y_pred: A tensor resulting from a softmax
@@ -60,15 +69,15 @@ def categorical_focal_loss(alpha=0.25, gamma=2.0):
     # loss = K.mean(K.sum(loss, axis=-1))
     # return loss
 
-    # return categorical_focal_loss_fixed
-    return tf.keras.losses.BinaryFocalCrossentropy(alpha=alpha, gamma=gamma)
+    # return tf.keras.losses.BinaryFocalCrossentropy(alpha=alpha, gamma=gamma)
 
 
 def dice_coef(y_true, y_pred):
     smooth = 1
-    intersection = K.sum(y_true * y_pred, axis=[1, 2, 3])
-    union = K.sum(y_true, axis=[1, 2, 3]) + K.sum(y_pred, axis=[1, 2, 3])
-    dice = K.mean((2.0 * intersection + smooth) / (union + smooth), axis=0)
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    dice = (2.0 * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
     return dice
 
 
