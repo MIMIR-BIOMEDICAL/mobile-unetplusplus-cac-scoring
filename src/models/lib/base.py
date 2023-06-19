@@ -6,6 +6,7 @@ from tensorflow import keras  # pylint: disable=wrong-import-position,import-err
 from tensorflow.keras import (  # pylint: disable=wrong-import-position,import-error
     layers,
 )
+from tensorflow.keras.applications import MobileNetV2
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
@@ -127,6 +128,140 @@ def base_unet_pp(config: UNetPPConfig):
                 layer = layers.Concatenate(name=f"x_{node_name}_concat")(skip_list)
 
             else:  # j==0 and i==0
+                continue
+
+            # Add H Block
+            h_params["n_filter"] = config.filter_list[i]
+            if config.model_mode == "mobile":
+                h_params["n_iter"] = config.downsample_iteration[i]
+            model_dict[node_name] = h_block(node_name=node_name, **h_params)(layer)
+
+    # Preparation whether we use deep supervision or not
+    # This loop basicaclly make sure that a multihead deep supervision is possible
+
+    output_lists = []
+    output_layer_name = []
+    activation_dict = {"bin": "sigmoid", "mult": "softmax"}
+
+    # Create a bunch of Conv 1x1 to the node with j = 0
+    for out_name, nc in config.n_class.items():
+        for node_num in range(1, config.depth):
+            layer_name = f"ds_{node_num}"
+            model_dict[layer_name] = layers.Conv2D(
+                filters=nc,
+                kernel_size=1,
+                name=layer_name,
+                padding="same",
+                activation=activation_dict.get(out_name, "sigmoid"),
+                dtype="float32",
+            )(model_dict[f"0{node_num}"])
+            output_lists.append(model_dict[layer_name])
+            output_layer_name.append(layer_name)
+
+    if config.deep_supervision:
+        return (
+            keras.Model(inputs=model_dict["input"], outputs=output_lists),
+            output_layer_name,
+        )
+
+    # Get the index of the last node, with the added head
+    n_head = len(list(config.n_class.keys()))
+    non_deep_supervision_output_index = [
+        i - 1 for i in range(0, (config.depth - 1) * n_head + 1, config.depth - 1)
+    ]
+
+    return (
+        keras.Model(
+            inputs=model_dict["input"],
+            outputs=output_lists[-1]
+            if n_head == 1
+            else [
+                output_lists[index] for index in non_deep_supervision_output_index[1:]
+            ],
+        ),
+        output_layer_name[-1]
+        if n_head == 1
+        else [
+            output_layer_name[index] for index in non_deep_supervision_output_index[1:]
+        ],
+    )
+
+
+def unetpp_mobile_backend(config: UNetPPConfig):
+    model_mode_mapping = {
+        "basic": {
+            "h_block": (
+                conv_bn_relu_block,
+                {
+                    "mode": config.upsample_mode,
+                },
+            ),
+        },
+        "mobile": {
+            "h_block": (
+                sequence_inv_res_bot_block,
+                {
+                    "strides": 1,
+                    "t_expansion": 6,
+                    "n_iter": config.downsample_iteration[0]
+                    if config.downsample_iteration is not None
+                    else 1,
+                },
+            ),
+        },
+    }
+    model_dict = {}
+
+    # Input layer for the first node
+    model_dict["input"] = keras.Input(shape=config.input_dim, name="x_00_input")
+    model_dict["00"] = layers.Concatenate()(
+        [model_dict["input"], model_dict["input"], model_dict["input"]]
+    )
+    mobile_backbone = MobileNetV2(
+        input_tensor=model_dict["00"], weights="imagenet", include_top=False
+    )
+
+    mobile_skip_node = {
+        "10": "block_1_expand_relu",
+        "20": "block_3_expand_relu",
+        "30": "block_6_expand_relu",
+        "40": "block_13_expand_relu",
+    }
+
+    for i in range(1, config.depth):
+        num = f"{i}0"
+        print(f"--- Creating model downsample node X{num} ")
+        model_dict[num] = mobile_backbone.get_layer(mobile_skip_node[num]).output
+
+    # For the first node it is a H block without downsampling
+
+    # H block initialization
+    h_block, h_params = model_mode_mapping[config.model_mode]["h_block"]
+    h_params["batch_norm"] = config.batch_norm
+
+    for j in range(config.depth):
+        for i in range(max(0, config.depth - j)):
+            node_name = node_name_func(i, j)
+
+            if j > 0:
+                print(
+                    f"--- Creating model upsample node X{node_name} f {config.filter_list[i]}"
+                )
+                # Upsampling
+                upsample = upsample_block(
+                    node_name=node_name,
+                    n_filter=config.filter_list[i],
+                    batch_norm=config.batch_norm,
+                    mode=config.upsample_mode,
+                )(model_dict[node_name_func(i + 1, j - 1)])
+
+                # Get all skip connection
+                skip_list = [model_dict[node_name_func(i, k)] for k in range(j)]
+                skip_list.append(upsample)
+
+                # Concatenation layer
+                layer = layers.Concatenate(name=f"x_{node_name}_concat")(skip_list)
+            else:
                 continue
 
             # Add H Block
