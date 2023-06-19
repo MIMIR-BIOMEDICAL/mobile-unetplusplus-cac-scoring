@@ -24,6 +24,7 @@ from src.models.lib.loss import (
     dice_loss,
     log_cosh_dice_focal,
     log_cosh_dice_loss,
+    dyn_weighted_bincrossentropy
 )
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
@@ -261,6 +262,7 @@ def start_prompt():
                 "Log Cosh Dice",
                 "Dice Focal",
                 "Log Cosh Dice Focal",
+                "Dynamic BCE"
             ],
             default="Focal",
         ),
@@ -411,6 +413,7 @@ def main():
                 alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
             )
         ],
+        "Dynamic BCE": [dyn_weighted_bincrossentropy]
     }
 
     loss_func = loss_func_dict[parsed_answer["loss_func"]]
