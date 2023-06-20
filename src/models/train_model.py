@@ -17,15 +17,9 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
-from src.models.lib.loss import (
-    categorical_focal_loss,
-    dice_coef,
-    dice_focal,
-    dice_loss,
-    log_cosh_dice_focal,
-    log_cosh_dice_loss,
-    dyn_weighted_bincrossentropy
-)
+from src.models.lib.loss import (categorical_focal_loss, dice_coef, dice_focal,
+                                 dice_loss, dyn_weighted_bincrossentropy,
+                                 log_cosh_dice_focal, log_cosh_dice_loss)
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
 
@@ -39,6 +33,7 @@ def train_model(
     epochs: int,
     loss_function_list: list,
     learning_rate,
+    learning_rate_decay,
 ):
     """
     Train a model using the specified configuration.
@@ -150,6 +145,10 @@ def train_model(
         f"models/{model_config.model_name}/history.csv"
     )
 
+    lr_reduce_callback = keras.callbacks.ReduceLROnPlateau(
+        monitor="vall_loss", mode="min", factor=learning_rate_decay, patience=5
+    )
+
     print("--- Model Prepared")
 
     # Create Dataset
@@ -170,7 +169,12 @@ def train_model(
             batch_size=batch_size,
             epochs=epochs,
             validation_data=val_coca_dataset,
-            callbacks=[history_callback, best_callback, epoch_callback],
+            callbacks=[
+                history_callback,
+                best_callback,
+                epoch_callback,
+                lr_reduce_callback,
+            ],
         )
         print("--- Training Finished")
         print("--- Saving Latest Model...")
@@ -262,7 +266,7 @@ def start_prompt():
                 "Log Cosh Dice",
                 "Dice Focal",
                 "Log Cosh Dice Focal",
-                "Dynamic BCE"
+                "Dynamic BCE",
             ],
             default="Focal",
         ),
@@ -299,28 +303,26 @@ def start_prompt():
                 "Log Cosh Dice Focal",
             ],
         ),
-        inquirer.Confirm("use_lr_scheduler", message="Use LR Scheduler?", default=True),
-        inquirer.List(
-            "lr_scheduler",
-            message="LR Scheduler",
-            choices=["Exponential Decay", "Cosine Decay"],
-            default="Exponential Decay",
-            ignore=lambda x: x["use_lr_scheduler"] != True,
-        ),
+        # inquirer.Confirm("use_lr_scheduler", message="Use LR Scheduler?", default=True),
+        # inquirer.List(
+        #     "lr_scheduler",
+        #     message="LR Scheduler",
+        #     choices=["Exponential Decay", "Cosine Decay"],
+        #     default="Exponential Decay",
+        #     ignore=lambda x: x["use_lr_scheduler"] != True,
+        # ),
         inquirer.Text("learning_rate", message="Learning Rate", default="0.001"),
         inquirer.Text(
             "learning_rate_decay",
             message="Learning Rate Decay",
             default="0.95",
-            ignore=lambda x: x["lr_scheduler"] != "Exponential Decay"
-            or x["use_lr_scheduler"] != True,
         ),
-        inquirer.Text(
-            "learning_rate_step",
-            message="Learning Rate Step",
-            default="10",
-            ignore=lambda x: x["use_lr_scheduler"] != True,
-        ),
+        # inquirer.Text(
+        #     "learning_rate_step",
+        #     message="Learning Rate Step",
+        #     default="10",
+        #     ignore=lambda x: x["use_lr_scheduler"] != True,
+        # ),
     ]
 
     try:
@@ -360,7 +362,7 @@ def prompt_parser(answer) -> dict:
     answer["epochs"] = int(answer["epochs"])
     answer["learning_rate"] = float(answer["learning_rate"])
     answer["learning_rate_decay"] = float(answer["learning_rate_decay"])
-    answer["learning_rate_step"] = int(answer["learning_rate_step"])
+    # answer["learning_rate_step"] = int(answer["learning_rate_step"])
     answer["alpha"] = float(answer["alpha"])
     answer["weight"] = float(answer["weight"])
     answer["gamma"] = float(answer["gamma"])
@@ -413,28 +415,28 @@ def main():
                 alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
             )
         ],
-        "Dynamic BCE": [dyn_weighted_bincrossentropy]
+        "Dynamic BCE": [dyn_weighted_bincrossentropy],
     }
 
     loss_func = loss_func_dict[parsed_answer["loss_func"]]
 
-    lr_scheduler_dict = {
-        "Exponential Decay": tf.keras.optimizers.schedules.ExponentialDecay(
-            parsed_answer["learning_rate"],
-            decay_steps=parsed_answer["learning_rate_step"],
-            decay_rate=parsed_answer["learning_rate_decay"],
-        ),
-        "Cosine Decay": tf.keras.optimizers.schedules.CosineDecay(
-            parsed_answer["learning_rate"],
-            decay_steps=parsed_answer["learning_rate_step"],
-        ),
-    }
+    # lr_scheduler_dict = {
+    #     "Exponential Decay": tf.keras.optimizers.schedules.ExponentialDecay(
+    #         parsed_answer["learning_rate"],
+    #         decay_steps=parsed_answer["learning_rate_step"],
+    #         decay_rate=parsed_answer["learning_rate_decay"],
+    #     ),
+    #     "Cosine Decay": tf.keras.optimizers.schedules.CosineDecay(
+    #         parsed_answer["learning_rate"],
+    #         decay_steps=parsed_answer["learning_rate_step"],
+    #     ),
+    # }
 
-    if parsed_answer["use_lr_scheduler"]:
-        lr_name = parsed_answer["lr_scheduler"]
-        lr = lr_scheduler_dict[lr_name]
-    else:
-        lr = parsed_answer["learning_rate"]
+    # if parsed_answer["use_lr_scheduler"]:
+    #     lr_name = parsed_answer["lr_scheduler"]
+    #     lr = lr_scheduler_dict[lr_name]
+    # else:
+    #     lr = parsed_answer["learning_rate"]
 
     # Create model configuration
     if answer.get("model_mode") == "sanity_check":
@@ -459,7 +461,8 @@ def main():
             shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
             loss_function_list=loss_func,
-            learning_rate=lr,
+            learning_rate=parsed_answer["learning_rate"],
+            learning_rate_decay=parsed_answer["learning_rate_decay"],
         )
         return
 
@@ -487,7 +490,8 @@ def main():
             shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
             loss_function_list=loss_func,
-            learning_rate=lr,
+            learning_rate=parsed_answer["learning_rate"],
+            learning_rate_decay=parsed_answer["learning_rate_decay"],
         )
         return
     else:
@@ -500,7 +504,8 @@ def main():
             shuffle_size=parsed_answer.get("shuffle_size"),
             epochs=parsed_answer.get("epochs"),
             loss_function_list=loss_func,
-            learning_rate=lr,
+            learning_rate=parsed_answer["learning_rate"],
+            learning_rate_decay=parsed_answer["learning_rate_decay"],
         )
 
 
