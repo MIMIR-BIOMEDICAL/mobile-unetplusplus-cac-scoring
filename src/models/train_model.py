@@ -146,7 +146,7 @@ def train_model(
     )
 
     lr_reduce_callback = keras.callbacks.ReduceLROnPlateau(
-        monitor="vall_loss", mode="min", factor=learning_rate_decay, patience=5
+        monitor="val_loss", mode="min", factor=learning_rate_decay, patience=5
     )
 
     print("--- Model Prepared")
