@@ -73,11 +73,13 @@ def categorical_focal_loss(alpha=0.25, gamma=2.0):
 
 
 def dice_coef(y_true, y_pred):
-    smooth = 1
+    smooth = K.epsilon()
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
     intersection = K.sum(y_true_f * y_pred_f)
-    dice = (2.0 * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
+    dice = (2.0 * intersection + smooth) / (
+        K.sum(K.square(y_true_f)) + K.sum(K.square(y_pred_f)) + smooth
+    )
     return dice
 
 
