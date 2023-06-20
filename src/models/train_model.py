@@ -131,17 +131,9 @@ def train_model(
         f"models/{model_config.model_name}/" + "best-model-epoch-{epoch:02d}.h5"
     )
 
-    epoch_callback = keras.callbacks.ModelCheckpoint(
-        per_epoch_path,
-        monitor="val_loss",
-        verbose=0,
-        save_best_only=False,
-        save_weights_only=False,
-        mode="min",
-    )
     best_callback = keras.callbacks.ModelCheckpoint(
         best_model_path,
-        monitor="val_loss",
+        monitor="val_ds_4_dice_coef",
         verbose=1,
         save_best_only=True,
         save_weights_only=False,
@@ -151,9 +143,9 @@ def train_model(
         f"models/{model_config.model_name}/history.csv"
     )
 
-    lr_reduce_callback = keras.callbacks.ReduceLROnPlateau(
-        monitor="val_loss", mode="min", factor=learning_rate_decay, patience=5
-    )
+    # lr_reduce_callback = keras.callbacks.ReduceLROnPlateau(
+    #     monitor="val_loss", mode="min", factor=learning_rate_decay, patience=5
+    # )
 
     print("--- Model Prepared")
 
@@ -178,8 +170,6 @@ def train_model(
             callbacks=[
                 history_callback,
                 best_callback,
-                epoch_callback,
-                lr_reduce_callback,
             ],
         )
         print("--- Training Finished")
