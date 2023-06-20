@@ -11,15 +11,11 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.data.preprocess.lib.tfrecord import (  # pylint: disable=wrong-import-position,import-error
-    create_example_fn,
-)
+from src.data.preprocess.lib.tfrecord import \
+    create_example_fn  # pylint: disable=wrong-import-position,import-error
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    get_patient_split,
-    get_pos_from_bin_list,
-    get_pos_from_mult_list,
-    split_list,
-)
+    get_patient_split, get_pos_from_bin_list, get_pos_from_mult_list,
+    split_list)
 
 
 def combine_to_tfrecord(
@@ -158,29 +154,31 @@ def combine_to_tfrecord(
                                 else:
                                     log_key = f"{split_mode}-img-non-cac"
                                     if split_mode == "train":
-                                        diff = 2391 - log.get(log_key, 0)
-
-                                        if diff <= 0:
-                                            continue
-                                        else:
-                                            skip = np.random.choice(
-                                                2, size=1, p=[0.85, 0.15]
-                                            )[0]
-
-                                            if skip:
-                                                continue
-                                            else:
-                                                patient_dict["img"] = indexer[
-                                                    patient_index
-                                                ]["img"][img_index]["img_hu"][:]
-
-                                                example = create_example_fn(
-                                                    patient_dict
-                                                )
-                                                log[log_key] = log.get(log_key, 0) + 1
-                                                tf_record_file.write(
-                                                    example.SerializeToString()
-                                                )
+                                        continue
+                                        # Undersample with negative
+                                        # diff = 2391 - log.get(log_key, 0)
+                                        #
+                                        # if diff <= 0:
+                                        #     continue
+                                        # else:
+                                        #     skip = np.random.choice(
+                                        #         2, size=1, p=[0.85, 0.15]
+                                        #     )[0]
+                                        #
+                                        #     if skip:
+                                        #         continue
+                                        #     else:
+                                        #         patient_dict["img"] = indexer[
+                                        #             patient_index
+                                        #         ]["img"][img_index]["img_hu"][:]
+                                        #
+                                        #         example = create_example_fn(
+                                        #             patient_dict
+                                        #         )
+                                        #         log[log_key] = log.get(log_key, 0) + 1
+                                        #         tf_record_file.write(
+                                        #             example.SerializeToString()
+                                        #         )
                                     else:
                                         log[log_key] = log.get(log_key, 0) + 1
                                         patient_dict["img"] = indexer[patient_index][
