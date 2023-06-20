@@ -2,23 +2,19 @@
 import pathlib
 import sys
 
-from tensorflow import keras  # pylint: disable=wrong-import-position,import-error
-from tensorflow.keras import (  # pylint: disable=wrong-import-position,import-error
-    layers,
-)
+from tensorflow import \
+    keras  # pylint: disable=wrong-import-position,import-error
+from tensorflow.keras import \
+    layers  # pylint: disable=wrong-import-position,import-error
 from tensorflow.keras.applications import MobileNetV2
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.models.lib.block import (  # pylint: disable=wrong-import-position,import-error
-    conv_bn_relu_block,
-    sequence_inv_res_bot_block,
-    upsample_block,
-)
+    conv_bn_relu_block, sequence_inv_res_bot_block, upsample_block)
 from src.models.lib.config import UNetPPConfig
-from src.models.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    node_name_func,
-)
+from src.models.lib.utils import \
+    node_name_func  # pylint: disable=wrong-import-position,import-error
 
 
 def base_unet_pp(config: UNetPPConfig):
@@ -210,7 +206,14 @@ def unetpp_mobile_backend(config: UNetPPConfig):
             ),
         },
     }
+    
+    # H block initialization
+    h_block, h_params = model_mode_mapping[config.model_mode]["h_block"]
+    h_params["batch_norm"] = config.batch_norm
+    
     model_dict = {}
+    
+    # For the first node it is a H block without downsampling
 
     # Input layer for the first node
     model_dict["input"] = keras.Input(shape=config.input_dim, name="x_00_input")
@@ -231,13 +234,13 @@ def unetpp_mobile_backend(config: UNetPPConfig):
     for i in range(1, config.depth):
         num = f"{i}0"
         print(f"--- Creating model downsample node X{num} ")
-        model_dict[num] = mobile_backbone.get_layer(mobile_skip_node[num]).output
+        h_params["n_filter"] = config.filter_list[i]
+        if config.model_mode == "mobile":
+            h_params["n_iter"] = config.downsample_iteration[i]
+        backbone_output = mobile_backbone.get_layer(mobile_skip_node[num]).output
+        model_dict[num] = h_block(node_name=num, **h_params)(backbone_output)
 
-    # For the first node it is a H block without downsampling
 
-    # H block initialization
-    h_block, h_params = model_mode_mapping[config.model_mode]["h_block"]
-    h_params["batch_norm"] = config.batch_norm
 
     for j in range(config.depth):
         for i in range(max(0, config.depth - j)):
