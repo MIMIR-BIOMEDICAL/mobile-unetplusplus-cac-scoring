@@ -17,9 +17,15 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
-from src.models.lib.loss import (categorical_focal_loss, dice_coef, dice_focal,
-                                 dice_loss, dyn_weighted_bincrossentropy,
-                                 log_cosh_dice_focal, log_cosh_dice_loss)
+from src.models.lib.loss import (
+    categorical_focal_loss,
+    dice_coef,
+    dice_focal,
+    dice_loss,
+    dyn_weighted_bincrossentropy,
+    log_cosh_dice_focal,
+    log_cosh_dice_loss,
+)
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
 
