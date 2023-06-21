@@ -33,9 +33,12 @@ def conv_bn_relu_unit(node_name, n_filter, batch_norm, n_kernel=3) -> Callable:
         # Batch Normalization
         if batch_norm:
             x = layers.BatchNormalization(name=f"x_{node_name}_bn")(x)
-
-        # Activation
-        x = layers.Activation("relu", name=f"x_{node_name}_activation")(x)
+            # Activation
+            x = layers.Activation("relu", name=f"x_{node_name}_activation")(x)
+            x = layers.Dropout(0.2, name=f"x_{node_name}_drop")(x)
+        else:
+            # Activation
+            x = layers.Activation("relu", name=f"x_{node_name}_activation")(x)
 
         return x
 
@@ -133,12 +136,17 @@ def upsample_block(
                 padding="same",
             )(input_tensor)
 
-            # Batch Norm
+            # Batch Normalization
             if batch_norm:
                 x = layers.BatchNormalization(name=f"x_{node_name}_transpose_bn")(x)
-
-            # Activation
-            x = layers.Activation("relu", name=f"x_{node_name}_transpose_activation")(x)
+                # Activation
+                x = layers.Activation(
+                    "relu", name=f"x_{node_name}_transpose_activation"
+                )(x)
+                x = layers.Dropout(0.2, name=f"x_{node_name}_transpose_drop")(x)
+            else:
+                # Activation
+                x = layers.Activation("relu", name=f"x_{node_name}_activation")(x)
 
             return x
 
@@ -193,6 +201,8 @@ def pointwise_block(
             x = layers.BatchNormalization(name=f"{node_name}_pwise_bnorm")(x)
         if not linear:
             x = layers.Activation(tf.nn.relu6, name=f"{node_name}_pwise_relu6")(x)
+        if batch_norm:
+            x = layers.Dropout(0.2, name=f"{node_name}_pwise_drop")(x)
         return x
 
     return layer
@@ -225,9 +235,16 @@ def depthwise_block(
         x = layers.DepthwiseConv2D(
             kernel, strides=strides, padding="same", name=f"{node_name}_dwise"
         )(input_tensor)
+
         if batch_norm:
             x = layers.BatchNormalization(name=f"{node_name}_dwise_bnorm")(x)
-        x = layers.Activation(tf.nn.relu6, name=f"{node_name}_dwise_relu6")(x)
+            # Activation
+            x = layers.Activation(tf.nn.relu6, name=f"{node_name}_dwise_relu6")(x)
+            x = layers.Dropout(0.2, name=f"x_{node_name}_dwise_drop")(x)
+        else:
+            # Activation
+            x = layers.Activation(tf.nn.relu6, name=f"{node_name}_dwise_relu6")(x)
+
         return x
 
     return layer

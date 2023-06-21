@@ -210,11 +210,18 @@ def unetpp_mobile_backend(config: UNetPPConfig):
             ),
         },
     }
+
+    # H block initialization
+    h_block, h_params = model_mode_mapping[config.model_mode]["h_block"]
+    h_params["batch_norm"] = config.batch_norm
+
     model_dict = {}
+
+    # For the first node it is a H block without downsampling
 
     # Input layer for the first node
     model_dict["input"] = keras.Input(shape=config.input_dim, name="x_00_input")
-    model_dict["00"] = layers.Concatenate()(
+    model_dict["00"] = layers.Concatenate(name="x_00_concat")(
         [model_dict["input"], model_dict["input"], model_dict["input"]]
     )
     mobile_backbone = MobileNetV2(
@@ -231,13 +238,11 @@ def unetpp_mobile_backend(config: UNetPPConfig):
     for i in range(1, config.depth):
         num = f"{i}0"
         print(f"--- Creating model downsample node X{num} ")
-        model_dict[num] = mobile_backbone.get_layer(mobile_skip_node[num]).output
-
-    # For the first node it is a H block without downsampling
-
-    # H block initialization
-    h_block, h_params = model_mode_mapping[config.model_mode]["h_block"]
-    h_params["batch_norm"] = config.batch_norm
+        h_params["n_filter"] = config.filter_list[i]
+        if config.model_mode == "mobile":
+            h_params["n_iter"] = config.downsample_iteration[i]
+        backbone_output = mobile_backbone.get_layer(mobile_skip_node[num]).output
+        model_dict[num] = h_block(node_name=num, **h_params)(backbone_output)
 
     for j in range(config.depth):
         for i in range(max(0, config.depth - j)):
