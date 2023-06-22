@@ -73,7 +73,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             or patient_number in blacklist_multiple_image_id_with_roi()
             or patient_number in blacklist_invalid_dicom()
             or patient_number in blacklist_no_image()
-            or patient_number in blacklist_cant_fill()
+            # or patient_number in blacklist_cant_fill()
         ):
             continue
 
@@ -114,7 +114,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                 if len(filled_pixel_coord) <= len(pixel_coord_list):
                     patient_no_fill_log.append(patient_number)
 
-                cleaned_roi = {"loc": artery_abbreviation, "pos": filled_pixel_coord}
+                cleaned_roi = {"loc": artery_abbreviation, "pos": pixel_coord_list}
                 cleaned_roi_list.append(cleaned_roi)
             # Skip adding to cleaned data if no roi is detected
             if len(cleaned_roi_list) == 0:
@@ -137,6 +137,10 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                 patient_minus_log.append(patient_number)
             else:
                 # NOTE: Its possible to check Agatston too here, so if no agatston its not worth it
+                pathh = next(
+                    patient_root_path.rglob(f"*00{str(true_image_index).zfill(2)}.dcm")
+                )
+                print(path)
                 agatston = ground_truth_auto_cac(
                     [
                         next(
@@ -148,6 +152,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                     [filled_pixel_coord],
                     mem_opt=True,
                 )
+                print(agatston["total_agatson"])
                 if agatston["total_agatston"] == 0:
                     patient_agatston_zero.append(patient_number)
 
