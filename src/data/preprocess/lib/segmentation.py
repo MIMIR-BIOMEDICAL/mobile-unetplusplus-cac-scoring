@@ -137,10 +137,6 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                 patient_minus_log.append(patient_number)
             else:
                 # NOTE: Its possible to check Agatston too here, so if no agatston its not worth it
-                pathh = next(
-                    patient_root_path.rglob(f"*00{str(true_image_index).zfill(2)}.dcm")
-                )
-                print(path)
                 agatston = ground_truth_auto_cac(
                     [
                         next(
