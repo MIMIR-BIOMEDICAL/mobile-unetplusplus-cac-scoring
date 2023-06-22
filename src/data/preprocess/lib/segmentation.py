@@ -153,7 +153,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                     [filled_pixel_coord],
                     mem_opt=True,
                 )
-                if agatston == 0:
+                if agatston["total_agatston"] == 0:
                     patient_agatston_zero.append(patient_number)
 
             # NOTE: Check also if there is any off by on eerror
