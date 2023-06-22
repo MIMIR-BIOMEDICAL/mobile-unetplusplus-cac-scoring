@@ -99,15 +99,15 @@ def load_model(project_root_path, depth, _main_model):
     return pruned_model
 
 
-def plot(img, title):
+def plot(container, img, title):
     fig, ax = plt.subplots()
-    fig.title(title)
+    ax.set_title(title)
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.05)
     im = ax.imshow(img, cmap="gray")
     ax.axis("off")
     fig.colorbar(im, cax=cax, orientation="vertical")
-    st.pyplot(fig)
+    container.pyplot(fig)
 
 
 def main():
@@ -141,15 +141,19 @@ def main():
                     ds_dict = {"DS1": 1, "DS2": 2, "DS3": 3, "DS4": 4}
                     num = ds_dict[ds]
                     pruned_model = load_model(project_root_path, num, main_model)
-                    st.write(file)
                     output = auto_cac(
                         [uploaded_file_path], pruned_model[f"d{num}"]["model"]
                     )
-                    st.subheader("Preprocessing Steps")
-                    plot(output["slice"][0]["img_arr"], "Input Image")
-                    plot(output["slice"][0]["img_hu"], "HU Image")
-                    plot(output["slice"][0]["img_clip"], "Clipped Image")
-                    plot(output["slice"][0]["img_norm"], "Normalized Image")
+                    a, b, c = st.columns(3)
+                    d, e, f = st.columns(3)
+                    plot(a, output["slice"][0]["img_arr"], "Input Image")
+                    plot(b, output["slice"][0]["img_hu"], "HU Image")
+                    plot(c, output["slice"][0]["img_clip"], "Clipped Image")
+                    plot(d, output["slice"][0]["img_norm"], "Normalized Image")
+                    plot(e, output["slice"][0]["img_zero"], "Zero Centered Image")
+                    plot(f, output["slice"][0]["pred_bin"], "Binary Segmentation Mask")
+                    st.write(output["total_agatston"])
+                    st.write(output["class"])
         else:
             file_path_list = []
             with st.spinner("Creating temporary dicom filej"):
