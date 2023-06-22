@@ -7,7 +7,6 @@ import numpy as np
 from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
-
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
     artery_loc_to_abbr,
     blacklist_invalid_dicom,
@@ -19,6 +18,7 @@ from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-posi
     fill_segmentation,
     string_to_int_tuple,
 )
+from src.system.pipeline.output import auto_cac, ground_truth_auto_cac
 
 
 def convert_plist_to_dict(plist_path: pathlib.Path) -> dict:
@@ -61,6 +61,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
     clean_output_dict = {}
     patient_no_fill_log = []
     patient_minus_log = []
+    patient_agatston_zero = []
 
     # Transverse dictionary
     for patient_number, patient_image_dict in tqdm(
@@ -139,6 +140,23 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             true_image_index = (patient_dcm_len + 1) - image_dict["ImageIndex"]
             if true_image_index < 0:
                 patient_minus_log.append(patient_number)
+            else:
+                # NOTE: Its possible to check Agatston too here, so if no agatston its not worth it
+                agatston = ground_truth_auto_cac(
+                    [
+                        next(
+                            patient_root_path.rglob(
+                                f"00{str(true_image_index).zfill(2)}.dcm"
+                            )
+                        )
+                    ],
+                    [filled_pixel_coord],
+                    mem_opt=True,
+                )
+                if agatston == 0:
+                    patient_agatston_zero.append(patient_number)
+
+            # NOTE: Check also if there is any off by on eerror
 
             patient_img_list.append(
                 {"idx": str(true_image_index).zfill(3), "roi": cleaned_roi_list}
@@ -147,6 +165,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
         clean_output_dict[patient_number] = patient_img_list
     print(set(patient_no_fill_log))
     print(set(patient_minus_log))
+    print(set(patient_agatston_zero))
 
     return clean_output_dict
 
