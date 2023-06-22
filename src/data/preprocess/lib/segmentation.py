@@ -8,10 +8,10 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    artery_loc_to_abbr, blacklist_invalid_dicom, blacklist_mislabelled_roi,
-    blacklist_multiple_image_id_with_roi, blacklist_no_image,
-    blacklist_pixel_overlap, convert_abr_to_num, fill_segmentation,
-    string_to_int_tuple)
+    artery_loc_to_abbr, blacklist_cant_fill, blacklist_invalid_dicom,
+    blacklist_mislabelled_roi, blacklist_multiple_image_id_with_roi,
+    blacklist_no_image, blacklist_pixel_overlap, convert_abr_to_num,
+    fill_segmentation, string_to_int_tuple)
 from src.system.pipeline.output import auto_cac, ground_truth_auto_cac
 
 
@@ -73,6 +73,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             or patient_number in blacklist_multiple_image_id_with_roi()
             or patient_number in blacklist_invalid_dicom()
             or patient_number in blacklist_no_image()
+            or patient_number in blacklist_cant_fill()
         ):
             continue
 
