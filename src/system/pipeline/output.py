@@ -5,6 +5,7 @@ import sys
 import cv2
 import numpy as np
 import pydicom as pdc
+import tensorflow as tf
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
@@ -41,12 +42,12 @@ def call_ccl(img, mode="cv2"):
 
 
 def extract_dcm(img_dcm_path):
-    img_dcm = pdc.dcmread(img_dcm_path)
+    img_dcm = pdc.dcmread(img_dcm_path, force=True)
     img_array = img_dcm.pixel_array
     img_hu = pdc.pixel_data_handlers.util.apply_modality_lut(img_array, img_dcm)
     pxl_spc = img_dcm.PixelSpacing
 
-    return img_hu, pxl_spc
+    return img_hu, pxl_spc, img_array
 
 
 def classify_risk(total_agatston):
@@ -74,11 +75,20 @@ def auto_cac(img_dcm_paths, model, mem_opt=False):
 
         ## Preprocessing
         # Get Image HU and pixel spacing
-        img_hu, pxl_spc = extract_dcm(img_dcm_path)
+        img_hu, pxl_spc, img_arr = extract_dcm(img_dcm_path)
 
         # Prepare image to correct dims (1,N,N,1)
-        preprocessed_img_hu = preprocess_img(img_hu)
-        expanded_img_batch = np.expand_dims(preprocessed_img_hu, axis=0)
+        # preprocessed_img_hu = preprocess_img(img_hu)
+
+        clipped_image = tf.clip_by_value(img_hu, -800, 1200)
+
+        # Normalization
+        normalized_image = (clipped_image - -800) / (1200 - -800)
+
+        # Zero Centering
+        zero_centered_image = normalized_image - tf.reduce_mean(normalized_image)
+
+        expanded_img_batch = np.expand_dims(zero_centered_image, axis=0)
         expanded_img_class = np.expand_dims(expanded_img_batch, axis=3)
 
         ## Model
@@ -100,7 +110,11 @@ def auto_cac(img_dcm_paths, model, mem_opt=False):
         if not mem_opt:
             output_dict["slice"] = output_dict.get("slice", {})
             output_dict["slice"][index] = {}
+            output_dict["slice"][index]["img_arr"] = img_arr
             output_dict["slice"][index]["img_hu"] = img_hu
+            output_dict["slice"][index]["img_clip"] = clipped_image
+            output_dict["slice"][index]["img_norm"] = normalized_image
+            output_dict["slice"][index]["img_zero"] = zero_centered_image
             output_dict["slice"][index]["pxl_spc"] = pxl_spc
             output_dict["slice"][index]["pred_sigmoid"] = pred_sigmoid
             output_dict["slice"][index]["pred_bin"] = pred_bin
