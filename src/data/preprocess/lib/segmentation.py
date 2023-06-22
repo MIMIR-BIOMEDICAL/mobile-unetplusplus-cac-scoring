@@ -116,7 +116,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                 dense_arr[tuple(zip(*pixel_coord_list))] = 1
                 flooded_arr = fill_segmentation(dense_arr)
                 filled_pixel_coord = np.argwhere(flooded_arr == 1).tolist()
-                if len(filled_pixel_coord) <= pixel_coord_list:
+                if len(filled_pixel_coord) <= len(pixel_coord_list):
                     patient_no_filllog.append(patient_number)
 
                 cleaned_roi = {"loc": artery_abbreviation, "pos": filled_pixel_coord}
