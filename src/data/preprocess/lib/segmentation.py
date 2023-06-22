@@ -16,6 +16,7 @@ from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-posi
     blacklist_no_image,
     blacklist_pixel_overlap,
     convert_abr_to_num,
+    fill_segmentation,
     string_to_int_tuple,
 )
 
@@ -58,6 +59,8 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
     """
     # Output Variable
     clean_output_dict = {}
+    patient_no_fill_log = []
+    patient_minus_log = []
 
     # Transverse dictionary
     for patient_number, patient_image_dict in tqdm(
@@ -107,7 +110,15 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                 # Remove duplicate coords
                 pixel_coord_list = list(set(int_pixel_coord_list))
 
-                cleaned_roi = {"loc": artery_abbreviation, "pos": pixel_coord_list}
+                # Flood fill
+                dense_arr = np.zeros((512, 512))
+                dense_arr[tuple(zip(*pixel_coord_list))] = 1
+                flooded_arr = fill_segmentation(dense_arr)
+                filled_pixel_coord = np.argwhere(flooded_arr == 1).tolist()
+                if len(filled_pixel_coord) <= pixel_coord_list:
+                    patient_no_filllog.append(patient_number)
+
+                cleaned_roi = {"loc": artery_abbreviation, "pos": filled_pixel_coord}
                 cleaned_roi_list.append(cleaned_roi)
             # Skip adding to cleaned data if no roi is detected
             if len(cleaned_roi_list) == 0:
@@ -126,12 +137,16 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             # Image index in metadata is reversed from the actual image index in
             # patient folder, so true index needed to be calculated
             true_image_index = (patient_dcm_len + 1) - image_dict["ImageIndex"]
+            if true_image_index < 0:
+                patient_minus_log.append(patient_number)
 
             patient_img_list.append(
                 {"idx": str(true_image_index).zfill(3), "roi": cleaned_roi_list}
             )
 
         clean_output_dict[patient_number] = patient_img_list
+    print(set(patient_no_fill_log))
+    print(set(patient_minus_log))
 
     return clean_output_dict
 
