@@ -10,10 +10,10 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    artery_loc_to_abbr, blacklist_cant_fill, blacklist_invalid_dicom,
-    blacklist_mislabelled_roi, blacklist_multiple_image_id_with_roi,
-    blacklist_no_image, blacklist_pixel_overlap, convert_abr_to_num,
-    fill_segmentation, string_to_float_tuple, string_to_int_tuple)
+    artery_loc_to_abbr, blacklist_invalid_dicom, blacklist_mislabelled_roi,
+    blacklist_multiple_image_id_with_roi, blacklist_no_image,
+    blacklist_pixel_overlap, convert_abr_to_num, fill_segmentation,
+    string_to_float_tuple, string_to_int_tuple)
 from src.system.pipeline.output import auto_cac, ground_truth_auto_cac
 
 
@@ -70,8 +70,8 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
         # - invalid dicom
         # - no image
         if (
-            patient_number in blacklist_pixel_overlap()
-            or patient_number in blacklist_mislabelled_roi()
+            # patient_number in blacklist_pixel_overlap()
+            patient_number in blacklist_mislabelled_roi()
             or patient_number in blacklist_multiple_image_id_with_roi()
             or patient_number in blacklist_invalid_dicom()
             or patient_number in blacklist_no_image()
@@ -154,7 +154,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                     [
                         next(
                             patient_root_path.rglob(
-                                f"*00{str(image_dict['ImageIndex']).zfill(2)}.dcm"
+                                f"*00{str(true_image_index).zfill(2)}.dcm"
                             )
                         )
                     ],
@@ -192,6 +192,7 @@ def split_clean_segmentation_to_binary(clean_segmentation_dict: dict) -> dict:
         binary_segmentation_dict: dictionary containing the binary
     """
     binary_segmentation_dict = {}
+    overlap = []
     for patient_number, image_list in tqdm(
         clean_segmentation_dict.items(), desc="Extracting Binary Segmentation Data"
     ):
@@ -202,8 +203,11 @@ def split_clean_segmentation_to_binary(clean_segmentation_dict: dict) -> dict:
             pos_list = []
             for roi in roi_list:
                 pos_list.extend(roi["pos"])
+            if len(set(pos_list)) != len(pos_list):
+                overlap.append(patient_number)
             out_image_list.append({"idx": image_index, "pos": pos_list})
         binary_segmentation_dict[patient_number] = out_image_list
+    print(overlap)
     return binary_segmentation_dict
 
 
