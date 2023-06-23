@@ -75,7 +75,6 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             or patient_number in blacklist_multiple_image_id_with_roi()
             or patient_number in blacklist_invalid_dicom()
             or patient_number in blacklist_no_image()
-            or patient_number in blacklist_cant_fill()
         ):
             continue
 
