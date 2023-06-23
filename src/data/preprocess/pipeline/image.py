@@ -9,12 +9,10 @@ import pydicom as pdc
 from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
-from src.data.preprocess.lib.image import (  # pylint: disable=import-error,wrong-import-position
-    extract_patient_dicom_path,
-)
-from src.data.preprocess.lib.utils import (  # pylint: disable=import-error,wrong-import-position
-    patient_number_zfill_range,
-)
+from src.data.preprocess.lib.image import \
+    extract_patient_dicom_path  # pylint: disable=import-error,wrong-import-position
+from src.data.preprocess.lib.utils import \
+    patient_number_zfill_range  # pylint: disable=import-error,wrong-import-position
 
 
 def extract_patient_dicom_data_to_h5(
@@ -105,7 +103,7 @@ def extract_patient_dicom_data_to_h5(
                         "img_arr",
                         data=img_array,
                         compression="gzip",
-                        compression_opts=9,
+                        compression_opts=6,
                         chunks=True,
                     )
                     # HU dataset
@@ -113,7 +111,7 @@ def extract_patient_dicom_data_to_h5(
                         "img_hu",
                         data=img_hu,
                         compression="gzip",
-                        compression_opts=9,
+                        compression_opts=6,
                         chunks=True,
                     )
         if sample:
