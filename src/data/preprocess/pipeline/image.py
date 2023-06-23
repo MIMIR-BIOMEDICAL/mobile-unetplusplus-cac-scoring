@@ -98,14 +98,6 @@ def extract_patient_dicom_data_to_h5(
                         f"{patient_img['idx']}"
                     )
 
-                    # Image dataset
-                    patient_image_group.create_dataset(
-                        "img_arr",
-                        data=img_array,
-                        compression="gzip",
-                        compression_opts=6,
-                        chunks=True,
-                    )
                     # HU dataset
                     patient_image_group.create_dataset(
                         "img_hu",
