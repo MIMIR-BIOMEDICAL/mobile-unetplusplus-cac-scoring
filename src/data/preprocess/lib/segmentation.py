@@ -145,7 +145,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
 
             # Image index in metadata is reversed from the actual image index in
             # patient folder, so true index needed to be calculated
-            true_image_index = (patient_dcm_len + 1) - image_dict["ImageIndex"]
+            true_image_index = patient_dcm_len - image_dict["ImageIndex"]
             if true_image_index < 0:
                 patient_minus_log.append(patient_number)
             else:
