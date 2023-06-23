@@ -5,7 +5,7 @@ import sys
 
 import numpy as np
 from geo_rasterize import rasterize
-from shapely import Polgyon
+from shapely import Polygon
 from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
@@ -103,7 +103,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                     for string_coord in roi["Point_px"]
                 ]
 
-                lesion_polygon = Polgyon(float_pixel_coord_list)
+                lesion_polygon = Polygon(float_pixel_coord_list)
                 rasterized_polygon = rasterize(
                     [lesion_polygon], [1], (512, 512), algorithm="replace"
                 )
