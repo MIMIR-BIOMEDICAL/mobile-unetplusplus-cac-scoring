@@ -1,5 +1,6 @@
 """Module containing utility function for preprocessing"""
 import numpy as np
+from skimage.segmentation import flood_fill
 
 
 def string_to_int_tuple(string_input: str) -> list:
@@ -20,6 +21,28 @@ def string_to_int_tuple(string_input: str) -> list:
 
     for string_num in string_input_list:
         out_list.append(int(float(string_num)))
+
+    return tuple(out_list)
+
+
+def string_to_float_tuple(string_input: str) -> list:
+    """
+    This function convert a string input with the format "( 1xxxx.xxxx, 1xxxx.xxxx)"
+    into a list
+
+    Args:
+        string_input: string formatted in "( 1xxxx.xxxx, 1xxxx.xxxx)"
+
+    Returns:
+        out_list: list of float position
+
+    """
+    string_input = string_input.strip("()")
+    string_input_list = string_input.split(",")
+    out_list = []
+
+    for string_num in string_input_list:
+        out_list.append(float(string_num))
 
     return tuple(out_list)
 
@@ -120,6 +143,57 @@ def convert_num_to_abr(input_num: int) -> str:
     return conversion_dict.get(input_num, 0)
 
 
+def blacklist_agatston_zero():
+    return [
+        "288",
+        "018",
+        "091",
+        "199",
+        "338",
+        "385",
+        "415",
+        "066",
+        "040",
+        "254",
+        "319",
+        "010",
+        "016",
+        "325",
+        "264",
+        "138",
+        "275",
+        "149",
+        "106",
+        "230",
+        "150",
+        "130",
+        "080",
+        "135",
+        "123",
+        "100",
+        "030",
+        "220",
+        "099",
+        "360",
+        "293",
+        "348",
+        "047",
+        "032",
+        "002",
+        "248",
+        "160",
+        "308",
+        "088",
+        "158",
+        "336",
+        "361",
+    ]
+
+
+def blacklist_neg_reverse_index():
+    return ["268"]
+
+
 def blacklist_pixel_overlap():
     """
     A function that return the list of patients with
@@ -133,21 +207,36 @@ def blacklist_pixel_overlap():
 
     """
     return [
-        "132",
-        "428",
         "004",
-        "037",
-        "116",
-        "144",
-        "300",
-        "161",
-        "283",
-        "303",
-        "154",
-        "305",
-        "289",
-        "387",
         "013",
+        "013",
+        "026",
+        "028",
+        "036",
+        "037",
+        "057",
+        "116",
+        "117",
+        "118",
+        "126",
+        "132",
+        "144",
+        "154",
+        "161",
+        "184",
+        "190",
+        "211",
+        "283",
+        "289",
+        "300",
+        "300",
+        "303",
+        "305",
+        "306",
+        "331",
+        "387",
+        "387",
+        "428",
     ]
 
 
@@ -399,8 +488,8 @@ def get_patient_split(split_arr: list, random_seed=811):
     calc_split = train_test_val_split(calc_patient_arr, split_arr, random_seed)
     no_calc_split = train_test_val_split(no_calc_patient_arr, split_arr, random_seed)
 
-    calc_split["test"].extend(no_calc_split["test"])
-
+    for split in ["train", "val", "test"]:
+        calc_split[split].extend(no_calc_split[split])
     return calc_split
 
 
@@ -427,3 +516,88 @@ def split_list(lst, n):
         start += size
 
     return sublists
+
+
+def flood_fill_scanline(image, start_coord, new_value):
+    """
+    Performs flood fill using scanline algorithm on a 2D image.
+    Args:
+        image (numpy.ndarray): Input image as a 2D NumPy array.
+        start_coord (tuple): Starting coordinate (x, y) for flood fill.
+        new_value: Value to fill in the flooded area.
+    Returns:
+        numpy.ndarray: Flood-filled image.
+    """
+    rows, cols = image.shape
+    stack = [
+        (start_coord[0], start_coord[1])
+    ]  # Initialize the stack with the starting coordinate
+    start_value = image[
+        start_coord[0], start_coord[1]
+    ]  # Get the value at the starting coordinate
+
+    if start_value == new_value:
+        return image
+
+    while stack:
+        x, y = stack.pop()  # Pop the next coordinate from the stack
+        if image[x, y] != start_value:
+            continue  # Skip if the current pixel does not have the start value
+
+        left, right = y, y
+        while left >= 0 and image[x, left] == start_value:
+            left -= 1  # Find the left boundary of the flood area
+        while right < cols and image[x, right] == start_value:
+            right += 1  # Find the right boundary of the flood area
+
+        image[x, left + 1 : right] = new_value  # Fill the flood area with the new value
+
+        if x > 0:
+            for i in range(left + 1, right):
+                if image[x - 1, i] == start_value:
+                    stack.append(
+                        (x - 1, i)
+                    )  # Add neighboring pixels from the above row to the stack
+
+        if x < rows - 1:
+            for i in range(left + 1, right):
+                if image[x + 1, i] == start_value:
+                    stack.append(
+                        (x + 1, i)
+                    )  # Add neighboring pixels from the below row to the stack
+
+    return image
+
+
+def fill_segmentation(segmentation, mode="skimage"):
+    """
+    Fill the segmentation using flood fill algorithm.
+    Args:
+        segmentation (np.array): Input segmentation as a 2D numpy tensor.
+        mode (str): Mode for flood fill algorithm. Default is "skimage".
+    Returns:
+        np.array: Filled segmentation.
+    Raises:
+        ValueError: If an unsupported mode is provided.
+    """
+
+    squeeze_segmentation = np.squeeze(segmentation)
+
+    if mode == "skimage":
+        # Use flood_fill function from skimage
+        flood_filled_segmentation = flood_fill(
+            squeeze_segmentation, (0, 0), 2, connectivity=1
+        )
+    elif mode == "scanline":
+        # Use custom scanline flood fill algorithm
+        flood_filled_segmentation = flood_fill_scanline(squeeze_segmentation, (0, 0), 2)
+    else:
+        raise ValueError(f"Unsupported mode: {mode}")
+
+    flipped_segmentation = np.where(
+        flood_filled_segmentation == 2,
+        0,
+        np.where(flood_filled_segmentation == 0, 1, flood_filled_segmentation),
+    )
+
+    return flipped_segmentation

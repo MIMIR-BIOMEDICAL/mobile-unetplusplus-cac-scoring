@@ -7,10 +7,19 @@ from tqdm import tqdm
 sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
+    artery_loc_to_abbr,
+    blacklist_agatston_zero,
     blacklist_invalid_dicom,
     blacklist_mislabelled_roi,
     blacklist_multiple_image_id,
+    blacklist_multiple_image_id_with_roi,
+    blacklist_neg_reverse_index,
+    blacklist_no_image,
     blacklist_pixel_overlap,
+    convert_abr_to_num,
+    fill_segmentation,
+    string_to_float_tuple,
+    string_to_int_tuple,
 )
 
 
@@ -43,6 +52,9 @@ def extract_patient_dicom_path(gated_path: pathlib.Path):
             or patient_number in blacklist_mislabelled_roi()
             or patient_number in blacklist_multiple_image_id()
             or patient_number in blacklist_invalid_dicom()
+            or patient_number in blacklist_no_image()
+            or patient_number in blacklist_neg_reverse_index()
+            or patient_number in blacklist_agatston_zero()
         ):
             continue
 

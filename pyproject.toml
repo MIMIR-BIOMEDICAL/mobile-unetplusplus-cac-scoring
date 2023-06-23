@@ -21,6 +21,8 @@ google-auth = "^2.17.3"
 scikit-image = "^0.20.0"
 opencv-contrib-python = "^4.7.0.72"
 scikit-learn = "^1.2.2"
+geo-rasterize = "^0.9.0"
+shapely = "^2.0.1"
 
 
 [tool.poetry.group.dev.dependencies]

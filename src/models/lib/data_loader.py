@@ -66,9 +66,6 @@ def create_sample(config: UNetPPConfig, features):
     bin_seg = tf.sparse.to_dense(bin_seg)
     bin_seg = tf.reshape(bin_seg, [input_dims[0], input_dims[1], 1])
 
-    # Fix row column and x y mix up
-    bin_seg = tf.transpose(bin_seg, perm=(1, 0, 2))
-
     return preprocessed_img, tf.cast(bin_seg, tf.float32)
 
 

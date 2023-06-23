@@ -1,23 +1,30 @@
 """Module for preprocessing segmentation file"""
+import json
 import pathlib
 import plistlib
 import sys
 
 import numpy as np
+from geo_rasterize import rasterize
+from shapely import Polygon
 from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
-
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
     artery_loc_to_abbr,
+    blacklist_agatston_zero,
     blacklist_invalid_dicom,
     blacklist_mislabelled_roi,
     blacklist_multiple_image_id_with_roi,
+    blacklist_neg_reverse_index,
     blacklist_no_image,
     blacklist_pixel_overlap,
     convert_abr_to_num,
+    fill_segmentation,
+    string_to_float_tuple,
     string_to_int_tuple,
 )
+from src.system.pipeline.output import auto_cac, ground_truth_auto_cac
 
 
 def convert_plist_to_dict(plist_path: pathlib.Path) -> dict:
@@ -58,6 +65,11 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
     """
     # Output Variable
     clean_output_dict = {}
+    patient_no_fill_log = []
+    patient_minus_log = []
+    patient_agatston_path = {}
+    patient_agatston = {}
+    patient_agatston_total = {}
 
     # Transverse dictionary
     for patient_number, patient_image_dict in tqdm(
@@ -75,8 +87,11 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             or patient_number in blacklist_multiple_image_id_with_roi()
             or patient_number in blacklist_invalid_dicom()
             or patient_number in blacklist_no_image()
+            or patient_number in blacklist_neg_reverse_index()
+            or patient_number in blacklist_agatston_zero()
         ):
             continue
+        patient_agatston_path[patient_number] = {}
 
         images_list = patient_image_dict["Images"]
 
@@ -98,16 +113,19 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                 if artery_abbreviation is None:
                     continue
 
-                # Convert string coords to integer coords
-                int_pixel_coord_list = [
-                    string_to_int_tuple(string_coord)
+                float_pixel_coord_list = [
+                    string_to_float_tuple(string_coord)
                     for string_coord in roi["Point_px"]
                 ]
 
-                # Remove duplicate coords
-                pixel_coord_list = list(set(int_pixel_coord_list))
+                lesion_polygon = Polygon(float_pixel_coord_list)
+                rasterized_polygon = rasterize(
+                    [lesion_polygon], [1], (512, 512), algorithm="replace"
+                )
 
-                cleaned_roi = {"loc": artery_abbreviation, "pos": pixel_coord_list}
+                rasterized_coord = np.argwhere(rasterized_polygon == 1).tolist()
+
+                cleaned_roi = {"loc": artery_abbreviation, "pos": rasterized_coord}
                 cleaned_roi_list.append(cleaned_roi)
             # Skip adding to cleaned data if no roi is detected
             if len(cleaned_roi_list) == 0:
@@ -125,14 +143,50 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
 
             # Image index in metadata is reversed from the actual image index in
             # patient folder, so true index needed to be calculated
-            true_image_index = (patient_dcm_len + 1) - image_dict["ImageIndex"]
+            true_image_index = patient_dcm_len - image_dict["ImageIndex"]
+
+            patient_agatston_path[patient_number]["img_path"] = patient_agatston_path[
+                patient_number
+            ].get("img_path", [])
+
+            patient_agatston_path[patient_number]["loc"] = patient_agatston_path[
+                patient_number
+            ].get("loc", [])
+
+            patient_agatston_path[patient_number]["img_path"].append(
+                next(
+                    patient_root_path.rglob(f"*00{str(true_image_index).zfill(2)}.dcm")
+                )
+            )
+
+            patient_agatston_path[patient_number]["loc"].append(rasterized_coord)
 
             patient_img_list.append(
                 {"idx": str(true_image_index).zfill(3), "roi": cleaned_roi_list}
             )
 
-        clean_output_dict[patient_number] = patient_img_list
+        patient_agatston[patient_number] = ground_truth_auto_cac(
+            patient_agatston_path[patient_number]["img_path"],
+            patient_agatston_path[patient_number]["loc"],
+            mem_opt=True,
+        )
 
+        patient_agatston_total[patient_agatston[patient_number]["class"]] = (
+            patient_agatston_total.get(patient_agatston[patient_number]["class"], 0) + 1
+        )
+
+        clean_output_dict[patient_number] = patient_img_list
+    print(patient_agatston)
+    with open("result.json", "w") as fp:
+        json.dump(patient_agatston, fp)
+    print(patient_agatston_total)
+    print("Remove pixel overlap", len(blacklist_pixel_overlap()))
+    print("Remove mislabelled roi", len(blacklist_mislabelled_roi()))
+    print("Remove multiple image id", len(blacklist_multiple_image_id_with_roi()))
+    print("Remove image invalid dicom", len(blacklist_invalid_dicom()))
+    print("Remove no image", len(blacklist_no_image()))
+    print("Remove negative on reverse index", len(blacklist_neg_reverse_index()))
+    print("Remove agatston zero", len(blacklist_agatston_zero()))
     return clean_output_dict
 
 
@@ -150,6 +204,7 @@ def split_clean_segmentation_to_binary(clean_segmentation_dict: dict) -> dict:
         binary_segmentation_dict: dictionary containing the binary
     """
     binary_segmentation_dict = {}
+    overlap = []
     for patient_number, image_list in tqdm(
         clean_segmentation_dict.items(), desc="Extracting Binary Segmentation Data"
     ):
@@ -159,9 +214,12 @@ def split_clean_segmentation_to_binary(clean_segmentation_dict: dict) -> dict:
             roi_list = image["roi"]
             pos_list = []
             for roi in roi_list:
-                pos_list.extend(roi["pos"])
+                pos_list.extend([tuple(x) for x in roi["pos"]])
+            if len(set(tuple(pos_list))) != len(pos_list):
+                overlap.append(patient_number)
             out_image_list.append({"idx": image_index, "pos": pos_list})
         binary_segmentation_dict[patient_number] = out_image_list
+    print(overlap)
     return binary_segmentation_dict
 
 
