@@ -202,6 +202,11 @@ def combine_to_tfrecord(
 
                                         if diff <= 0:
                                             continue
+                                            log[log_key] = log.get(log_key, 0) + 1
+                                            log[log_key + " non_cac_pixel"] = (
+                                                log.get(log_key + " non_cac_pixel", 0)
+                                                + 512 * 512
+                                            )
                                         else:
                                             skip = np.random.choice(
                                                 2, size=1, p=[0.85, 0.15]
