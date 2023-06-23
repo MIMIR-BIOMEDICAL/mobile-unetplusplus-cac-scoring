@@ -4,6 +4,8 @@ import plistlib
 import sys
 
 import numpy as np
+from geo_rasterize import rasterize
+from shapely import Polgyon
 from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
@@ -11,7 +13,7 @@ from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-posi
     artery_loc_to_abbr, blacklist_cant_fill, blacklist_invalid_dicom,
     blacklist_mislabelled_roi, blacklist_multiple_image_id_with_roi,
     blacklist_no_image, blacklist_pixel_overlap, convert_abr_to_num,
-    fill_segmentation, string_to_int_tuple)
+    fill_segmentation, string_to_float_tuple, string_to_int_tuple)
 from src.system.pipeline.output import auto_cac, ground_truth_auto_cac
 
 
@@ -97,24 +99,36 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                 if artery_abbreviation is None:
                     continue
 
-                # Convert string coords to integer coords
-                int_pixel_coord_list = [
-                    string_to_int_tuple(string_coord)
+                float_pixel_coord_list = [
+                    string_to_float_tuple(string_coord)
                     for string_coord in roi["Point_px"]
                 ]
 
+                lesion_polygon = Polgyon(float_pixel_coord_list)
+                rasterized_polygon = rasterize(
+                    [lesion_polygon], [1], (512, 512), algorithm="replace"
+                )
+
+                rasterized_coord = np.argwhere(rasterized_polygon == 1).tolist()
+
+                # Convert string coords to integer coords
+                # int_pixel_coord_list = [
+                #     string_to_int_tuple(string_coord)
+                #     for string_coord in roi["Point_px"]
+                # ]
+
                 # Remove duplicate coords
-                pixel_coord_list = list(set(int_pixel_coord_list))
+                # pixel_coord_list = list(set(int_pixel_coord_list))
 
                 # Flood fill
-                dense_arr = np.zeros((512, 512))
-                dense_arr[tuple(zip(*pixel_coord_list))] = 1
-                flooded_arr = fill_segmentation(dense_arr)
-                filled_pixel_coord = np.argwhere(flooded_arr == 1).tolist()
-                if len(filled_pixel_coord) <= len(pixel_coord_list):
-                    patient_no_fill_log.append(patient_number)
+                # dense_arr = np.zeros((512, 512))
+                # dense_arr[tuple(zip(*pixel_coord_list))] = 1
+                # flooded_arr = fill_segmentation(dense_arr)
+                # filled_pixel_coord = np.argwhere(flooded_arr == 1).tolist()
+                # if len(filled_pixel_coord) <= len(pixel_coord_list):
+                #     patient_no_fill_log.append(patient_number)
 
-                cleaned_roi = {"loc": artery_abbreviation, "pos": filled_pixel_coord}
+                cleaned_roi = {"loc": artery_abbreviation, "pos": rasterized_coord}
                 cleaned_roi_list.append(cleaned_roi)
             # Skip adding to cleaned data if no roi is detected
             if len(cleaned_roi_list) == 0:
