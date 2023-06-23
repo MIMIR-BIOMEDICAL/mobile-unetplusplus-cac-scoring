@@ -163,7 +163,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
         )
 
         patient_agatston_total[patient_agatston[patient_number]["class"]] = (
-            patient_agatson_total.get(patient_agatston[patient_number]["class"], 0) + 1
+            patient_agatston_total.get(patient_agatston[patient_number]["class"], 0) + 1
         )
 
         clean_output_dict[patient_number] = patient_img_list
