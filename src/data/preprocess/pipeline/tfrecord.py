@@ -178,11 +178,11 @@ def combine_to_tfrecord(
                                 patient_dict["idx"] = img_index
 
                                 if img_is_cac:
-                                    # patient_dict["img"] = indexer[patient_index]["img"][
-                                    #     img_index
-                                    # ]["img_hu"][:]
+                                    patient_dict["img"] = indexer[patient_index]["img"][
+                                        img_index
+                                    ]["img_hu"][:]
 
-                                    # example = create_example_fn(patient_dict)
+                                    example = create_example_fn(patient_dict)
 
                                     log_key = f"{split_mode}-img-cac"
                                     log[log_key] = log.get(log_key, 0) + 1
@@ -195,7 +195,7 @@ def combine_to_tfrecord(
                                         + 512 * 512
                                         - patient_dict["mult_seg"].shape[0]
                                     )
-                                    # tf_record_file.write(example.SerializeToString())
+                                    tf_record_file.write(example.SerializeToString())
                                 else:
                                     log_key = f"{split_mode}-img-non-cac"
                                     if split_mode == "train":
@@ -211,13 +211,13 @@ def combine_to_tfrecord(
                                             if skip:
                                                 continue
                                             else:
-                                                #         # patient_dict["img"] = indexer[
-                                                #         #     patient_index
-                                                #         # ]["img"][img_index]["img_hu"][:]
+                                                patient_dict["img"] = indexer[
+                                                    patient_index
+                                                ]["img"][img_index]["img_hu"][:]
                                                 #
-                                                #         # example = create_example_fn(
-                                                #         #     patient_dict
-                                                #         # )
+                                                example = create_example_fn(
+                                                    patient_dict
+                                                )
                                                 log[log_key] = log.get(log_key, 0) + 1
                                                 log[log_key + " non_cac_pixel"] = (
                                                     log.get(
@@ -225,30 +225,23 @@ def combine_to_tfrecord(
                                                     )
                                                     + 512 * 512
                                                 )
-                                        #         log[log_key] = log.get(log_key, 0) + 1
-                                        #         log[log_key + " non_cac_pixel"] = (
-                                        #             log.get(
-                                        #                 log_key + " non_cac_pixel", 0
-                                        #             )
-                                        #             + 512 * 512
-                                        #         )
-                                        # tf_record_file.write(
-                                        #     example.SerializeToString()
-                                        # )
+                                        tf_record_file.write(
+                                            example.SerializeToString()
+                                        )
                                     else:
                                         log[log_key] = log.get(log_key, 0) + 1
                                         log[log_key + " non_cac_pixel"] = (
                                             log.get(log_key + " non_cac_pixel", 0)
                                             + 512 * 512
                                         )
-                                        # patient_dict["img"] = indexer[patient_index][
-                                        #     "img"
-                                        # ][img_index]["img_hu"][:]
+                                        patient_dict["img"] = indexer[patient_index][
+                                            "img"
+                                        ][img_index]["img_hu"][:]
 
-                                        # example = create_example_fn(patient_dict)
-                                        # tf_record_file.write(
-                                        #     example.SerializeToString()
-                                        # )
+                                        example = create_example_fn(patient_dict)
+                                        tf_record_file.write(
+                                            example.SerializeToString()
+                                        )
 
                                 # Over sample algorithmm
                                 # CAC = 2391
