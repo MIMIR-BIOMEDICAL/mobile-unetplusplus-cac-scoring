@@ -33,7 +33,6 @@ def train_model(
     epochs: int,
     loss_function_list: list,
     learning_rate,
-    learning_rate_decay,
 ):
     """
     Train a model using the specified configuration.
