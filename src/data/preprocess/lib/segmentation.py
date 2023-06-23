@@ -154,7 +154,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                     [
                         next(
                             patient_root_path.rglob(
-                                f"*00{str(image_dict["ImageIndex"]).zfill(2)}.dcm"
+                                f"*00{str(image_dict['ImageIndex']).zfill(2)}.dcm"
                             )
                         )
                     ],
