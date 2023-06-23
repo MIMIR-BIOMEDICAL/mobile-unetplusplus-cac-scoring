@@ -158,7 +158,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                             )
                         )
                     ],
-                    [filled_pixel_coord],
+                    [rasterized_coord],
                     mem_opt=True,
                 )
                 if agatston["total_agatston"] == 0:
