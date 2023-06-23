@@ -11,16 +11,28 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.data.preprocess.lib.tfrecord import \
-    create_example_fn  # pylint: disable=wrong-import-position,import-error
+from src.data.preprocess.lib.tfrecord import (
+    create_example_fn,
+)  # pylint: disable=wrong-import-position,import-error
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    artery_loc_to_abbr, blacklist_agatston_zero, blacklist_invalid_dicom,
-    blacklist_mislabelled_roi, blacklist_multiple_image_id,
-    blacklist_multiple_image_id_with_roi, blacklist_neg_reverse_index,
-    blacklist_no_image, blacklist_pixel_overlap, convert_abr_to_num,
-    fill_segmentation, get_patient_split, get_pos_from_bin_list,
-    get_pos_from_mult_list, split_list, string_to_float_tuple,
-    string_to_int_tuple)
+    artery_loc_to_abbr,
+    blacklist_agatston_zero,
+    blacklist_invalid_dicom,
+    blacklist_mislabelled_roi,
+    blacklist_multiple_image_id,
+    blacklist_multiple_image_id_with_roi,
+    blacklist_neg_reverse_index,
+    blacklist_no_image,
+    blacklist_pixel_overlap,
+    convert_abr_to_num,
+    fill_segmentation,
+    get_patient_split,
+    get_pos_from_bin_list,
+    get_pos_from_mult_list,
+    split_list,
+    string_to_float_tuple,
+    string_to_int_tuple,
+)
 
 
 def combine_to_tfrecord(
@@ -47,6 +59,9 @@ def combine_to_tfrecord(
     """
     np.random.seed(811)
     log = {}
+    with open("result.json") as json_file:
+        agatston_map = json.load(json_file)
+
     with binary_json_path.open(mode="r") as binary_json_file:
         binary_seg_dict = json.load(binary_json_file)
 
@@ -55,6 +70,7 @@ def combine_to_tfrecord(
 
             with h5py.File(h5_image_index_path, "r") as indexer:
                 random_patient_index = random_index_dict[split_mode]
+                print(split_mode, len(random_patient_index))
 
                 # NOTE: 1. create a sharded list of random_patient index
                 # NOTE: 2. Use enumerate to get each index of sharding + zfill i guess
@@ -109,6 +125,11 @@ def combine_to_tfrecord(
                                 patient_index_img_list = list(
                                     indexer[patient_index]["img"]
                                 )
+
+                            cl = agatston_map.get(
+                                patient_index, {"total_agatston": 0, "class": "Absent"}
+                            )["class"]
+                            log[cl] = log.get(cl, 0) + 1
 
                             for img_index in tqdm(
                                 patient_index_img_list,
