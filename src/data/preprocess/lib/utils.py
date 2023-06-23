@@ -143,6 +143,10 @@ def convert_num_to_abr(input_num: int) -> str:
     return conversion_dict.get(input_num, 0)
 
 
+def blacklist_neg_reverse_index():
+    return ["268"]
+
+
 def blacklist_pixel_overlap():
     """
     A function that return the list of patients with
