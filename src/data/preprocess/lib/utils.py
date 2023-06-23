@@ -488,9 +488,8 @@ def get_patient_split(split_arr: list, random_seed=811):
     calc_split = train_test_val_split(calc_patient_arr, split_arr, random_seed)
     no_calc_split = train_test_val_split(no_calc_patient_arr, split_arr, random_seed)
 
-    calc_split["val"].extend(no_calc_split["val"])
-    calc_split["test"].extend(no_calc_split["test"])
-
+    for split in ["train", "val", "test"]:
+        calc_split[split].extend(no_calc_split[split])
     return calc_split
 
 
