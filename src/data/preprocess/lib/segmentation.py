@@ -60,6 +60,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
     patient_minus_log = []
     patient_agatston_path = {}
     patient_agatston = {}
+    patient_agatston_total = {}
 
     # Transverse dictionary
     for patient_number, patient_image_dict in tqdm(
@@ -161,8 +162,13 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             mem_opt=True,
         )
 
+        patient_agatston_total[patient_agatston[patient_number]["class"]] = (
+            patient_agatson_total.get(patient_agatston[patient_number]["class"], 0) + 1
+        )
+
         clean_output_dict[patient_number] = patient_img_list
     print(patient_agatston)
+    print(patient_agatston_total)
     print("Remove pixel overlap", len(blacklist_pixel_overlap()))
     print("Remove mislabelled roi", len(blacklist_mislabelled_roi()))
     print("Remove multiple image id", len(blacklist_multiple_image_id_with_roi()))
