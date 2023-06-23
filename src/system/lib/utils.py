@@ -143,7 +143,7 @@ def agatston(image_hu, lesion_dict, spacing_pair):
         area = square_area * lesion["loc"].shape[0]
 
         # get weight
-        if max_att < 130:
+        if max_att < 130 or area < 1:
             # No need to  count, if w =0
             continue
         if 130 <= max_att < 200:
