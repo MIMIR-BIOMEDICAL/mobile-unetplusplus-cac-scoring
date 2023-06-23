@@ -97,7 +97,6 @@ def combine_to_tfrecord(
                                 or patient_index in blacklist_neg_reverse_index()
                                 or patient_index in blacklist_agatston_zero()
                             ):
-                                tqdm.write(f"Skipping patient")
                                 continue
                             if sample_mode:
                                 try:
@@ -179,30 +178,32 @@ def combine_to_tfrecord(
                                 else:
                                     log_key = f"{split_mode}-img-non-cac"
                                     if split_mode == "train":
-                                        diff = 2391 - log.get(log_key, 0)
-                                        log[log_key] = log.get(log_key, 0) + 1
-                                        log[log_key + " non_cac_pixel"] = (
-                                            log.get(log_key + " non_cac_pixel", 0)
-                                            + 512 * 512
-                                        )
+                                        diff = 1984 - log.get(log_key, 0)
 
-                                        # if diff <= 0:
-                                        #     continue
-                                        # else:
-                                        #     skip = np.random.choice(
-                                        #         2, size=1, p=[0.85, 0.15]
-                                        #     )[0]
-                                        #
-                                        #     if skip:
-                                        #         continue
-                                        #     else:
-                                        #         # patient_dict["img"] = indexer[
-                                        #         #     patient_index
-                                        #         # ]["img"][img_index]["img_hu"][:]
-                                        #
-                                        #         # example = create_example_fn(
-                                        #         #     patient_dict
-                                        #         # )
+                                        if diff <= 0:
+                                            continue
+                                        else:
+                                            skip = np.random.choice(
+                                                2, size=1, p=[0.85, 0.15]
+                                            )[0]
+
+                                            if skip:
+                                                continue
+                                            else:
+                                                #         # patient_dict["img"] = indexer[
+                                                #         #     patient_index
+                                                #         # ]["img"][img_index]["img_hu"][:]
+                                                #
+                                                #         # example = create_example_fn(
+                                                #         #     patient_dict
+                                                #         # )
+                                                log[log_key] = log.get(log_key, 0) + 1
+                                                log[log_key + " non_cac_pixel"] = (
+                                                    log.get(
+                                                        log_key + " non_cac_pixel", 0
+                                                    )
+                                                    + 512 * 512
+                                                )
                                         #         log[log_key] = log.get(log_key, 0) + 1
                                         #         log[log_key + " non_cac_pixel"] = (
                                         #             log.get(
