@@ -1,4 +1,5 @@
 """Module for preprocessing segmentation file"""
+import json
 import pathlib
 import plistlib
 import sys
@@ -10,11 +11,19 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
-    artery_loc_to_abbr, blacklist_agatston_zero, blacklist_invalid_dicom,
-    blacklist_mislabelled_roi, blacklist_multiple_image_id_with_roi,
-    blacklist_neg_reverse_index, blacklist_no_image, blacklist_pixel_overlap,
-    convert_abr_to_num, fill_segmentation, string_to_float_tuple,
-    string_to_int_tuple)
+    artery_loc_to_abbr,
+    blacklist_agatston_zero,
+    blacklist_invalid_dicom,
+    blacklist_mislabelled_roi,
+    blacklist_multiple_image_id_with_roi,
+    blacklist_neg_reverse_index,
+    blacklist_no_image,
+    blacklist_pixel_overlap,
+    convert_abr_to_num,
+    fill_segmentation,
+    string_to_float_tuple,
+    string_to_int_tuple,
+)
 from src.system.pipeline.output import auto_cac, ground_truth_auto_cac
 
 
@@ -168,6 +177,8 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
 
         clean_output_dict[patient_number] = patient_img_list
     print(patient_agatston)
+    with open("result.json", "w") as fp:
+        json.dump(patient_agatston, fp)
     print(patient_agatston_total)
     print("Remove pixel overlap", len(blacklist_pixel_overlap()))
     print("Remove mislabelled roi", len(blacklist_mislabelled_roi()))
