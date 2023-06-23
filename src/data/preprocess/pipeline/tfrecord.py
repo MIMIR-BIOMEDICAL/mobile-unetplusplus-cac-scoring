@@ -11,9 +11,9 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.data.preprocess.lib.tfrecord import (
+from src.data.preprocess.lib.tfrecord import (  # pylint: disable=wrong-import-position,import-error
     create_example_fn,
-)  # pylint: disable=wrong-import-position,import-error
+)
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
     artery_loc_to_abbr,
     blacklist_agatston_zero,
