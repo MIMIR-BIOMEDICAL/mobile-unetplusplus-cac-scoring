@@ -59,7 +59,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
     patient_no_fill_log = []
     patient_minus_log = []
     patient_agatston_path = {}
-    patient_agatston
+    patient_agatston = {}
 
     # Transverse dictionary
     for patient_number, patient_image_dict in tqdm(
