@@ -127,7 +127,6 @@ def ground_truth_auto_cac(img_dcm_paths, loc_lists, mem_opt=False):
 
         temp = np.zeros((512, 512))
         temp[tuple(zip(*loc_list))] = 1
-        temp = np.transpose(temp)
 
         # Connected Component
         connected_lesion = call_ccl(temp, mode="cv2")
