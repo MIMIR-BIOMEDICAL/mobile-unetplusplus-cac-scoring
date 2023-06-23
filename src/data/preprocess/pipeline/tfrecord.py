@@ -83,6 +83,17 @@ def combine_to_tfrecord(
                             unit="patient",
                             leave=False,
                         ):
+                            if (
+                                patient_index in blacklist_pixel_overlap()
+                                or patient_index in blacklist_mislabelled_roi()
+                                or patient_index in blacklist_multiple_image_id()
+                                or patient_index in blacklist_invalid_dicom()
+                                or patient_index in blacklist_no_image()
+                                or patient_index in blacklist_neg_reverse_index()
+                                or patient_index in blacklist_agatston_zero()
+                            ):
+                                tqdm.write(f"Skipping patient")
+                                continue
                             if sample_mode:
                                 try:
                                     patient_index_img_list = list(
