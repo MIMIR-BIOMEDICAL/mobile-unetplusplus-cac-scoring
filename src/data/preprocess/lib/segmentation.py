@@ -202,7 +202,7 @@ def split_clean_segmentation_to_binary(clean_segmentation_dict: dict) -> dict:
             roi_list = image["roi"]
             pos_list = []
             for roi in roi_list:
-                pos_list.extend(roi["pos"])
+                pos_list.extend([tuple(x) for x in roi["pos"]])
             if len(set(tuple(pos_list))) != len(pos_list):
                 overlap.append(patient_number)
             out_image_list.append({"idx": image_index, "pos": pos_list})
