@@ -58,7 +58,8 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
     clean_output_dict = {}
     patient_no_fill_log = []
     patient_minus_log = []
-    patient_agatston_zero = []
+    patient_agatston_path = {}
+    patient_agatston
 
     # Transverse dictionary
     for patient_number, patient_image_dict in tqdm(
@@ -80,6 +81,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             or patient_number in blacklist_agatston_zero()
         ):
             continue
+        patient_agatston_path[patient_number] = {}
 
         images_list = patient_image_dict["Images"]
 
@@ -132,32 +134,35 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             # Image index in metadata is reversed from the actual image index in
             # patient folder, so true index needed to be calculated
             true_image_index = patient_dcm_len - image_dict["ImageIndex"]
-            if true_image_index < 0:
-                patient_minus_log.append(patient_number)
-            else:
-                # NOTE: Its possible to check Agatston too here, so if no agatston its not worth it
-                agatston = ground_truth_auto_cac(
-                    [
-                        next(
-                            patient_root_path.rglob(
-                                f"*00{str(true_image_index).zfill(2)}.dcm"
-                            )
-                        )
-                    ],
-                    [rasterized_coord],
-                    mem_opt=True,
-                )
-                if agatston["total_agatston"] == 0:
-                    patient_agatston_zero.append(patient_number)
 
-            # NOTE: Check also if there is any off by on eerror
+            patient_agatston_path[patient_number]["img_path"] = patient_agatston_path[
+                patient_number
+            ].get("img_path", [])
+
+            patient_agatston_path[patient_number]["loc"] = patient_agatston_path[
+                patient_number
+            ].get("loc", [])
+
+            patient_agatston_path[patient_number]["img_path"].append(
+                next(
+                    patient_root_path.rglob(f"*00{str(true_image_index).zfill(2)}.dcm")
+                )
+            )
+
+            patient_agatston_path[patient_number]["loc"].append(rasterized_coord)
 
             patient_img_list.append(
                 {"idx": str(true_image_index).zfill(3), "roi": cleaned_roi_list}
             )
 
+        patient_agatston[patient_number] = ground_truth_auto_cac(
+            patient_agatston_path[patient_number]["img_path"],
+            patient_agatston_path[patient_number]["loc"],
+            mem_opt=True,
+        )
+
         clean_output_dict[patient_number] = patient_img_list
-    print(set(patient_agatston_zero))
+    print(patient_agatston)
     print("Remove pixel overlap", len(blacklist_pixel_overlap()))
     print("Remove mislabelled roi", len(blacklist_mislabelled_roi()))
     print("Remove multiple image id", len(blacklist_multiple_image_id_with_roi()))
