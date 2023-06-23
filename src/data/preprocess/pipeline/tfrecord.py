@@ -201,7 +201,7 @@ def combine_to_tfrecord(
                                         diff = 1984 - log.get(log_key, 0)
 
                                         if diff <= 0:
-                                            continue
+                                            # continue
                                             log[log_key] = log.get(log_key, 0) + 1
                                             log[log_key + " non_cac_pixel"] = (
                                                 log.get(log_key + " non_cac_pixel", 0)
