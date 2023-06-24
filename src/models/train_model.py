@@ -121,7 +121,7 @@ def train_model(
         verbose=1,
         save_best_only=True,
         save_weights_only=False,
-        mode="max",
+        mode="min",
     )
     history_callback = keras.callbacks.CSVLogger(
         f"models/{model_config.model_name}/history.csv"
