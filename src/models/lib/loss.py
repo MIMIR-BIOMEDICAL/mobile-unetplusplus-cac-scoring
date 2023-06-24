@@ -44,13 +44,13 @@ def dice_coef(y_true, y_pred):
     return dice / 5
 
 
-def dice_coef_background(y_true, y_pred):
+def back_dice(y_true, y_pred):
     y_true_bg = y_true[:, :, :, 0]
     y_pred_bg = y_pred[:, :, :, 0]
     return dice_coef_slice(y_true_bg, y_pred_bg)
 
 
-def dice_coef_foreground(y_true, y_pred):
+def fore_dice(y_true, y_pred):
     dice = 0
     for i in range(1, 5):
         y_true_bg = y_true[:, :, :, i]
