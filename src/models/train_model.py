@@ -325,7 +325,9 @@ def prompt_parser(answer) -> dict:
         parsed_answer (dict): A dictionary containing the modified and parsed answers.
 
     """
-    answer["model_name"] = f"{answer['model_name']}-{datetime.now().isoformat()}"
+    answer[
+        "model_name"
+    ] = f"{answer['model_name']}-{datetime.now().isoformat('_', 'minutes')}"
     answer["depth"] = int(answer["depth"])
     answer["input_dim"] = parse_list_string(answer["input_dim"])
     answer["filter_list"] = parse_list_string(answer["filter_list"])
