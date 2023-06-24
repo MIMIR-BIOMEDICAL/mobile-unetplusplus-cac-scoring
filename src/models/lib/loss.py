@@ -1,15 +1,24 @@
 """Module for unified focal loss from https://github.com/mlyg/unified-focal-loss"""
+import numpy as np
 import tensorflow as tf
 from tensorflow.keras import backend as K
 
 
 def categorical_focal_loss(alpha=0.25, gamma=2.0):
     def focal_loss_fixed(y_true, y_pred):
-        pt_1 = tf.where(tf.equal(y_true, 1), y_pred, tf.ones_like(y_pred))
-        pt_0 = tf.where(tf.equal(y_true, 0), y_pred, tf.zeros_like(y_pred))
-        return -K.mean(
-            alpha * K.pow(1.0 - pt_1, gamma) * K.log(pt_1 + K.epsilon())
-        ) - K.mean((1 - alpha) * K.pow(pt_0, gamma) * K.log(1.0 - pt_0 + K.epsilon()))
+        # Clip values to prevent division by zero error
+        epsilon = K.epsilon()
+        y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)
+        cross_entropy = -y_true * K.log(y_pred)
+
+        if alpha is not None:
+            alpha_weight = np.array(alpha, dtype=np.float32)
+            focal_loss = alpha_weight * K.pow(1 - y_pred, gamma) * cross_entropy
+        else:
+            focal_loss = K.pow(1 - y_pred, gamma) * cross_entropy
+
+        focal_loss = K.mean(K.sum(focal_loss, axis=[-1]))
+        return focal_loss
 
     return focal_loss_fixed
 
