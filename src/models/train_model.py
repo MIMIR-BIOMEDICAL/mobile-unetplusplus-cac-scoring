@@ -132,7 +132,7 @@ def train_model(
 
     best_callback = keras.callbacks.ModelCheckpoint(
         best_model_path,
-        monitor="val_ds_4_dice_coef",
+        monitor="val_loss",
         verbose=1,
         save_best_only=True,
         save_weights_only=False,
