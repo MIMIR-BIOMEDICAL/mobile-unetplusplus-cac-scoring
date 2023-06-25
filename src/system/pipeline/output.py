@@ -8,6 +8,7 @@ import pydicom as pdc
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
+from src.data.preprocess.utils import convert_abr_to_num
 from src.models.lib.data_loader import preprocess_img
 from src.system.lib.utils import agatston, assign_lesion_type, ccl, get_lesion_dict
 
@@ -137,7 +138,7 @@ def ground_truth_auto_cac(img_dcm_paths, roi_lists, mem_opt=False):
 
         temp_mult = np.zeros((512, 512))
         for roi in roi_list:
-            temp_mult[tuple(zip(*roi["pos"]))] = roi["loc"]
+            temp_mult[tuple(zip(*roi["pos"]))] = convert_abr_to_num(roi["loc"])
 
         temp_bin = np.where(temp_mult == 0, 0, 1)
 
