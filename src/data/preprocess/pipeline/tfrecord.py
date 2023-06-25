@@ -76,7 +76,7 @@ def combine_to_tfrecord(
                 # NOTE: 3. Add TFRecordOptions with compression type gzip and compression level 9
                 # NOTE: 4. Use it in TFRecordWriter
 
-                random_patient_index_shard = split_list(random_patient_index, 10)
+                random_patient_index_shard = split_list(random_patient_index, 5)
 
                 for shard_count, patient_shard in enumerate(
                     tqdm(
