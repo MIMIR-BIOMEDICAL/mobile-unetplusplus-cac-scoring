@@ -184,7 +184,6 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
     print("Remove image invalid dicom", len(blacklist_invalid_dicom()))
     print("Remove no image", len(blacklist_no_image()))
     print("Remove negative on reverse index", len(blacklist_neg_reverse_index()))
-    print("Remove agatston zero", len(blacklist_agatston_zero()))
     return clean_output_dict
 
 

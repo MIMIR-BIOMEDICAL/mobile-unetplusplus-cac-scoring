@@ -16,7 +16,6 @@ from src.data.preprocess.lib.tfrecord import (
 )  # pylint: disable=wrong-import-position,import-error
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
     artery_loc_to_abbr,
-    blacklist_agatston_zero,
     blacklist_invalid_dicom,
     blacklist_mislabelled_roi,
     blacklist_multiple_image_id,
@@ -111,7 +110,6 @@ def combine_to_tfrecord(
                                 or patient_index in blacklist_invalid_dicom()
                                 or patient_index in blacklist_no_image()
                                 or patient_index in blacklist_neg_reverse_index()
-                                or patient_index in blacklist_agatston_zero()
                             ):
                                 continue
                             if sample_mode:
