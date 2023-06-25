@@ -174,7 +174,7 @@ def agatston(image_hu, lesion_dict, spacing_pair):
         else:
             w = 4
 
-        score = area * w
+        score = int(area * w)
 
         abbr = convert_num_to_abr(lesion["type"])
         agatston_dict[abbr] = agatston_dict.get(abbr, 0) + score
