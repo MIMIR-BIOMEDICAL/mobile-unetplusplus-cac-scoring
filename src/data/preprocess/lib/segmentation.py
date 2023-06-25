@@ -12,7 +12,6 @@ from tqdm import tqdm
 sys.path.append(pathlib.Path.cwd().as_posix())
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
     artery_loc_to_abbr,
-    blacklist_agatston_zero,
     blacklist_invalid_dicom,
     blacklist_mislabelled_roi,
     blacklist_multiple_image_id_with_roi,
@@ -88,7 +87,6 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             or patient_number in blacklist_invalid_dicom()
             or patient_number in blacklist_no_image()
             or patient_number in blacklist_neg_reverse_index()
-            or patient_number in blacklist_agatston_zero()
         ):
             continue
         patient_agatston_path[patient_number] = {}
