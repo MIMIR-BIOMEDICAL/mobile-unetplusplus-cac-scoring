@@ -83,11 +83,11 @@ def auto_cac(img_dcm_paths, model, mem_opt=False):
 
         ## Model
         # Inference
-        pred_sigmoid = model.predict(expanded_img_class, verbose=0)
+        pred_softmax = model.predict(expanded_img_class, verbose=0)
 
         ## Postprocessing
         # Reverse one-hot encoding
-        pred_batchless = np.squeeze(pred_sigmoid[-1])
+        pred_batchless = np.squeeze(pred_softmax[-1])
         pred_mult = np.argmax(pred_batchless, axis=-1)
         # Create binary mask to be use as ccl base
         pred_bin = np.where(pred_mult == 0, 0, 1)
@@ -106,14 +106,20 @@ def auto_cac(img_dcm_paths, model, mem_opt=False):
             output_dict["slice"][index] = {}
             output_dict["slice"][index]["img_hu"] = img_hu
             output_dict["slice"][index]["pxl_spc"] = pxl_spc
-            output_dict["slice"][index]["pred_sigmoid"] = pred_sigmoid
+            output_dict["slice"][index]["pred_softmax"] = pred_softmax
             output_dict["slice"][index]["pred_bin"] = pred_bin
+            output_dict["slice"][index]["pred_mult"] = pred_mult
             output_dict["slice"][index]["lesion"] = lesion_dict
             output_dict["slice"][index]["agatston_slice_score_dict"] = agatston_dict
 
-        output_dict["total_agatston"] = (
-            output_dict.get("total_agatston", 0) + agatston_dict["total"]
-        )
+        for cor_art in ["LAD", "RCA", "LCX", "LCA"]:
+            output_dict[f"{cor_art}_total_agatston"] = (
+                output_dict.get(f"{cor_art}_total_agatston", 0) + agatston_dict[cor_art]
+            )
+
+        output_dict["total_agatston"] = output_dict.get(
+            f"{cor_art}_total_agatston", 0
+        ) + agatston_dict.get(cor_art, 0)
 
     output_dict["class"] = classify_risk(output_dict["total_agatston"])
 
@@ -141,7 +147,7 @@ def ground_truth_auto_cac(img_dcm_paths, roi_lists, mem_opt=False):
         lesion_dict = assign_lesion_type(temp_mult, lesion_dict)
 
         # Agatston scoring (per slice score)
-        agatston_score = agatston(img_hu, lesion_dict, pxl_spc)
+        agatston_dict = agatston(img_hu, lesion_dict, pxl_spc)
 
         if not mem_opt:
             output_dict["slice"] = output_dict.get("slice", {})
@@ -149,13 +155,16 @@ def ground_truth_auto_cac(img_dcm_paths, roi_lists, mem_opt=False):
             output_dict["slice"][index]["img_hu"] = img_hu
             output_dict["slice"][index]["pxl_spc"] = pxl_spc
             output_dict["slice"][index]["lesion"] = lesion_dict
-            output_dict["slice"][index]["agatston_slice_score"] = agatston_score
+            output_dict["slice"][index]["agatston_slice_score"] = agatston_dict
+
+        for cor_art in ["LAD", "RCA", "LCX", "LCA"]:
+            output_dict[f"{cor_art}_total_agatston"] = output_dict.get(
+                f"{cor_art}_total_agatston", 0
+            ) + agatston_dict.get(cor_art, 0)
 
         output_dict["total_agatston"] = (
-            output_dict.get("total_agatston", 0) + agatston_score
+            output_dict.get("total_agatston", 0) + agatston_dict["total"]
         )
-
-    output_dict["total_agatston"] = int(output_dict["total_agatston"])
 
     output_dict["class"] = classify_risk(output_dict["total_agatston"])
     return output_dict
