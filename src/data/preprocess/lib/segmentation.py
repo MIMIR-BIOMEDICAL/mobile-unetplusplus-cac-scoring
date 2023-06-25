@@ -159,7 +159,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                 )
             )
 
-            patient_agatston_path[patient_number]["loc"].append(rasterized_coord)
+            patient_agatston_path[patient_number]["roi"].append(cleaned_roi_list)
 
             patient_img_list.append(
                 {"idx": str(true_image_index).zfill(3), "roi": cleaned_roi_list}
@@ -167,7 +167,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
 
         patient_agatston[patient_number] = ground_truth_auto_cac(
             patient_agatston_path[patient_number]["img_path"],
-            patient_agatston_path[patient_number]["loc"],
+            patient_agatston_path[patient_number]["roi"],
             mem_opt=True,
         )
 
