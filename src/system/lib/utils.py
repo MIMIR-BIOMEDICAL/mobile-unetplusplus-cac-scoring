@@ -179,5 +179,5 @@ def agatston(image_hu, lesion_dict, spacing_pair):
         abbr = convert_num_to_abr(lesion["type"])
         agatston_dict[abbr] = agatston_dict.get(abbr, 0) + score
 
-    agatston_dict["total"] = np.sum(list(agatston_dict.values()))
+    agatston_dict["total"] = sum(list(agatston_dict.values()))
     return agatston_dict
