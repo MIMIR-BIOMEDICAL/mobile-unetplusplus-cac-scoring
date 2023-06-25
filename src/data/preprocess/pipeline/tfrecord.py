@@ -196,7 +196,7 @@ def combine_to_tfrecord(
                                 else:
                                     log_key = f"{split_mode}-img-non-cac"
                                     if split_mode == "train":
-                                        diff = 1984 - log.get(log_key, 0)
+                                        diff = 2277 - log.get(log_key, 0)
 
                                         if diff <= 0:
                                             continue
