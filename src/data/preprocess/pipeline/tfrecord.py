@@ -11,9 +11,9 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.data.preprocess.lib.tfrecord import (  # pylint: disable=wrong-import-position,import-error
+from src.data.preprocess.lib.tfrecord import (
     create_example_fn,
-)
+)  # pylint: disable=wrong-import-position,import-error
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
     artery_loc_to_abbr,
     blacklist_invalid_dicom,
@@ -199,11 +199,6 @@ def combine_to_tfrecord(
                                         diff = 1984 - log.get(log_key, 0)
 
                                         if diff <= 0:
-                                            log[log_key] = log.get(log_key, 0) + 1
-                                            log[log_key + " non_cac_pixel"] = (
-                                                log.get(log_key + " non_cac_pixel", 0)
-                                                + 512 * 512
-                                            )
                                             continue
                                         else:
                                             skip = np.random.choice(
@@ -211,13 +206,6 @@ def combine_to_tfrecord(
                                             )[0]
 
                                             if skip:
-                                                log[log_key] = log.get(log_key, 0) + 1
-                                                log[log_key + " non_cac_pixel"] = (
-                                                    log.get(
-                                                        log_key + " non_cac_pixel", 0
-                                                    )
-                                                    + 512 * 512
-                                                )
                                                 continue
                                             else:
                                                 log[log_key] = log.get(log_key, 0) + 1
