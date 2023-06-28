@@ -318,7 +318,7 @@ def unetpp_mobile_backend(config: UNetPPConfig):
                 output_lists[index] for index in non_deep_supervision_output_index[1:]
             ],
         ),
-        output_layer_name[-1]
+        [output_layer_name[-1]]
         if n_head == 1
         else [
             output_layer_name[index] for index in non_deep_supervision_output_index[1:]

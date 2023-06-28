@@ -18,11 +18,13 @@ from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
 from src.models.lib.loss import (
+    back_dice,
     categorical_focal_loss,
     dice_coef,
     dice_focal,
     dice_loss,
     dyn_weighted_bincrossentropy,
+    fore_dice,
     log_cosh_dice_focal,
     log_cosh_dice_loss,
 )
@@ -75,12 +77,7 @@ def train_model(
         devices_name = [d.name.split("e:")[1] for d in devices]
         strategy = tf.distribute.MirroredStrategy(devices_name)
         with strategy.scope():
-            metrics = [
-                dice_coef,
-                tf.keras.metrics.BinaryIoU(),
-                tf.keras.metrics.Recall(),
-                tf.keras.metrics.Precision(),
-            ]
+            metrics = [dice_coef]
             model, model_layer_name = build_unet_pp(model_config, custom=custom)
 
             loss_dict = loss_dict_gen(
@@ -95,12 +92,7 @@ def train_model(
                 metrics=metrics,
             )
     else:
-        metrics = [
-            dice_coef,
-            tf.keras.metrics.BinaryIoU(),
-            tf.keras.metrics.Recall(),
-            tf.keras.metrics.Precision(),
-        ]
+        metrics = [dice_coef]
         model, model_layer_name = build_unet_pp(model_config, custom=custom)
 
         loss_dict = loss_dict_gen(
@@ -136,7 +128,7 @@ def train_model(
         verbose=1,
         save_best_only=True,
         save_weights_only=False,
-        mode="max",
+        mode="min",
     )
     history_callback = keras.callbacks.CSVLogger(
         f"models/{model_config.model_name}/history.csv"
@@ -340,7 +332,9 @@ def prompt_parser(answer) -> dict:
         parsed_answer (dict): A dictionary containing the modified and parsed answers.
 
     """
-    answer["model_name"] = f"{answer['model_name']}-{datetime.now().isoformat()}"
+    answer[
+        "model_name"
+    ] = f"{answer['model_name']}-{datetime.now().isoformat('_', 'minutes')}"
     answer["depth"] = int(answer["depth"])
     answer["input_dim"] = parse_list_string(answer["input_dim"])
     answer["filter_list"] = parse_list_string(answer["filter_list"])
@@ -376,16 +370,16 @@ def main():
 
     """
 
-    try:
-        tpu = tf.distribute.cluster_resolver.TPUClusterResolver()  # TPU detection
-    except ValueError:
-        tpu = None
-
-    if tpu:
-        policy = "mixed_bfloat16"
-    else:
-        policy = "mixed_float16"
-    tf.keras.mixed_precision.set_global_policy(policy)
+    # try:
+    #     tpu = tf.distribute.cluster_resolver.TPUClusterResolver()  # TPU detection
+    # except ValueError:
+    #     tpu = None
+    #
+    # if tpu:
+    #     policy = "mixed_bfloat16"
+    # else:
+    #     policy = "mixed_float16"
+    # tf.keras.mixed_precision.set_global_policy(policy)
 
     project_root_path = pathlib.Path.cwd()
 
@@ -443,7 +437,7 @@ def main():
             input_dim=[512, 512, 1],
             batch_norm=True,
             model_mode="mobile",
-            n_class={"bin": 1},
+            n_class={"mult": 5},
             deep_supervision=True,
             filter_list=[2, 2, 2],
             downsample_iteration=[1, 1, 1],
@@ -468,7 +462,7 @@ def main():
         input_dim=parsed_answer.get("input_dim", [1, 1, 1]),
         batch_norm=parsed_answer.get("batch_norm", True),
         model_mode=parsed_answer.get("model_mode"),
-        n_class={"bin": 1},
+        n_class={"mult": 5},
         deep_supervision=parsed_answer.get("deep_supervision", True),
         filter_list=parsed_answer.get("filter_list", [1, 1]),
         downsample_iteration=parsed_answer.get("downsample_iteration", [1, 1]),

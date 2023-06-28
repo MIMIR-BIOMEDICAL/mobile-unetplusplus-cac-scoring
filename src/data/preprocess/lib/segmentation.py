@@ -12,7 +12,6 @@ from tqdm import tqdm
 sys.path.append(pathlib.Path.cwd().as_posix())
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
     artery_loc_to_abbr,
-    blacklist_agatston_zero,
     blacklist_invalid_dicom,
     blacklist_mislabelled_roi,
     blacklist_multiple_image_id_with_roi,
@@ -88,7 +87,6 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             or patient_number in blacklist_invalid_dicom()
             or patient_number in blacklist_no_image()
             or patient_number in blacklist_neg_reverse_index()
-            or patient_number in blacklist_agatston_zero()
         ):
             continue
         patient_agatston_path[patient_number] = {}
@@ -159,7 +157,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                 )
             )
 
-            patient_agatston_path[patient_number]["loc"].append(rasterized_coord)
+            patient_agatston_path[patient_number]["loc"].append(cleaned_roi_list)
 
             patient_img_list.append(
                 {"idx": str(true_image_index).zfill(3), "roi": cleaned_roi_list}
@@ -176,7 +174,6 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
         )
 
         clean_output_dict[patient_number] = patient_img_list
-    print(patient_agatston)
     with open("result.json", "w") as fp:
         json.dump(patient_agatston, fp)
     print(patient_agatston_total)
@@ -186,7 +183,6 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
     print("Remove image invalid dicom", len(blacklist_invalid_dicom()))
     print("Remove no image", len(blacklist_no_image()))
     print("Remove negative on reverse index", len(blacklist_neg_reverse_index()))
-    print("Remove agatston zero", len(blacklist_agatston_zero()))
     return clean_output_dict
 
 
@@ -219,7 +215,6 @@ def split_clean_segmentation_to_binary(clean_segmentation_dict: dict) -> dict:
                 overlap.append(patient_number)
             out_image_list.append({"idx": image_index, "pos": pos_list})
         binary_segmentation_dict[patient_number] = out_image_list
-    print(overlap)
     return binary_segmentation_dict
 
 

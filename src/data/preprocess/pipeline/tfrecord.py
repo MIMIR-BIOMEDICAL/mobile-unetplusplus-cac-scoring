@@ -16,7 +16,6 @@ from src.data.preprocess.lib.tfrecord import (  # pylint: disable=wrong-import-p
 )
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
     artery_loc_to_abbr,
-    blacklist_agatston_zero,
     blacklist_invalid_dicom,
     blacklist_mislabelled_roi,
     blacklist_multiple_image_id,
@@ -77,7 +76,7 @@ def combine_to_tfrecord(
                 # NOTE: 3. Add TFRecordOptions with compression type gzip and compression level 9
                 # NOTE: 4. Use it in TFRecordWriter
 
-                random_patient_index_shard = split_list(random_patient_index, 10)
+                random_patient_index_shard = split_list(random_patient_index, 5)
 
                 for shard_count, patient_shard in enumerate(
                     tqdm(
@@ -111,7 +110,6 @@ def combine_to_tfrecord(
                                 or patient_index in blacklist_invalid_dicom()
                                 or patient_index in blacklist_no_image()
                                 or patient_index in blacklist_neg_reverse_index()
-                                or patient_index in blacklist_agatston_zero()
                             ):
                                 continue
                             if sample_mode:
@@ -198,7 +196,7 @@ def combine_to_tfrecord(
                                 else:
                                     log_key = f"{split_mode}-img-non-cac"
                                     if split_mode == "train":
-                                        diff = 1984 - log.get(log_key, 0)
+                                        diff = 2277 - log.get(log_key, 0)
 
                                         if diff <= 0:
                                             continue
