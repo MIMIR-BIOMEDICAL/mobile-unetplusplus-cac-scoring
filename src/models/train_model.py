@@ -17,17 +17,10 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
-from src.models.lib.loss import (
-    back_dice,
-    categorical_focal_loss,
-    dice_coef,
-    dice_focal,
-    dice_loss,
-    dyn_weighted_bincrossentropy,
-    fore_dice,
-    log_cosh_dice_focal,
-    log_cosh_dice_loss,
-)
+from src.models.lib.loss import (back_dice, categorical_focal_loss, dice_coef,
+                                 dice_focal, dice_loss,
+                                 dyn_weighted_bincrossentropy, fore_dice,
+                                 log_cosh_dice_focal, log_cosh_dice_loss)
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
 
@@ -370,16 +363,16 @@ def main():
 
     """
 
-    try:
-        tpu = tf.distribute.cluster_resolver.TPUClusterResolver()  # TPU detection
-    except ValueError:
-        tpu = None
-
-    if tpu:
-        policy = "mixed_bfloat16"
-    else:
-        policy = "mixed_float16"
-    tf.keras.mixed_precision.set_global_policy(policy)
+    # try:
+    #     tpu = tf.distribute.cluster_resolver.TPUClusterResolver()  # TPU detection
+    # except ValueError:
+    #     tpu = None
+    #
+    # if tpu:
+    #     policy = "mixed_bfloat16"
+    # else:
+    #     policy = "mixed_float16"
+    # tf.keras.mixed_precision.set_global_policy(policy)
 
     project_root_path = pathlib.Path.cwd()
 
