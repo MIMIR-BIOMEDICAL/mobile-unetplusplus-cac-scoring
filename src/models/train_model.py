@@ -17,15 +17,10 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
-from src.models.lib.loss import (
-    categorical_focal_loss,
-    dice_coef,
-    dice_focal,
-    dice_loss,
-    dyn_weighted_bincrossentropy,
-    log_cosh_dice_focal,
-    log_cosh_dice_loss,
-)
+from src.models.lib.loss import (categorical_focal_loss, dice_coef,
+                                 dice_coef_nosq, dice_focal, dice_loss,
+                                 dyn_weighted_bincrossentropy,
+                                 log_cosh_dice_focal, log_cosh_dice_loss)
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
 
@@ -76,10 +71,7 @@ def train_model(
         strategy = tf.distribute.MirroredStrategy(devices_name)
         with strategy.scope():
             metrics = [
-                dice_coef,
-                tf.keras.metrics.BinaryIoU(),
-                tf.keras.metrics.Recall(),
-                tf.keras.metrics.Precision(),
+                dice_coef_nosq,
             ]
             model, model_layer_name = build_unet_pp(model_config, custom=custom)
 
@@ -96,10 +88,7 @@ def train_model(
             )
     else:
         metrics = [
-            dice_coef,
-            tf.keras.metrics.BinaryIoU(),
-            tf.keras.metrics.Recall(),
-            tf.keras.metrics.Precision(),
+            dice_coef_nosq,
         ]
         model, model_layer_name = build_unet_pp(model_config, custom=custom)
 
@@ -136,15 +125,11 @@ def train_model(
         verbose=1,
         save_best_only=True,
         save_weights_only=False,
-        mode="max",
+        mode="min",
     )
     history_callback = keras.callbacks.CSVLogger(
         f"models/{model_config.model_name}/history.csv"
     )
-
-    # lr_reduce_callback = keras.callbacks.ReduceLROnPlateau(
-    #     monitor="val_loss", mode="min", factor=learning_rate_decay, patience=5
-    # )
 
     print("--- Model Prepared")
 
@@ -340,7 +325,9 @@ def prompt_parser(answer) -> dict:
         parsed_answer (dict): A dictionary containing the modified and parsed answers.
 
     """
-    answer["model_name"] = f"{answer['model_name']}-{datetime.now().isoformat()}"
+    answer[
+        "model_name"
+    ] = f"{answer['model_name']}-{datetime.now().isoformat('_','minutes')}"
     answer["depth"] = int(answer["depth"])
     answer["input_dim"] = parse_list_string(answer["input_dim"])
     answer["filter_list"] = parse_list_string(answer["filter_list"])
