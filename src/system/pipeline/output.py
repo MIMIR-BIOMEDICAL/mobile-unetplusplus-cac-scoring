@@ -10,8 +10,7 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.data.preprocess.lib.utils import convert_abr_to_num
 from src.models.lib.data_loader import preprocess_img
-from src.system.lib.utils import (agatston, assign_lesion_type, ccl,
-                                  get_lesion_dict)
+from src.system.lib.utils import agatston, assign_lesion_type, ccl, get_lesion_dict
 
 
 def call_ccl(img, mode="cv2"):
