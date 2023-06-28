@@ -10,7 +10,8 @@ sys.path.append(pathlib.Path.cwd().as_posix())
 
 from src.data.preprocess.lib.utils import convert_abr_to_num
 from src.models.lib.data_loader import preprocess_img
-from src.system.lib.utils import agatston, assign_lesion_type, ccl, get_lesion_dict
+from src.system.lib.utils import (agatston, assign_lesion_type, ccl,
+                                  get_lesion_dict)
 
 
 def call_ccl(img, mode="cv2"):
@@ -114,13 +115,13 @@ def auto_cac(img_dcm_paths, model, mem_opt=False):
             output_dict["slice"][index]["agatston_slice_score_dict"] = agatston_dict
 
         for cor_art in ["LAD", "RCA", "LCX", "LCA"]:
-            output_dict[f"{cor_art}_total_agatston"] = (
-                output_dict.get(f"{cor_art}_total_agatston", 0) + agatston_dict[cor_art]
-            )
+            output_dict[f"{cor_art}_total_agatston"] = output_dict.get(
+                f"{cor_art}_total_agatston", 0
+            ) + agatston_dict.get(cor_art, 0)
 
-        output_dict["total_agatston"] = output_dict.get(
-            f"{cor_art}_total_agatston", 0
-        ) + agatston_dict.get(cor_art, 0)
+        output_dict["total_agatston"] = (
+            output_dict.get("total_agatston", 0) + agatston_dict["total"]
+        )
 
     output_dict["class"] = classify_risk(output_dict["total_agatston"])
 
