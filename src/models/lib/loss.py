@@ -22,15 +22,15 @@ def categorical_focal_loss(alpha=0.25, gamma=2.0):
 
     return focal_loss_fixed
 
+
 def dice_coef_slice_nosq(y_true, y_pred):
     smooth = K.epsilon()
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
     intersection = K.sum(y_true_f * y_pred_f)
-    dice = (2.0 * intersection + smooth) / (
-        K.sum(y_true_f) + K.sum(y_pred_f) + smooth
-    )
+    dice = (2.0 * intersection + smooth) / (K.sum(y_true_f) + K.sum(y_pred_f) + smooth)
     return dice
+
 
 def dice_coef_slice(y_true, y_pred):
     smooth = K.epsilon()
@@ -52,6 +52,7 @@ def dice_coef(y_true, y_pred):
         dice += dice_coef_slice(y_true_bg, y_pred_bg)
     return dice / 5
 
+
 def dice_coef_nosq(y_true, y_pred):
     smooth = K.epsilon()
     dice = 0
@@ -65,7 +66,7 @@ def dice_coef_nosq(y_true, y_pred):
 def back_dice(y_true, y_pred):
     y_true_bg = y_true[:, :, :, 0]
     y_pred_bg = y_pred[:, :, :, 0]
-    return dice_coef_slice(y_true_bg, y_pred_bg)
+    return dice_coef_slice_nosq(y_true_bg, y_pred_bg)
 
 
 def fore_dice(y_true, y_pred):
@@ -73,7 +74,7 @@ def fore_dice(y_true, y_pred):
     for i in range(1, 5):
         y_true_bg = y_true[:, :, :, i]
         y_pred_bg = y_pred[:, :, :, i]
-        dice += dice_coef_slice(y_true_bg, y_pred_bg)
+        dice += dice_coef_slice_nosq(y_true_bg, y_pred_bg)
     return dice / 4
 
 
