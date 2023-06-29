@@ -219,7 +219,7 @@ def split_clean_segmentation_to_binary(clean_segmentation_dict: dict) -> dict:
             + 1
         )
         binary_segmentation_dict[patient_number] = out_image_list
-    print(overlap)
+    print(patient_agatston_total)
     return binary_segmentation_dict
 
 
