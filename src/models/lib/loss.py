@@ -97,6 +97,11 @@ def dice_loss(y_true, y_pred):
     loss = 1 - dice
     return loss
 
+def dice_loss_nosq(y_true, y_pred):
+    dice = dice_coef_nosq(y_true, y_pred)
+    loss = 1 - dice
+    return loss
+
 
 def dice_focal(alpha=0.25, gamma=2.0):
     focal_func = categorical_focal_loss(alpha=alpha, gamma=gamma)
@@ -122,6 +127,10 @@ def dice_focal_no_bg(alpha=0.25, gamma=2.0):
 
 def log_cosh_dice_loss(y_true, y_pred):
     dice = dice_loss(y_true, y_pred)
+    return tf.math.log((tf.exp(dice) + tf.exp(-dice)) / 2.0)
+
+def log_cosh_dice_loss_nosq(y_true, y_pred):
+    dice = dice_loss_nosq(y_true, y_pred)
     return tf.math.log((tf.exp(dice) + tf.exp(-dice)) / 2.0)
 
 

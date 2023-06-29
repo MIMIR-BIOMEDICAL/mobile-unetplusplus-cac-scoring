@@ -19,8 +19,8 @@ from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset
 from src.models.lib.loss import (categorical_focal_loss, dice_coef,
                                  dice_coef_nosq, dice_focal, dice_loss,
-                                 dyn_weighted_bincrossentropy,
-                                 log_cosh_dice_focal, log_cosh_dice_loss)
+                                 dice_loss_nosq, dyn_weighted_bincrossentropy,
+                                 log_cosh_dice_focal, log_cosh_dice_loss,log_cosh_dice_loss_nosq)
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
 
@@ -243,7 +243,9 @@ def start_prompt():
             choices=[
                 "Focal",
                 "Dice",
+                "Dice NoSq",
                 "Log Cosh Dice",
+                "Log Cosh Dice NoSq",
                 "Dice Focal",
                 "Log Cosh Dice Focal",
                 "Dynamic BCE",
@@ -387,12 +389,14 @@ def main():
             )
         ],
         "Dice": [dice_loss],
+        "Dice NoSq": [dice_loss_nosq],
         "Dice Focal": [
             dice_focal(
                 alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
             )
         ],
         "Log Cosh Dice": [log_cosh_dice_loss],
+        "Log Cosh Dice NoSq": [log_cosh_dice_loss_nosq],
         "Log Cosh Dice Focal": [
             log_cosh_dice_focal(
                 alpha=parsed_answer.get("alpha"), gamma=parsed_answer.get("gamma")
