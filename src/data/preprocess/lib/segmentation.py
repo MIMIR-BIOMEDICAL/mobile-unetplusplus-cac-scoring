@@ -140,33 +140,11 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             # patient folder, so true index needed to be calculated
             true_image_index = patient_dcm_len - image_dict["ImageIndex"]
 
-            patient_agatston_path[patient_number]["img_path"].append(
-                next(
-                    patient_root_path.rglob(f"*00{str(true_image_index).zfill(2)}.dcm")
-                )
-            )
-
-            patient_agatston_path[patient_number]["loc"].append(cleaned_roi_list)
-
             patient_img_list.append(
                 {"idx": str(true_image_index).zfill(3), "roi": cleaned_roi_list}
             )
 
         clean_output_dict[patient_number] = patient_img_list
-
-        pos_list = []
-        for roi in patient_agatston_path[patient_number]["loc"]:
-            pos_list.extend([tuple(x) for x in roi["pos"]])
-
-        patient_agatston[patient_number] = ground_truth_auto_cac(
-            patient_agatston_path[patient_number]["img_path"],
-            pos_list,
-            mem_opt=True,
-        )
-
-        patient_agatston_total[patient_agatston[patient_number]["class"]] = (
-            patient_agatston_total.get(patient_agatston[patient_number]["class"], 0) + 1
-        )
     print("Remove pixel overlap", len(blacklist_pixel_overlap()))
     print("Remove mislabelled roi", len(blacklist_mislabelled_roi()))
     print("Remove multiple image id", len(blacklist_multiple_image_id_with_roi()))
