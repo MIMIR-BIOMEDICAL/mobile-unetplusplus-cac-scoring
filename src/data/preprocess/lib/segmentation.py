@@ -220,6 +220,8 @@ def split_clean_segmentation_to_binary(clean_segmentation_dict: dict) -> dict:
         )
         binary_segmentation_dict[patient_number] = out_image_list
     print(patient_agatston_total)
+    with open("result.json", "w") as fp:
+        json.dump(patient_agatston_dict, fp)
     return binary_segmentation_dict
 
 
