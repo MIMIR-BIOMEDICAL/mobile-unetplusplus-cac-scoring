@@ -67,9 +67,6 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
     clean_output_dict = {}
     patient_no_fill_log = []
     patient_minus_log = []
-    patient_agatston_path = {}
-    patient_agatston = {}
-    patient_agatston_total = {}
 
     # Transverse dictionary
     for patient_number, patient_image_dict in tqdm(
@@ -90,7 +87,6 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             or patient_number in blacklist_neg_reverse_index()
         ):
             continue
-        patient_agatston_path[patient_number] = {}
 
         images_list = patient_image_dict["Images"]
 
@@ -144,27 +140,23 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             # patient folder, so true index needed to be calculated
             true_image_index = patient_dcm_len - image_dict["ImageIndex"]
 
-            patient_agatston_path[patient_number]["img_path"] = patient_agatston_path[
-                patient_number
-            ].get("img_path", [])
-
             patient_agatston_path[patient_number]["img_path"].append(
                 next(
                     patient_root_path.rglob(f"*00{str(true_image_index).zfill(2)}.dcm")
                 )
             )
 
-            patient_agatston_path[patient_number]["loc"] = cleaned_roi_list
+            patient_agatston_path[patient_number]["loc"].append(cleaned_roi_list)
 
             patient_img_list.append(
                 {"idx": str(true_image_index).zfill(3), "roi": cleaned_roi_list}
             )
 
-        print(patient_agatston_path[patient_number]["loc"])
+        clean_output_dict[patient_number] = patient_img_list
+
         pos_list = []
         for roi in patient_agatston_path[patient_number]["loc"]:
             pos_list.extend([tuple(x) for x in roi["pos"]])
-        print(pos_list)
 
         patient_agatston[patient_number] = ground_truth_auto_cac(
             patient_agatston_path[patient_number]["img_path"],
@@ -175,12 +167,6 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
         patient_agatston_total[patient_agatston[patient_number]["class"]] = (
             patient_agatston_total.get(patient_agatston[patient_number]["class"], 0) + 1
         )
-
-        clean_output_dict[patient_number] = patient_img_list
-    print(patient_agatston)
-    with open("result.json", "w") as fp:
-        json.dump(patient_agatston, fp)
-    print(patient_agatston_total)
     print("Remove pixel overlap", len(blacklist_pixel_overlap()))
     print("Remove mislabelled roi", len(blacklist_mislabelled_roi()))
     print("Remove multiple image id", len(blacklist_multiple_image_id_with_roi()))
@@ -204,11 +190,24 @@ def split_clean_segmentation_to_binary(clean_segmentation_dict: dict) -> dict:
         binary_segmentation_dict: dictionary containing the binary
     """
     binary_segmentation_dict = {}
+    patient_agatston_dict = {}
+    patient_agatston_total = {}
     overlap = []
+    project_root_path = pathlib.Path.cwd()
     for patient_number, image_list in tqdm(
         clean_segmentation_dict.items(), desc="Extracting Binary Segmentation Data"
     ):
         out_image_list = []
+        patient_img_path_list = []
+        patient_loc_list = []
+
+        if patient_number == "000":
+            patient_idx = 0
+        else:
+            patient_idx = patient_number.lstrip("0")
+
+        patient_root_path = next(project_root_path.rglob(f"patient/{patient_idx}"))
+
         for image in image_list:
             image_index = image["idx"]
             roi_list = image["roi"]
@@ -218,6 +217,26 @@ def split_clean_segmentation_to_binary(clean_segmentation_dict: dict) -> dict:
             if len(set(tuple(pos_list))) != len(pos_list):
                 overlap.append(patient_number)
             out_image_list.append({"idx": image_index, "pos": pos_list})
+
+            patient_img_path_list.append(
+                next(
+                    patient_root_path.rglob(
+                        f"*00{image_index.lstrip('0').zfill(2)}.dcm"
+                    )
+                )
+            )
+
+            patient_loc_list.append(pos_list)
+
+        patient_agatston[patient_number] = ground_truth_auto_cac(
+            patient_img_path_list,
+            patient_loc_list,
+            mem_opt=True,
+        )
+
+        patient_agatston_total[patient_agatston[patient_number]["class"]] = (
+            patient_agatston_total.get(patient_agatston[patient_number]["class"], 0) + 1
+        )
         binary_segmentation_dict[patient_number] = out_image_list
     print(overlap)
     return binary_segmentation_dict
