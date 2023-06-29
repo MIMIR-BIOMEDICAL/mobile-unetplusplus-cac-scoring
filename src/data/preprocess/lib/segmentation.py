@@ -148,17 +148,13 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                 patient_number
             ].get("img_path", [])
 
-            patient_agatston_path[patient_number]["loc"] = patient_agatston_path[
-                patient_number
-            ].get("loc", [])
-
             patient_agatston_path[patient_number]["img_path"].append(
                 next(
                     patient_root_path.rglob(f"*00{str(true_image_index).zfill(2)}.dcm")
                 )
             )
 
-            patient_agatston_path[patient_number]["loc"].append(cleaned_roi_list)
+            patient_agatston_path[patient_number]["loc"] = cleaned_roi_list
 
             patient_img_list.append(
                 {"idx": str(true_image_index).zfill(3), "roi": cleaned_roi_list}
