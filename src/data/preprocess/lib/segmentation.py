@@ -206,14 +206,17 @@ def split_clean_segmentation_to_binary(clean_segmentation_dict: dict) -> dict:
 
             patient_loc_list.append(pos_list)
 
-        patient_agatston[patient_number] = ground_truth_auto_cac(
+        patient_agatston_dict[patient_number] = ground_truth_auto_cac(
             patient_img_path_list,
             patient_loc_list,
             mem_opt=True,
         )
 
-        patient_agatston_total[patient_agatston[patient_number]["class"]] = (
-            patient_agatston_total.get(patient_agatston[patient_number]["class"], 0) + 1
+        patient_agatston_total[patient_agatston_dict[patient_number]["class"]] = (
+            patient_agatston_total.get(
+                patient_agatston_dict[patient_number]["class"], 0
+            )
+            + 1
         )
         binary_segmentation_dict[patient_number] = out_image_list
     print(overlap)
