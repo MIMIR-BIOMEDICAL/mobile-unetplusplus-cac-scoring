@@ -197,30 +197,25 @@ def combine_to_tfrecord(
                                 else:
                                     log_key = f"{split_mode}-img-non-cac"
                                     if split_mode == "train":
-                                        log[log_key] = log.get(log_key, 0) + 1
-                                        log[log_key + " non_cac_pixel"] = (
-                                            log.get(log_key + " non_cac_pixel", 0)
-                                            + 512 * 512
-                                        )
-                                        # diff = 1984 - log.get(log_key, 0)
-                                        #
-                                        # if diff <= 0:
-                                        #     continue
-                                        # else:
-                                        #     skip = np.random.choice(
-                                        #         2, size=1, p=[0.91, 0.09]
-                                        #     )[0]
-                                        #
-                                        #     if skip:
-                                        #         continue
-                                        #     else:
-                                        #         log[log_key] = log.get(log_key, 0) + 1
-                                        #         log[log_key + " non_cac_pixel"] = (
-                                        #             log.get(
-                                        #                 log_key + " non_cac_pixel", 0
-                                        #             )
-                                        #             + 512 * 512
-                                        #         )
+                                        diff = 2277 - log.get(log_key, 0)
+
+                                        if diff <= 0:
+                                            continue
+                                        else:
+                                            skip = np.random.choice(
+                                                2, size=1, p=[0.91, 0.09]
+                                            )[0]
+
+                                            if skip:
+                                                continue
+                                            else:
+                                                log[log_key] = log.get(log_key, 0) + 1
+                                                log[log_key + " non_cac_pixel"] = (
+                                                    log.get(
+                                                        log_key + " non_cac_pixel", 0
+                                                    )
+                                                    + 512 * 512
+                                                )
                                         # patient_dict["img"] = indexer[
                                         #     patient_index
                                         # ]["img"][img_index]["img_hu"][:]
