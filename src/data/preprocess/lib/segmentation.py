@@ -164,9 +164,13 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                 {"idx": str(true_image_index).zfill(3), "roi": cleaned_roi_list}
             )
 
+        pos_list = []
+        for roi in patient_agatston_path[patient_number]["loc"]:
+            pos_list.extend([tuple(x) for x in roi["pos"]])
+            
         patient_agatston[patient_number] = ground_truth_auto_cac(
             patient_agatston_path[patient_number]["img_path"],
-            patient_agatston_path[patient_number]["loc"],
+            pos_list,
             mem_opt=True,
         )
 
