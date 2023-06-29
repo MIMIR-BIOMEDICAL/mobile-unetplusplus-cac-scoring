@@ -88,7 +88,6 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
             or patient_number in blacklist_invalid_dicom()
             or patient_number in blacklist_no_image()
             or patient_number in blacklist_neg_reverse_index()
-            or patient_number in blacklist_agatston_zero()
         ):
             continue
         patient_agatston_path[patient_number] = {}
@@ -159,7 +158,7 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
                 )
             )
 
-            patient_agatston_path[patient_number]["loc"].append(rasterized_coord)
+            patient_agatston_path[patient_number]["loc"].append(cleaned_roi_list)
 
             patient_img_list.append(
                 {"idx": str(true_image_index).zfill(3), "roi": cleaned_roi_list}
@@ -186,7 +185,6 @@ def clean_raw_segmentation_dict(project_root_path, raw_segmentation_dict: dict) 
     print("Remove image invalid dicom", len(blacklist_invalid_dicom()))
     print("Remove no image", len(blacklist_no_image()))
     print("Remove negative on reverse index", len(blacklist_neg_reverse_index()))
-    print("Remove agatston zero", len(blacklist_agatston_zero()))
     return clean_output_dict
 
 
