@@ -11,9 +11,9 @@ from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().as_posix())
 
-from src.data.preprocess.lib.tfrecord import (  # pylint: disable=wrong-import-position,import-error
+from src.data.preprocess.lib.tfrecord import (
     create_example_fn,
-)
+)  # pylint: disable=wrong-import-position,import-error
 from src.data.preprocess.lib.utils import (  # pylint: disable=wrong-import-position,import-error
     artery_loc_to_abbr,
     blacklist_agatston_zero,
@@ -111,7 +111,6 @@ def combine_to_tfrecord(
                                 or patient_index in blacklist_invalid_dicom()
                                 or patient_index in blacklist_no_image()
                                 or patient_index in blacklist_neg_reverse_index()
-                                or patient_index in blacklist_agatston_zero()
                             ):
                                 continue
                             if sample_mode:
@@ -200,9 +199,7 @@ def combine_to_tfrecord(
                                     if split_mode == "train":
                                         log[log_key] = log.get(log_key, 0) + 1
                                         log[log_key + " non_cac_pixel"] = (
-                                            log.get(
-                                                log_key + " non_cac_pixel", 0
-                                            )
+                                            log.get(log_key + " non_cac_pixel", 0)
                                             + 512 * 512
                                         )
                                         # diff = 1984 - log.get(log_key, 0)
@@ -224,16 +221,16 @@ def combine_to_tfrecord(
                                         #             )
                                         #             + 512 * 512
                                         #         )
-                                                # patient_dict["img"] = indexer[
-                                                #     patient_index
-                                                # ]["img"][img_index]["img_hu"][:]
-                                                # #
-                                                # example = create_example_fn(
-                                                #     patient_dict
-                                                # )
-                                                # tf_record_file.write(
-                                                #     example.SerializeToString()
-                                                # )
+                                        # patient_dict["img"] = indexer[
+                                        #     patient_index
+                                        # ]["img"][img_index]["img_hu"][:]
+                                        # #
+                                        # example = create_example_fn(
+                                        #     patient_dict
+                                        # )
+                                        # tf_record_file.write(
+                                        #     example.SerializeToString()
+                                        # )
                                     else:
                                         log[log_key] = log.get(log_key, 0) + 1
                                         log[log_key + " non_cac_pixel"] = (
