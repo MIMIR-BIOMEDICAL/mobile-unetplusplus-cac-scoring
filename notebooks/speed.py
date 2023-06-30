@@ -139,7 +139,7 @@ for idx_seg in tqdm(patient_test_data):
     time_list.append(time.perf_counter() - a)
 
 mean = np.mean(time_list)
-std = np.std(time_list)
+std = np.std(time_list, ddof=1)
 maks = np.max(time_list)
 mins = np.min(time_list)
 
