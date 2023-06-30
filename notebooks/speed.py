@@ -17,18 +17,20 @@ from src.data.preprocess.lib.utils import get_patient_split
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset, preprocess_img
-from src.models.lib.loss import (dice_coef, dice_coef_nosq, log_cosh_dice_loss,
-                                 log_cosh_dice_loss_nosq)
+from src.models.lib.loss import (
+    dice_coef,
+    dice_coef_nosq,
+    log_cosh_dice_loss,
+    log_cosh_dice_loss_nosq,
+)
 from src.models.lib.utils import loss_dict_gen
 from src.system.pipeline.output import auto_cac, ground_truth_auto_cac
 
 project_root_path = pathlib.Path.cwd().parent
 
 # Select model
-model_root_path = (
-    project_root_path / "models" / "mend_bismillah_nodecay-2023-06-28_23:27"
-)  # Change this
-model_paths = list((model_root_path).rglob("*model-epoch-225*"))
+model_root_path = project_root_path / "models" / str(sys.argv[1])  # Change this
+model_paths = list((model_root_path).rglob(f"*model-epoch-{sys.argv[2]}*"))
 
 # Import main model
 selected_model_path = model_paths[0].as_posix()
@@ -43,7 +45,7 @@ main_model = tf.keras.models.load_model(
 )
 
 model_depth = 5
-depth = int(sys.argv[1])
+depth = int(sys.argv[3])
 filter_list = [16, 32, 64, 128, 256]
 
 
