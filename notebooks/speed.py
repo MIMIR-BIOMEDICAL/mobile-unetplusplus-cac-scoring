@@ -131,8 +131,8 @@ for idx_seg in tqdm(patient_test_data):
     auto_cac(img_path, pruned_model[f"d{depth}"]["model"], mem_opt=True)
 
 # Test
-a = time.perf_counter()
 for idx_seg in tqdm(patient_test_data):
+    a = time.perf_counter()
     patient_root_path = next(project_root_path.rglob(f"patient/{idx_seg.lstrip('0')}"))
     img_path = list(patient_root_path.rglob(f"*.dcm"))
     auto_cac(img_path, pruned_model[f"d{depth}"]["model"], mem_opt=True)
