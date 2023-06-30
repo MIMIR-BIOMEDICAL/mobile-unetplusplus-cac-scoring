@@ -71,8 +71,6 @@ def auto_cac(img_dcm_paths, model, mem_opt=False):
 
     # Loop over  image path(s)
     for index, img_dcm_path in enumerate(img_dcm_paths):
-        output_dict["slice"][index] = {}
-
         ## Preprocessing
         # Get Image HU and pixel spacing
         img_hu, pxl_spc, img_arr = extract_dcm(img_dcm_path)
