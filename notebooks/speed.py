@@ -1,6 +1,7 @@
 import json
 import pathlib
 import sys
+import time
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -121,7 +122,7 @@ pruned_model[f"d{depth}"]["model"].compile(
 
 patient_test_data = set(get_patient_split([0.7, 0.2, 0.1])["test"])
 
-time = []
+time_list = []
 
 # Warmup
 for idx_seg in tqdm(patient_test_data):
@@ -135,11 +136,11 @@ for idx_seg in tqdm(patient_test_data):
     patient_root_path = next(project_root_path.rglob(f"patient/{idx_seg.lstrip('0')}"))
     img_path = list(patient_root_path.rglob(f"*.dcm"))
     auto_cac(img_path, pruned_model[f"d{depth}"]["model"], mem_opt=True)
-    time.append(time.perf_counter() - a)
+    time_list.append(time.perf_counter() - a)
 
-mean = np.mean(time)
-std = np.std(time)
-maks = np.max(time)
-mins = np.min(time)
+mean = np.mean(time_list)
+std = np.std(time_list)
+maks = np.max(time_list)
+mins = np.min(time_list)
 
 print(f"Model {depth} with {mean} plus minus {std} with max {maks} and min {mins}")
