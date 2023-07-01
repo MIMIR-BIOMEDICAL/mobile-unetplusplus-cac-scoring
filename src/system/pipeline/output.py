@@ -53,12 +53,14 @@ def extract_dcm(img_dcm_path):
 def classify_risk(total_agatston):
     if total_agatston == 0:
         class_label = "Absent"
-    elif 1 <= total_agatston <= 100:
-        class_label = "Discrete"
+    elif 1 <= total_agatston <= 10:
+        class_label = "Minimal"
+    elif 11 <= total_agatston <= 100:
+        class_label = "Mild"
     elif 101 <= total_agatston <= 400:
         class_label = "Moderate"
     elif total_agatston > 400:
-        class_label = "Accentuated"
+        class_label = "High"
     else:
         class_label = None
 
