@@ -196,7 +196,7 @@ def main():
                         f"Total Agatston score for all slices: {output['total_agatston']}"
                     )
                     st.write(f"Stratified risk: {output['class']}")
-                    if output["total_agatston"]!=0:
+                    if output["total_agatston"] != 0:
                         st.write("Calcium Detected on the following file:")
                         real_path_list = []
                         for tmp_path in output["detected"]:
