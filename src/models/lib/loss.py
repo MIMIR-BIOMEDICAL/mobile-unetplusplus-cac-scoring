@@ -97,6 +97,7 @@ def dice_loss(y_true, y_pred):
     loss = 1 - dice
     return loss
 
+
 def dice_loss_nosq(y_true, y_pred):
     dice = dice_coef_nosq(y_true, y_pred)
     loss = 1 - dice
@@ -128,6 +129,7 @@ def dice_focal_no_bg(alpha=0.25, gamma=2.0):
 def log_cosh_dice_loss(y_true, y_pred):
     dice = dice_loss(y_true, y_pred)
     return tf.math.log((tf.exp(dice) + tf.exp(-dice)) / 2.0)
+
 
 def log_cosh_dice_loss_nosq(y_true, y_pred):
     dice = dice_loss_nosq(y_true, y_pred)
@@ -179,3 +181,14 @@ def dyn_weighted_bincrossentropy(true, pred):
     weighted_bin_crossentropy = weights * bin_crossentropy
 
     return K.mean(weighted_bin_crossentropy)
+
+
+def dice_coef_nosq(y_true, y_pred):
+    smooth = K.epsilon()
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+    intersection = K.sum(y_true_f * y_pred_f)
+    dice = (2.0 * intersection + smooth) / (
+        K.sum(K.square(y_true_f)) + K.sum(K.square(y_pred_f)) + smooth
+    )
+    return dice
