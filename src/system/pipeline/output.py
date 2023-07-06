@@ -70,6 +70,7 @@ def classify_risk(total_agatston):
 def auto_cac(img_dcm_paths, model, mem_opt=False):
     output_dict = {}
     output_dict["slice"] = {}
+    detected_list = []
 
     # Loop over  image path(s)
     for index, img_dcm_path in enumerate(img_dcm_paths):
@@ -121,11 +122,15 @@ def auto_cac(img_dcm_paths, model, mem_opt=False):
             output_dict["slice"][index]["lesion"] = lesion_dict
             output_dict["slice"][index]["agatston_slice_score"] = agatston_score
 
+        if agatston_score != 0:
+            detected_list.append(img_dcm_path)
+
         output_dict["total_agatston"] = (
             output_dict.get("total_agatston", 0) + agatston_score
         )
 
     output_dict["class"] = classify_risk(output_dict["total_agatston"])
+    output_dict["detected"] = detected_list
 
     return output_dict
 

@@ -15,7 +15,7 @@ from src.data.preprocess.lib.utils import get_patient_split
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import preprocess_img
-from src.models.lib.loss import dice_coef, log_cosh_dice_loss
+from src.models.lib.loss import dice_coef_nosq, log_cosh_dice_loss
 from src.models.lib.utils import loss_dict_gen
 from src.system.pipeline.output import auto_cac, ground_truth_auto_cac
 
@@ -32,18 +32,19 @@ def load_main_model(project_root_path):
         selected_model_path,
         custom_objects={
             "log_cosh_dice_loss": loss_func,
-            "dice_coef": dice_coef,
+            "dice_coef_nosq": dice_coef_nosq,
         },
     )
+
     return main_model
 
 
 @st.cache_resource
 def load_model(project_root_path, depth, _main_model):
+    loss_func = log_cosh_dice_loss
     model_depth = 5
     filter_list = [16, 32, 64, 128, 256]
 
-    loss_func = log_cosh_dice_loss
     pruned_model = {}
 
     pruned_model[f"d{depth}"] = {}
@@ -54,41 +55,32 @@ def load_model(project_root_path, depth, _main_model):
         depth=depth + 1,
         input_dim=[512, 512, 1],
         batch_norm=True,
-        deep_supervision=True,
+        deep_supervision=False,
         model_mode="basic",
         n_class={"bin": 1},
         filter_list=filter_list[: depth + 1],
     )
 
     model, output_layer_name = build_unet_pp(model_config, custom=True)
-    if depth != model_depth - 1:
-        print(f"-- Creating pruned model d{depth}")
-        for layer in tqdm(model.layers):
-            pruned_layer_name = layer.name
-            if "x_00_concat" in pruned_layer_name:
-                pruned_layer_name = "concatenate"
 
-            main_model_layer = _main_model.get_layer(pruned_layer_name)
+    print(f"-- Creating pruned model d{depth}")
+    for layer in tqdm(model.layers):
+        pruned_layer_name = layer.name
 
-            main_model_weight = main_model_layer.get_weights()
+        main_model_layer = _main_model.get_layer(pruned_layer_name)
 
-            layer.set_weights(main_model_weight)
+        main_model_weight = main_model_layer.get_weights()
 
-        pruned_model[f"d{depth}"]["model"] = model
-    else:
-        pruned_model[f"d{model_depth-1}"]["model"] = _main_model
+        layer.set_weights(main_model_weight)
+
+    pruned_model[f"d{depth}"]["model"] = model
 
     loss_dict = loss_dict_gen(model_config, output_layer_name, [loss_func])
 
     pruned_model[f"d{depth}"]["config"] = model_config
     pruned_model[f"d{depth}"]["loss_dict"] = loss_dict
 
-    metrics = [
-        dice_coef,
-        tf.keras.metrics.BinaryIoU(),
-        tf.keras.metrics.Recall(),
-        tf.keras.metrics.Precision(),
-    ]
+    metrics = ["acc"]
 
     pruned_model[f"d{depth}"]["model"].compile(
         optimizer=tf.keras.optimizers.legacy.Adam(),
@@ -107,6 +99,15 @@ def plot(container, img, title):
     im = ax.imshow(img, cmap="gray")
     ax.axis("off")
     fig.colorbar(im, cax=cax, orientation="vertical")
+    container.pyplot(fig)
+
+
+def plot_lesion(container, img, bin_mask, title):
+    fig, ax = plt.subplots()
+    ax.set_title(title)
+    ax.imshow(img, cmap="gray")
+    ax.imshow(bin_mask, cmap="gray", alpha=0.5)
+    ax.axis("off")
     container.pyplot(fig)
 
 
@@ -151,11 +152,18 @@ def main():
                     plot(c, output["slice"][0]["img_clip"], "Clipped Image")
                     plot(d, output["slice"][0]["img_norm"], "Normalized Image")
                     plot(e, output["slice"][0]["img_zero"], "Zero Centered Image")
-                    plot(f, output["slice"][0]["pred_bin"], "Binary Segmentation Mask")
-                    st.write(output["total_agatston"])
-                    st.write(output["class"])
+                    plot_lesion(
+                        f,
+                        output["slice"][0]["img_hu"],
+                        output["slice"][0]["pred_bin"],
+                        "Binary Segmentation Mask",
+                    )
+                    st.write(
+                        f"Agatston Score for the current slice: {output['total_agatston']}"
+                    )
         else:
             file_path_list = []
+            file_dict = {}
             with st.spinner("Creating temporary dicom filej"):
                 for idx, f in enumerate(file):
                     uploaded_file_name = f"temp{idx}.dcm"
@@ -165,10 +173,11 @@ def main():
                     with open(uploaded_file_path, "wb") as out_temp_file:
                         out_temp_file.write(f.read())
                     file_path_list.append(uploaded_file_path)
+                    file_dict[uploaded_file_path] = f.name
 
             # Whole Scan mode
             st.subheader("Whole Scan Mode")
-            with st.form("breakdown_form"):
+            with st.form("whole_scan"):
                 ds = st.selectbox(
                     label="Deep Supervision Layer", options=["DS1", "DS2", "DS3", "DS4"]
                 )
@@ -183,10 +192,16 @@ def main():
                             pruned_model[f"d{num}"]["model"],
                             mem_opt=True,
                         )
-                    st.write(output["total_agatston"])
-                    st.write(output["class"])
-                    if output["total_agatston"] == 0:
-                        st.balloons()
+                    st.write(
+                        f"Total Agatston score for all slices: {output['total_agatston']}"
+                    )
+                    st.write(f"Stratified risk: {output['class']}")
+                    if output["total_agatston"]!=0:
+                        st.write("Calcium Detected on the following file:")
+                        real_path_list = []
+                        for tmp_path in output["detected"]:
+                            real_path_list.append(file_dict[tmp_path])
+                        st.write(real_path_list)
 
 
 if __name__ == "__main__":
