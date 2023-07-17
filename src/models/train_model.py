@@ -20,7 +20,8 @@ from src.models.lib.data_loader import create_dataset
 from src.models.lib.loss import (categorical_focal_loss, dice_coef,
                                  dice_coef_nosq, dice_focal, dice_loss,
                                  dice_loss_nosq, dyn_weighted_bincrossentropy,
-                                 log_cosh_dice_focal, log_cosh_dice_loss,log_cosh_dice_loss_nosq)
+                                 log_cosh_dice_focal, log_cosh_dice_loss,
+                                 log_cosh_dice_loss_nosq)
 from src.models.lib.utils import loss_dict_gen, parse_list_string
 
 
@@ -71,7 +72,7 @@ def train_model(
         strategy = tf.distribute.MirroredStrategy(devices_name)
         with strategy.scope():
             metrics = [
-                dice_coef_nosq,
+                dice_coef,
             ]
             model, model_layer_name = build_unet_pp(model_config, custom=custom)
 
@@ -88,7 +89,7 @@ def train_model(
             )
     else:
         metrics = [
-            dice_coef_nosq,
+            dice_coef,
         ]
         model, model_layer_name = build_unet_pp(model_config, custom=custom)
 
