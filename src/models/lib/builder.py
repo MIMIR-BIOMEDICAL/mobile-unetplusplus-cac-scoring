@@ -2,7 +2,8 @@
 import pathlib
 import sys
 
-from tensorflow import keras  # pylint: disable=wrong-import-position,import-error
+from tensorflow import \
+    keras  # pylint: disable=wrong-import-position,import-error
 
 sys.path.append(pathlib.Path.cwd().parent.as_posix())
 from src.models.lib.base import base_unet_pp, unetpp_mobile_backend
@@ -37,7 +38,8 @@ def build_unet_pp(config: UNetPPConfig, custom: bool = False) -> keras.Model:
         else:
             raise ValueError(f"Invalid model mode: {config.model_mode}")
 
-        return unetpp_mobile_backend(config)
+        return base_unet_pp(config)
+        # return unetpp_mobile_backend(config)
 
     if config.model_mode == "basic":
         model_conf = UNetPPConfig(
@@ -68,5 +70,5 @@ def build_unet_pp(config: UNetPPConfig, custom: bool = False) -> keras.Model:
     else:
         raise ValueError(f"Invalid model mode: {config.model_mode}")
 
-    # return base_unet_pp(model_conf)
-    return unetpp_mobile_backend(model_conf)
+    return base_unet_pp(model_conf)
+    # return unetpp_mobile_backend(model_conf)
