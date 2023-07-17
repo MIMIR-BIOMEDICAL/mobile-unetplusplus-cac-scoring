@@ -142,7 +142,7 @@ def ground_truth_auto_cac(img_dcm_paths, loc_lists, mem_opt=False):
     for index, (img_dcm_path, loc_list) in enumerate(zip(img_dcm_paths, loc_lists)):
         ## Preprocessing
         # Get Image HU and pixel spacing
-        img_hu, pxl_spc = extract_dcm(img_dcm_path)
+        img_hu, pxl_spc, img_arr = extract_dcm(img_dcm_path)
 
         temp = np.zeros((512, 512))
         temp[tuple(zip(*loc_list))] = 1
