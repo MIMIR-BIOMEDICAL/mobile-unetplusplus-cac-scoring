@@ -17,8 +17,12 @@ from src.data.preprocess.lib.utils import get_patient_split
 from src.models.lib.builder import build_unet_pp
 from src.models.lib.config import UNetPPConfig
 from src.models.lib.data_loader import create_dataset, preprocess_img
-from src.models.lib.loss import (dice_coef, dice_coef_nosq, log_cosh_dice_loss,
-                                 log_cosh_dice_loss_nosq)
+from src.models.lib.loss import (
+    dice_coef,
+    dice_coef_nosq,
+    log_cosh_dice_loss,
+    log_cosh_dice_loss_nosq,
+)
 from src.models.lib.utils import loss_dict_gen
 from src.system.pipeline.output import auto_cac, ground_truth_auto_cac
 
@@ -42,7 +46,7 @@ main_model = tf.keras.models.load_model(
 
 model_depth = 5
 depth = int(sys.argv[3])
-filter_list = [16, 32, 64, 128, 256]
+# filter_list = [16, 32, 64, 128, 256]
 
 
 pruned_model = {}
@@ -53,15 +57,28 @@ pruned_model[f"d{depth}"] = {}
 
 model_config = UNetPPConfig(
     model_name=f"model_d{depth}",
-    upsample_mode="transpose",
-    depth=depth + 1,
     input_dim=[512, 512, 1],
     batch_norm=True,
-    deep_supervision=False,
     model_mode="basic",
+    depth=5,
     n_class={"bin": 1},
-    filter_list=filter_list[: depth + 1],
+    deep_supervision=False,
+    upsample_mode="transpose",
+    filter_list=[32, 64, 128, 256, 512],
 )
+
+
+# model_config = UNetPPConfig(
+#     model_name=f"model_d{depth}",
+#     upsample_mode="transpose",
+#     depth=depth + 1,
+#     input_dim=[512, 512, 1],
+#     batch_norm=True,
+#     deep_supervision=False,
+#     model_mode="basic",
+#     n_class={"bin": 1},
+#     filter_list=filter_list[: depth + 1],
+# )
 
 model, output_layer_name = build_unet_pp(model_config, custom=True)
 
