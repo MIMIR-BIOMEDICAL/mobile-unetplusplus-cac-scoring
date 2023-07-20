@@ -39,7 +39,7 @@ main_model = tf.keras.models.load_model(
     selected_model_path,
     custom_objects={
         "log_cosh_dice_loss": loss_func,
-        "dice_coef_nosq": dice_coef_nosq,
+        "dice_coef": dice_coef,
     },
 )
 
