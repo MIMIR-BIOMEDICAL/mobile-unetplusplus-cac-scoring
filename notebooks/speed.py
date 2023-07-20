@@ -8,7 +8,6 @@ import numpy as np
 import pydicom as pdc
 import sklearn.metrics as skm
 import tensorflow as tf
-from keras.utils.layer_utils import count_params
 from tqdm import tqdm
 
 sys.path.append(pathlib.Path.cwd().parent.as_posix())
