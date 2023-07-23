@@ -182,22 +182,6 @@ def base_unet_pp(config: UNetPPConfig):
         ],
     )
 
-    # return (
-    #     keras.Model(
-    #         inputs=model_dict["input"],
-    #         outputs=output_lists[-1]
-    #         if n_head == 1
-    #         else [
-    #             output_lists[index] for index in non_deep_supervision_output_index[1:]
-    #         ],
-    #     ),
-    #     output_layer_name[-1]
-    #     if n_head == 1
-    #     else [
-    #         output_layer_name[index] for index in non_deep_supervision_output_index[1:]
-    #     ],
-    # )
-
 
 def unetpp_mobile_backend(config: UNetPPConfig):
     model_mode_mapping = {
